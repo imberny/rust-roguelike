@@ -17,7 +17,7 @@ impl<'a> System<'a> for MonsterAISystem {
 
         for (viewshed, _monster, name) in (&viewshed, &monster, &name).join() {
             if viewshed.visible_tiles.contains(&*player_pos) {
-                console::log(format!("{} considers their own existence", name.name));
+                console::log(format!("{} shouts insults at the player.", name.name));
             }
         }
     }
