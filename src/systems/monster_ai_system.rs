@@ -1,5 +1,5 @@
-use crate::{Map, Monster, Name, Position, Viewshed};
-use rltk::{console, field_of_view, Point};
+use crate::{Monster, Name, Position, Viewshed};
+use rltk::{console, Point};
 use specs::prelude::*;
 
 pub struct MonsterAISystem {}

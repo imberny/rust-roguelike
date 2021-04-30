@@ -1,6 +1,6 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
-use rltk::{ GameState, Point, Rltk, VirtualKeyCode, RGB };
+use rltk::{GameState, Point, Rltk, RGB};
 use specs::prelude::*;
 
 mod rect;
@@ -44,8 +44,6 @@ impl State {
         self.ecs.maintain();
     }
 }
-
-
 
 fn draw_map(ecs: &World, ctx: &mut Rltk) {
     let map = ecs.fetch::<Map>();
@@ -105,26 +103,16 @@ impl GameState for State {
     }
 }
 
-fn main() -> rltk::BError {
-    use rltk::RltkBuilder;
-    let context = RltkBuilder::simple80x50()
-        .with_title("Roguelike Tutorial")
-        .build()?;
+fn register_components(ecs: &mut World) {
+    ecs.register::<Position>();
+    ecs.register::<Renderable>();
+    ecs.register::<Player>();
+    ecs.register::<Monster>();
+    ecs.register::<Name>();
+    ecs.register::<Viewshed>();
+}
 
-    let mut gs = State {
-        ecs: World::new(),
-        game_state: GameRunState::Running,
-    };
-
-    gs.ecs.register::<Position>();
-    gs.ecs.register::<Renderable>();
-    gs.ecs.register::<Player>();
-    gs.ecs.register::<Monster>();
-    gs.ecs.register::<Name>();
-    gs.ecs.register::<Viewshed>();
-
-    let map = Map::new_map_rooms_and_corridors();
-    let (player_x, player_y) = map.rooms[0].center();
+fn add_monsters_to_rooms(gs: &mut State, map: &Map) {
     let mut rng = rltk::RandomNumberGenerator::new();
     for (i, room) in map.rooms.iter().skip(1).enumerate() {
         let (x, y) = room.center();
@@ -162,9 +150,9 @@ fn main() -> rltk::BError {
             })
             .build();
     }
-    gs.ecs.insert(map);
-    gs.ecs.insert(PlayerPosition::new(player_x, player_y));
+}
 
+fn create_player_at_pos(gs: &mut State, player_x: i32, player_y: i32) {
     gs.ecs
         .create_entity()
         .with(Player {})
@@ -186,6 +174,38 @@ fn main() -> rltk::BError {
             dirty: true,
         })
         .build();
+}
+
+fn build_map(gs: &mut State) {
+    let map = Map::new_map_rooms_and_corridors();
+    let (player_x, player_y) = map.rooms[0].center();
+
+    add_monsters_to_rooms(gs, &map);
+    gs.ecs.insert(map);
+    gs.ecs.insert(PlayerPosition::new(player_x, player_y));
+
+    create_player_at_pos(gs, player_x, player_y);
+}
+
+fn init_game() -> State {
+    let mut ecs = World::new();
+    register_components(&mut ecs);
+    let mut gs = State {
+        ecs: ecs,
+        game_state: GameRunState::Running,
+    };
+
+    build_map(&mut gs);
+    gs
+}
+
+fn main() -> rltk::BError {
+    use rltk::RltkBuilder;
+    let context = RltkBuilder::simple80x50()
+        .with_title("Roguelike Tutorial")
+        .build()?;
+
+    let gs = init_game();
 
     rltk::main_loop(context, gs)
 }

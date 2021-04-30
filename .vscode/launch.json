@@ -5,41 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "lldb",
+            "name": "(Windows) Launch",
+            "type": "cppvsdbg",
             "request": "launch",
-            "name": "Debug executable 'exorcism'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=exorcism",
-                    "--package=exorcism"
-                ],
-                "filter": {
-                    "name": "exorcism",
-                    "kind": "bin"
-                }
-            },
+            "program": "${workspaceFolder}/target/debug/exorcism.exe",
             "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'exorcism'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=exorcism",
-                    "--package=exorcism"
-                ],
-                "filter": {
-                    "name": "exorcism",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "externalTerminal"
         }
     ]
 }
