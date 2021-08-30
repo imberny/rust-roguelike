@@ -1,3 +1,5 @@
 mod player;
 
-pub use player::player_input;
+pub use player::handle_input;
+
+mod input;

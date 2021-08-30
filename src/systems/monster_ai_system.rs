@@ -1,24 +1,17 @@
-use crate::{Monster, Name, PlayerPosition, Viewshed};
-use rltk::console;
-use specs::prelude::*;
+use crate::{Monster, Name, Viewshed, components::{Player, Position}};
+use bevy_ecs::prelude::*;
+use rltk::{console};
 
-pub struct MonsterAISystem {}
-
-impl<'a> System<'a> for MonsterAISystem {
-    type SystemData = (
-        ReadExpect<'a, PlayerPosition>,
-        ReadStorage<'a, Viewshed>,
-        ReadStorage<'a, Monster>,
-        ReadStorage<'a, Name>,
-    );
-
-    fn run(&mut self, data: Self::SystemData) {
-        let (player_pos, viewshed, monster, name) = data;
-
-        for (viewshed, _monster, name) in (&viewshed, &monster, &name).join() {
-            if viewshed.visible_tiles.contains(&*player_pos) {
+pub fn monster_ai(
+    monster_query: Query<(&Viewshed, &Name), With<Monster>>,
+    player_query: Query<&Position, With<Player>>,
+) {
+    for (viewshed, name) in monster_query.iter() {
+        for player_pos in player_query.iter() {
+            if viewshed.visible_tiles.contains(player_pos) {
                 console::log(format!("{} shouts insults at the player.", name.name));
             }
         }
+        
     }
 }

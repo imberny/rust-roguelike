@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
-use rltk::{GameState, Point, Rltk, RGB};
-use specs::prelude::*;
+use bevy_ecs::{prelude::*, schedule::ShouldRun};
+use rltk::{GameState, INPUT, Point, RGB, Rltk, VirtualKeyCode};
 
 mod rect;
 use rect::Rect;
@@ -16,103 +16,81 @@ mod systems;
 use systems::*;
 
 mod player;
-use player::*;
+use player::handle_input;
+
+mod rendering;
+use rendering::render;
 
 type PlayerPosition = Point;
 
 #[derive(PartialEq, Copy, Clone)]
-pub enum GameRunState {
-    Paused,
-    Running,
+pub enum TurnBasedState {
+    PlayerTurn,
+    OpponentsTurn,
 }
 
-pub struct State {
-    pub ecs: World,
-    pub game_state: GameRunState,
+pub struct Game {
+    turn_based_state: TurnBasedState,
 }
 
-impl State {
-    fn run_systems(&mut self) {
-        use rltk::console;
-
-        console::log("Running systems...");
-
-        let mut vis = VisibilitySystem {};
-        vis.run_now(&self.ecs);
-        let mut mob = MonsterAISystem {};
-        mob.run_now(&self.ecs);
-        self.ecs.maintain();
-    }
+#[derive(Clone, Hash, Debug, PartialEq, Eq, SystemLabel)]
+pub enum SystemGroup {
+    Player,
+    Opponent,
+    Visual,
 }
 
-fn draw_map(ecs: &World, ctx: &mut Rltk) {
-    let map = ecs.fetch::<Map>();
-
-    for (idx, tile) in map.tiles.iter().enumerate() {
-        if !map.revealed[idx] {
-            continue;
-        }
-
-        let (x, y) = map.idx_xy(idx);
-        let mut fg;
-        let glyph;
-        match tile {
-            map::TileType::Floor => {
-                fg = RGB::from_f32(0.0, 0.5, 0.5);
-                glyph = rltk::to_cp437('.');
-            }
-            map::TileType::Wall => {
-                fg = RGB::from_f32(0., 1.0, 0.);
-                glyph = rltk::to_cp437('#');
-            }
-        }
-        if !map.visible[idx] {
-            fg = fg.to_greyscale()
-        }
-        ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
-    }
+#[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
+pub enum MainStage {
+    InputPoll,
+    PlayerTurn,
+    OpponentsTurn,
+    PostUpdate,
+    Render,
 }
 
-impl GameState for State {
+pub struct ECS {
+    pub world: World,
+    pub schedule: Schedule,
+}
+
+#[derive(Default)]
+pub struct PlayerInput {
+    key: Option<VirtualKeyCode>,
+    pub mouse_pos: (i32, i32),
+    pub left_click: bool,
+    pub shift: bool,
+    pub control: bool,
+    pub alt: bool,
+}
+
+pub fn poll_input(world: &mut World, ctx: &Rltk) {
+    let mut input = world.get_resource_mut::<PlayerInput>().unwrap();
+    input.key = ctx.key;
+    input.mouse_pos = ctx.mouse_pos;
+    input.left_click = ctx.left_click;
+    input.shift = ctx.shift;
+    // input.control = ctx.control;
+    input.alt = ctx.alt;
+
+    let rltk_input = INPUT.lock();
+    input.control = rltk_input.is_key_pressed(VirtualKeyCode::LControl);
+}
+
+impl GameState for ECS {
     fn tick(&mut self, ctx: &mut Rltk) {
-        match self.game_state {
-            GameRunState::Running => {
-                self.run_systems();
+        // update PlayerInput resource
+        poll_input(&mut self.world, ctx);
 
-                self.game_state = GameRunState::Paused;
-            }
+        // run systems
+        self.schedule.run(&mut self.world);
 
-            GameRunState::Paused => {
-                self.game_state = player_input(self, ctx);
-            }
-        }
-
-        ctx.cls();
-        draw_map(&self.ecs, ctx);
-
-        let positions = self.ecs.read_storage::<Position>();
-        let renderables = self.ecs.read_storage::<Renderable>();
-        let map = self.ecs.fetch::<Map>();
-
-        for (pos, render) in (&positions, &renderables).join() {
-            let idx = map.xy_idx(pos.x, pos.y);
-            if map.visible[idx] {
-                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
-            }
-        }
+        // draw
+        render(&mut self.world, ctx);
     }
 }
 
-fn register_components(ecs: &mut World) {
-    ecs.register::<Position>();
-    ecs.register::<Renderable>();
-    ecs.register::<Player>();
-    ecs.register::<Monster>();
-    ecs.register::<Name>();
-    ecs.register::<Viewshed>();
-}
-
-fn add_monsters_to_rooms(gs: &mut State, map: &Map) {
+fn add_monsters_to_rooms(gs: &mut ECS, map: &Map) {
     let mut rng = rltk::RandomNumberGenerator::new();
     for (i, room) in map.rooms.iter().skip(1).enumerate() {
         let (x, y) = room.center();
@@ -131,69 +109,151 @@ fn add_monsters_to_rooms(gs: &mut State, map: &Map) {
             }
         }
 
-        gs.ecs
-            .create_entity()
-            .with(Monster {})
-            .with(Name {
+        gs.world
+            .spawn()
+            .insert(Monster {})
+            .insert(Name {
                 name: format!("{} #{}", &name, i),
             })
-            .with(Position { x, y })
-            .with(Renderable {
+            .insert(Position { x, y })
+            .insert(Renderable {
                 glyph,
                 fg: RGB::named(rltk::RED),
                 bg: RGB::named(rltk::BLACK),
             })
-            .with(Viewshed {
+            .insert(Viewshed {
                 visible_tiles: Vec::new(),
                 range: 8,
                 dirty: true,
-            })
-            .build();
+            });
     }
 }
 
-fn create_player_at_pos(gs: &mut State, player_x: i32, player_y: i32) {
-    gs.ecs
-        .create_entity()
-        .with(Player {})
-        .with(Name {
+fn create_player_at_pos(gs: &mut ECS, player_x: i32, player_y: i32) {
+    gs.world
+        .spawn()
+        .insert(Player)
+        .insert(Name {
             name: "Player".to_string(),
         })
-        .with(Position {
+        .insert(Position {
             x: player_x,
             y: player_y,
         })
-        .with(Renderable {
+        .insert(Renderable {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
         })
-        .with(Viewshed {
+        .insert(Viewshed {
             visible_tiles: Vec::new(),
             range: 8,
             dirty: true,
-        })
-        .build();
+        });
 }
 
-fn build_map(gs: &mut State) {
+fn build_map(gs: &mut ECS) {
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
     add_monsters_to_rooms(gs, &map);
-    gs.ecs.insert(map);
-    gs.ecs.insert(PlayerPosition::new(player_x, player_y));
+    gs.world.insert_resource(map);
 
     create_player_at_pos(gs, player_x, player_y);
 }
 
-fn init_game() -> State {
-    let mut ecs = World::new();
-    register_components(&mut ecs);
-    let mut gs = State {
-        ecs: ecs,
-        game_state: GameRunState::Running,
-    };
+fn is_player_turn(game: Res<Game>) -> ShouldRun {
+    if game.turn_based_state == TurnBasedState::PlayerTurn {
+        ShouldRun::Yes
+    } else {
+        ShouldRun::No
+    }
+    // match game.turn_based_state {
+    //     TurnBasedState::PlayerTurn => ShouldRun::Yes,
+    //     _ => ShouldRun::No,
+    // }
+}
+
+fn is_opponents_turn(game: Res<Game>) -> ShouldRun {
+    match game.turn_based_state {
+        TurnBasedState::OpponentsTurn => ShouldRun::Yes,
+        _ => ShouldRun::No,
+    }
+}
+
+fn end_opponents_turn(mut game: ResMut<Game>) {
+    game.turn_based_state = TurnBasedState::PlayerTurn;
+}
+
+fn init_game() -> ECS {
+    let mut world = World::new();
+    world.insert_resource::<PlayerInput>(PlayerInput::default());
+    world.insert_resource::<Game>(Game {
+        turn_based_state: TurnBasedState::PlayerTurn,
+    });
+    // player input stage
+    // runcondition: gamerunstate == player_turn
+
+    // update stage
+    //  run player systems
+    //  run opponent systems
+    //  handle game over
+
+    // render stage
+    //  update all animations
+    //  draw (runcondition: something changed)
+
+    let mut player_turn = SystemStage::parallel();
+    player_turn
+        .set_run_criteria(is_player_turn.system())
+        .add_system_set(
+            SystemSet::new()
+                .label(SystemGroup::Player)
+                // .with_run_criteria(is_player_turn.system())
+                .with_system(handle_input.system()),
+        );
+    let mut opponents_turn = SystemStage::parallel();
+    opponents_turn
+        .set_run_criteria(is_opponents_turn.system())
+        .add_system_set(
+            SystemSet::new()
+                .label(SystemGroup::Opponent)
+                // .with_run_criteria(is_opponents_turn.system())
+                .with_system(monster_ai.system()),
+        );
+
+    let mut post_update_stage = SystemStage::parallel();
+    post_update_stage
+        .add_system_set(
+            SystemSet::new()
+                .label(SystemGroup::Visual)
+                .with_system(update_viewsheds.system())
+                .with_system(update_player_viewshed.system()),
+        )
+        .add_system(
+            end_opponents_turn
+                .system()
+                .with_run_criteria(is_opponents_turn.system()),
+        );
+
+    let render_stage = SystemStage::parallel();
+
+    let mut schedule = Schedule::default();
+    schedule
+        .add_stage(MainStage::PlayerTurn, player_turn)
+        .add_stage_after(
+            MainStage::PlayerTurn,
+            MainStage::OpponentsTurn,
+            opponents_turn,
+        )
+        .add_stage_after(
+            MainStage::OpponentsTurn,
+            MainStage::PostUpdate,
+            post_update_stage,
+        )
+        .add_stage_after(MainStage::PostUpdate, MainStage::Render, render_stage);
+
+    let mut gs = ECS { world, schedule };
 
     build_map(&mut gs);
     gs
