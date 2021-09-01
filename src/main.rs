@@ -1,10 +1,8 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 use bevy_ecs::{prelude::*, schedule::ShouldRun};
-use rltk::{GameState, INPUT, Point, RGB, Rltk, VirtualKeyCode};
-
-mod rect;
-use rect::Rect;
+use constants::facings::SOUTH;
+use rltk::{GameState, Point, Rltk, VirtualKeyCode, INPUT, RGB};
 
 mod map;
 use map::Map;
@@ -20,6 +18,13 @@ use player::handle_input;
 
 mod rendering;
 use rendering::render;
+
+mod actor;
+use actor::Actor;
+
+mod constants;
+
+mod types;
 
 type PlayerPosition = Point;
 
@@ -45,7 +50,7 @@ pub enum MainStage {
     InputPoll,
     PlayerTurn,
     OpponentsTurn,
-    PostUpdate,
+    EndOfTurn,
     Render,
 }
 
@@ -57,24 +62,29 @@ pub struct ECS {
 #[derive(Default)]
 pub struct PlayerInput {
     key: Option<VirtualKeyCode>,
-    pub mouse_pos: (i32, i32),
+    pub cursor_pos: (i32, i32),
     pub left_click: bool,
-    pub shift: bool,
-    pub control: bool,
+    pub is_strafing: bool,
+    pub skew_move: bool,
     pub alt: bool,
 }
+
+const LEFT_MOUSE_BUTTON: usize = 0;
 
 pub fn poll_input(world: &mut World, ctx: &Rltk) {
     let mut input = world.get_resource_mut::<PlayerInput>().unwrap();
     input.key = ctx.key;
-    input.mouse_pos = ctx.mouse_pos;
-    input.left_click = ctx.left_click;
-    input.shift = ctx.shift;
-    // input.control = ctx.control;
-    input.alt = ctx.alt;
+    input.cursor_pos = ctx.mouse_pos;
 
     let rltk_input = INPUT.lock();
-    input.control = rltk_input.is_key_pressed(VirtualKeyCode::LControl);
+    input.left_click = rltk_input.is_mouse_button_pressed(LEFT_MOUSE_BUTTON);
+    input.skew_move = rltk_input.is_key_pressed(VirtualKeyCode::LControl)
+        || rltk_input.is_key_pressed(VirtualKeyCode::RControl);
+    input.is_strafing = rltk_input.is_key_pressed(VirtualKeyCode::LShift)
+        || rltk_input.is_key_pressed(VirtualKeyCode::RShift);
+    input.alt = rltk_input.is_key_pressed(VirtualKeyCode::LAlt)
+        || rltk_input.is_key_pressed(VirtualKeyCode::RAlt);
+    input.skew_move = rltk_input.is_key_pressed(VirtualKeyCode::LControl);
 }
 
 impl GameState for ECS {
@@ -112,6 +122,7 @@ fn add_monsters_to_rooms(gs: &mut ECS, map: &Map) {
         gs.world
             .spawn()
             .insert(Monster {})
+            .insert(Actor { facing: SOUTH })
             .insert(Name {
                 name: format!("{} #{}", &name, i),
             })
@@ -133,6 +144,7 @@ fn create_player_at_pos(gs: &mut ECS, player_x: i32, player_y: i32) {
     gs.world
         .spawn()
         .insert(Player)
+        .insert(Actor { facing: SOUTH })
         .insert(Name {
             name: "Player".to_string(),
         })
@@ -187,10 +199,10 @@ fn end_opponents_turn(mut game: ResMut<Game>) {
 
 fn init_game() -> ECS {
     let mut world = World::new();
-    world.insert_resource::<PlayerInput>(PlayerInput::default());
     world.insert_resource::<Game>(Game {
         turn_based_state: TurnBasedState::PlayerTurn,
     });
+    world.insert_resource::<PlayerInput>(PlayerInput::default());
     // player input stage
     // runcondition: gamerunstate == player_turn
 
@@ -222,8 +234,8 @@ fn init_game() -> ECS {
                 .with_system(monster_ai.system()),
         );
 
-    let mut post_update_stage = SystemStage::parallel();
-    post_update_stage
+    let mut end_of_turn = SystemStage::parallel();
+    end_of_turn
         .add_system_set(
             SystemSet::new()
                 .label(SystemGroup::Visual)
@@ -246,12 +258,8 @@ fn init_game() -> ECS {
             MainStage::OpponentsTurn,
             opponents_turn,
         )
-        .add_stage_after(
-            MainStage::OpponentsTurn,
-            MainStage::PostUpdate,
-            post_update_stage,
-        )
-        .add_stage_after(MainStage::PostUpdate, MainStage::Render, render_stage);
+        .add_stage_after(MainStage::OpponentsTurn, MainStage::EndOfTurn, end_of_turn)
+        .add_stage_after(MainStage::EndOfTurn, MainStage::Render, render_stage);
 
     let mut gs = ECS { world, schedule };
 
@@ -262,7 +270,7 @@ fn init_game() -> ECS {
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
     let context = RltkBuilder::simple80x50()
-        .with_title("Roguelike Tutorial")
+        .with_title("The Possession of Barbe Halle")
         .build()?;
 
     let gs = init_game();

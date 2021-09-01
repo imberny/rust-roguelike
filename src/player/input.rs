@@ -1,67 +1,94 @@
 use bevy_ecs::prelude::*;
-use rltk::{Point, VirtualKeyCode};
+use rltk::VirtualKeyCode;
 
-use crate::PlayerInput;
-
-pub type Direction = Point;
+use crate::{PlayerInput, constants::facings::*, types::Facing};
 
 // Laptop      Numpad         Arrow keys + Control
 // ---------------------------------------------------
 // Y K U       7 8 9       Ctrl+Left   Up    Ctrl-Up
 // H . L       4 5 6          Left     .      Right
 // B J N       1 2 3       Ctrl+Down  Down  Ctrl+Right
-pub fn direction_from(input: Res<PlayerInput>) -> Option<Direction> {
+pub fn input_to_facing(input: Res<PlayerInput>) -> Option<Facing> {
     let direction = match input.key {
         Some(key) => match key {
-            VirtualKeyCode::Numpad7 | VirtualKeyCode::Y => Some(Point::new(-1, -1)),
+            VirtualKeyCode::Numpad7 | VirtualKeyCode::Y => Some(NORTH_WEST),
+            VirtualKeyCode::Numpad8 | VirtualKeyCode::K => Some(NORTH),
+            VirtualKeyCode::Numpad9 | VirtualKeyCode::U => Some(NORTH_EAST),
+            VirtualKeyCode::Numpad6 | VirtualKeyCode::L => Some(EAST),
+            VirtualKeyCode::Numpad3 | VirtualKeyCode::N => Some(SOUTH_EAST),
+            VirtualKeyCode::Numpad2 | VirtualKeyCode::J => Some(SOUTH),
+            VirtualKeyCode::Numpad1 | VirtualKeyCode::B => Some(SOUTH_WEST),
+            VirtualKeyCode::Numpad4 | VirtualKeyCode::H => Some(WEST),
 
-            VirtualKeyCode::Numpad8 | VirtualKeyCode::K => Some(Point::new(0, -1)),
+            // Shift + 7 => Home
+            VirtualKeyCode::Home => {
+                if input.is_strafing {
+                    Some(NORTH_WEST)
+                } else {
+                    None
+                }
+            }
 
-            VirtualKeyCode::Numpad9 | VirtualKeyCode::U => Some(Point::new(1, -1)),
+            // Shift + 9 => Page up
+            VirtualKeyCode::PageUp => {
+                if input.is_strafing {
+                    Some(NORTH_EAST)
+                } else {
+                    None
+                }
+            }
 
-            VirtualKeyCode::Numpad6 | VirtualKeyCode::L => Some(Point::new(1, 0)),
+            // Shift + 3 => Page down
+            VirtualKeyCode::PageDown => {
+                if input.is_strafing {
+                    Some(SOUTH_EAST)
+                } else {
+                    None
+                }
+            }
 
-            VirtualKeyCode::Numpad3 | VirtualKeyCode::N => Some(Point::new(1, 1)),
-
-            VirtualKeyCode::Numpad2 | VirtualKeyCode::J => Some(Point::new(0, 1)),
-
-            VirtualKeyCode::Numpad1 | VirtualKeyCode::B => Some(Point::new(-1, 1)),
-
-            VirtualKeyCode::Numpad4 | VirtualKeyCode::H => Some(Point::new(-1, 0)),
+            // Shift + 1 => End
+            VirtualKeyCode::End => {
+                if input.is_strafing {
+                    Some(SOUTH_WEST)
+                } else {
+                    None
+                }
+            }
 
             VirtualKeyCode::Left => {
-                if input.control {
-                    Some(Point::new(-1, 1))
+                if input.skew_move {
+                    Some(SOUTH_WEST)
                 } else {
-                    Some(Point::new(-1, 0))
+                    Some(WEST)
                 }
             }
 
             VirtualKeyCode::Up => {
-                if input.control {
-                    Some(Point::new(-1, -1))
+                if input.skew_move {
+                    Some(NORTH_WEST)
                 } else {
-                    Some(Point::new(0, -1))
+                    Some(NORTH)
                 }
             }
 
             VirtualKeyCode::Right => {
-                if input.control {
-                    Some(Point::new(1, -1))
+                if input.skew_move {
+                    Some(NORTH_EAST)
                 } else {
-                    Some(Point::new(1, 0))
+                    Some(EAST)
                 }
             }
 
             VirtualKeyCode::Down => {
-                if input.control {
-                    Some(Point::new(1, 1))
+                if input.skew_move {
+                    Some(SOUTH_EAST)
                 } else {
-                    Some(Point::new(0, 1))
+                    Some(SOUTH)
                 }
             }
 
-            VirtualKeyCode::Period | VirtualKeyCode::Numpad5 => Some(Point::new(0, 0)),
+            VirtualKeyCode::Period | VirtualKeyCode::Numpad5 => Some(Facing::new(0, 0)),
 
             _ => None,
         },
