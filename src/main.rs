@@ -2,7 +2,7 @@
 #![allow(dead_code)]
 use bevy_ecs::{prelude::*, schedule::ShouldRun};
 use constants::facings::SOUTH;
-use rltk::{GameState, Point, Rltk, VirtualKeyCode, INPUT, RGB};
+use rltk::{GameState, Point, Rltk, RGB};
 
 mod map;
 use map::Map;
@@ -14,13 +14,13 @@ mod systems;
 use systems::*;
 
 mod player;
-use player::handle_input;
+use player::{PlayerInput, handle_player_input, poll_input};
 
 mod rendering;
 use rendering::render;
 
 mod actor;
-use actor::Actor;
+use actor::{Actor, action::process_move_actions};
 
 mod constants;
 
@@ -30,61 +30,36 @@ type PlayerPosition = Point;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum TurnBasedState {
+    None,
     PlayerTurn,
     OpponentsTurn,
 }
 
 pub struct Game {
+    is_waiting_for_input: bool,
     turn_based_state: TurnBasedState,
 }
 
 #[derive(Clone, Hash, Debug, PartialEq, Eq, SystemLabel)]
 pub enum SystemGroup {
-    Player,
-    Opponent,
+    Actor,
+    Action,
     Visual,
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
 pub enum MainStage {
     InputPoll,
-    PlayerTurn,
-    OpponentsTurn,
+    Actor,
+    Action,
     EndOfTurn,
+    Animate,
     Render,
 }
 
 pub struct ECS {
     pub world: World,
     pub schedule: Schedule,
-}
-
-#[derive(Default)]
-pub struct PlayerInput {
-    key: Option<VirtualKeyCode>,
-    pub cursor_pos: (i32, i32),
-    pub left_click: bool,
-    pub is_strafing: bool,
-    pub skew_move: bool,
-    pub alt: bool,
-}
-
-const LEFT_MOUSE_BUTTON: usize = 0;
-
-pub fn poll_input(world: &mut World, ctx: &Rltk) {
-    let mut input = world.get_resource_mut::<PlayerInput>().unwrap();
-    input.key = ctx.key;
-    input.cursor_pos = ctx.mouse_pos;
-
-    let rltk_input = INPUT.lock();
-    input.left_click = rltk_input.is_mouse_button_pressed(LEFT_MOUSE_BUTTON);
-    input.skew_move = rltk_input.is_key_pressed(VirtualKeyCode::LControl)
-        || rltk_input.is_key_pressed(VirtualKeyCode::RControl);
-    input.is_strafing = rltk_input.is_key_pressed(VirtualKeyCode::LShift)
-        || rltk_input.is_key_pressed(VirtualKeyCode::RShift);
-    input.alt = rltk_input.is_key_pressed(VirtualKeyCode::LAlt)
-        || rltk_input.is_key_pressed(VirtualKeyCode::RAlt);
-    input.skew_move = rltk_input.is_key_pressed(VirtualKeyCode::LControl);
 }
 
 impl GameState for ECS {
@@ -122,7 +97,7 @@ fn add_monsters_to_rooms(gs: &mut ECS, map: &Map) {
         gs.world
             .spawn()
             .insert(Monster {})
-            .insert(Actor { facing: SOUTH })
+            .insert(Actor::default())
             .insert(Name {
                 name: format!("{} #{}", &name, i),
             })
@@ -144,7 +119,7 @@ fn create_player_at_pos(gs: &mut ECS, player_x: i32, player_y: i32) {
     gs.world
         .spawn()
         .insert(Player)
-        .insert(Actor { facing: SOUTH })
+        .insert(Actor::default())
         .insert(Name {
             name: "Player".to_string(),
         })
@@ -174,91 +149,70 @@ fn build_map(gs: &mut ECS) {
     create_player_at_pos(gs, player_x, player_y);
 }
 
-fn is_player_turn(game: Res<Game>) -> ShouldRun {
-    if game.turn_based_state == TurnBasedState::PlayerTurn {
-        ShouldRun::Yes
-    } else {
+fn is_not_waiting_for_input(game: Res<Game>) -> ShouldRun {
+    if game.is_waiting_for_input {
         ShouldRun::No
-    }
-    // match game.turn_based_state {
-    //     TurnBasedState::PlayerTurn => ShouldRun::Yes,
-    //     _ => ShouldRun::No,
-    // }
-}
-
-fn is_opponents_turn(game: Res<Game>) -> ShouldRun {
-    match game.turn_based_state {
-        TurnBasedState::OpponentsTurn => ShouldRun::Yes,
-        _ => ShouldRun::No,
+    } else {
+        ShouldRun::Yes
     }
 }
 
-fn end_opponents_turn(mut game: ResMut<Game>) {
-    game.turn_based_state = TurnBasedState::PlayerTurn;
+fn is_player_ready() -> ShouldRun {
+    ShouldRun::Yes
+}
+
+fn end_player_turn(mut game: ResMut<Game> /* , actions with player*/) {
+    game.is_waiting_for_input = true;
+    println!("Waiting for input...");
 }
 
 fn init_game() -> ECS {
     let mut world = World::new();
     world.insert_resource::<Game>(Game {
+        is_waiting_for_input: false,
         turn_based_state: TurnBasedState::PlayerTurn,
     });
     world.insert_resource::<PlayerInput>(PlayerInput::default());
-    // player input stage
-    // runcondition: gamerunstate == player_turn
 
-    // update stage
-    //  run player systems
-    //  run opponent systems
-    //  handle game over
+    let mut input_poll = SystemStage::parallel();
+    input_poll
+    .set_run_criteria(is_not_waiting_for_input.system())
+    .add_system(handle_player_input.system());
 
-    // render stage
-    //  update all animations
-    //  draw (runcondition: something changed)
-
-    let mut player_turn = SystemStage::parallel();
-    player_turn
-        .set_run_criteria(is_player_turn.system())
+    let mut process_actors = SystemStage::parallel();
+    process_actors
+        .set_run_criteria(is_not_waiting_for_input.system())
         .add_system_set(
             SystemSet::new()
-                .label(SystemGroup::Player)
-                // .with_run_criteria(is_player_turn.system())
-                .with_system(handle_input.system()),
-        );
-    let mut opponents_turn = SystemStage::parallel();
-    opponents_turn
-        .set_run_criteria(is_opponents_turn.system())
-        .add_system_set(
-            SystemSet::new()
-                .label(SystemGroup::Opponent)
-                // .with_run_criteria(is_opponents_turn.system())
+                .label(SystemGroup::Actor)
+                .with_system(process_move_actions.system())
                 .with_system(monster_ai.system()),
         );
 
+    let mut process_actions = SystemStage::parallel();
+    process_actions
+        .set_run_criteria(is_not_waiting_for_input.system())
+        .add_system_set(SystemSet::new().label(SystemGroup::Action));
+
     let mut end_of_turn = SystemStage::parallel();
     end_of_turn
+        .set_run_criteria(is_not_waiting_for_input.system())
         .add_system_set(
             SystemSet::new()
                 .label(SystemGroup::Visual)
                 .with_system(update_viewsheds.system())
                 .with_system(update_player_viewshed.system()),
-        )
-        .add_system(
-            end_opponents_turn
-                .system()
-                .with_run_criteria(is_opponents_turn.system()),
         );
 
-    let render_stage = SystemStage::parallel();
+    let mut render_stage = SystemStage::parallel();
+    render_stage.add_system(end_player_turn.system()).set_run_criteria(is_not_waiting_for_input.system());
 
     let mut schedule = Schedule::default();
     schedule
-        .add_stage(MainStage::PlayerTurn, player_turn)
-        .add_stage_after(
-            MainStage::PlayerTurn,
-            MainStage::OpponentsTurn,
-            opponents_turn,
-        )
-        .add_stage_after(MainStage::OpponentsTurn, MainStage::EndOfTurn, end_of_turn)
+        .add_stage(MainStage::InputPoll, input_poll)
+        .add_stage_after(MainStage::InputPoll,MainStage::Actor, process_actors)
+        .add_stage_after(MainStage::Actor, MainStage::Action, process_actions)
+        .add_stage_after(MainStage::Action, MainStage::EndOfTurn, end_of_turn)
         .add_stage_after(MainStage::EndOfTurn, MainStage::Render, render_stage);
 
     let mut gs = ECS { world, schedule };
@@ -270,6 +224,7 @@ fn init_game() -> ECS {
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
     let context = RltkBuilder::simple80x50()
+        .with_dimensions(120, 75)
         .with_title("The Possession of Barbe Halle")
         .build()?;
 

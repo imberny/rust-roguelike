@@ -4,6 +4,7 @@ use bevy_ecs::prelude::*;
 use rltk::{field_of_view, Point};
 
 pub fn update_viewsheds(map: ResMut<Map>, mut query: Query<(&mut Viewshed, &Position)>) {
+    println!("Updating viewsheds");
     for (mut viewshed, pos) in query.iter_mut() {
         if viewshed.dirty {
             viewshed.dirty = false;
@@ -17,6 +18,7 @@ pub fn update_viewsheds(map: ResMut<Map>, mut query: Query<(&mut Viewshed, &Posi
 }
 
 pub fn update_player_viewshed(mut map: ResMut<Map>, mut query: Query<&mut Viewshed, With<Player>>) {
+    println!("Updating player viewshed");
     for t in map.visible.iter_mut() {
         *t = false
     }

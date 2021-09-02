@@ -1,6 +1,6 @@
-use rltk::Point;
-
 pub mod facings {
+    use rltk::Point;
+
     use crate::types::Facing;
 
     pub const NORTH_WEST: Facing = Facing::constant(-1, -1);
@@ -11,6 +11,5 @@ pub mod facings {
     pub const SOUTH: Facing = Facing::constant(0, 1);
     pub const SOUTH_WEST: Facing = Facing::constant(-1, 1);
     pub const WEST: Facing = Facing::constant(-1, 0);
+    pub const IDLE: Facing = Facing::constant(0, 0);
 }
-
-pub const IDLE_MOVE: Point = Point::constant(0, 0);
