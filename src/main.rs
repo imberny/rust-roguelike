@@ -1,7 +1,6 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 use bevy_ecs::{prelude::*, schedule::ShouldRun};
-use constants::facings::SOUTH;
 use rltk::{GameState, Point, Rltk, RGB};
 
 mod map;

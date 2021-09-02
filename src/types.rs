@@ -2,7 +2,7 @@ use rltk::Point;
 
 use crate::constants::facings::SOUTH;
 
-#[derive(Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct Facing {
     pub x: i32,
     pub y: i32,

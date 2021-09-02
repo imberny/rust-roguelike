@@ -141,7 +141,6 @@ pub fn poll_input(world: &mut World, ctx: &Rltk) {
     update_player_input(&mut input_resource, ctx);
 
     if input_resource.is_valid() {
-        println!("New input received!");
         let mut game = world.get_resource_mut::<Game>().unwrap();
         game.is_waiting_for_input = false;
     }
