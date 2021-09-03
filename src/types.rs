@@ -17,3 +17,31 @@ impl Default for Facing {
         SOUTH
     }
 }
+
+mod percentage {
+
+    const PERCENTAGE_LOWER_BOUND: f32 = 0.0;
+    const PERCENTAGE_UPPER_BOUND: f32 = 100.0;
+
+    pub struct Percentage {
+        value: f32,
+    }
+
+    impl Default for Percentage {
+        fn default() -> Self {
+            Self {
+                value: PERCENTAGE_UPPER_BOUND,
+            }
+        }
+    }
+
+    impl From<f32> for Percentage {
+        fn from(value: f32) -> Self {
+            Self {
+                value: value.clamp(PERCENTAGE_LOWER_BOUND, PERCENTAGE_UPPER_BOUND),
+            }
+        }
+    }
+}
+
+pub use percentage::Percentage;
