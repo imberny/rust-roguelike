@@ -16,7 +16,7 @@ pub fn update_viewsheds(map: ResMut<Map>, mut query: Query<(&mut Viewshed, &Posi
     }
 }
 
-pub fn update_player_viewshed(mut map: ResMut<Map>, mut query: Query<&mut Viewshed, With<Player>>) {
+pub fn apply_player_viewsheds(mut map: ResMut<Map>, mut query: Query<&mut Viewshed, With<Player>>) {
     for t in map.visible.iter_mut() {
         *t = false
     }

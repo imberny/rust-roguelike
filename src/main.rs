@@ -19,7 +19,10 @@ mod rendering;
 use rendering::render;
 
 mod actor;
-use actor::{Actor, action::{Action, process_move_actions}};
+use actor::{
+    action::{process_move_actions, Action},
+    Actor,
+};
 
 mod constants;
 
@@ -39,21 +42,20 @@ pub struct Game {
     turn_based_state: TurnBasedState,
 }
 
-#[derive(Clone, Hash, Debug, PartialEq, Eq, SystemLabel)]
-pub enum SystemGroup {
-    Actor,
-    Action,
-    Visual,
+#[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
+pub enum CoreStage {
+    Update,
+    Render,
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
-pub enum MainStage {
-    InputPoll,
+#[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
+pub enum SystemGroup {
+    Input,
     Actor,
     Action,
-    EndOfTurn,
+    EndTurn,
     Animate,
-    Render,
+    Visualize,
 }
 
 pub struct ECS {
@@ -175,48 +177,47 @@ fn init_game() -> ECS {
     });
     world.insert_resource::<PlayerInput>(PlayerInput::default());
 
-    let mut input_poll = SystemStage::parallel();
-    input_poll
-        .set_run_criteria(is_not_waiting_for_input.system())
-        .add_system(handle_player_input.system());
-
-    let mut process_actors = SystemStage::parallel();
-    process_actors
+    let mut update_stage = SystemStage::parallel();
+    update_stage
         .set_run_criteria(is_not_waiting_for_input.system())
         .add_system_set(
             SystemSet::new()
+                .label(SystemGroup::Input)
+                .with_system(handle_player_input.system()),
+        )
+        .add_system_set(
+            SystemSet::new()
+                .after(SystemGroup::Input)
                 .label(SystemGroup::Actor)
-                .with_system(process_move_actions.system())
                 .with_system(monster_ai.system()),
-        );
-
-    let mut process_actions = SystemStage::parallel();
-    process_actions
-        .set_run_criteria(is_not_waiting_for_input.system())
-        .add_system_set(SystemSet::new().label(SystemGroup::Action));
-
-    let mut end_of_turn = SystemStage::parallel();
-    end_of_turn
-        .set_run_criteria(is_not_waiting_for_input.system())
+        )
         .add_system_set(
             SystemSet::new()
-                .label(SystemGroup::Visual)
+                .after(SystemGroup::Actor)
+                .label(SystemGroup::Action)
+                .with_system(process_move_actions.system()),
+        )
+        .add_system_set(
+            SystemSet::new()
+                .after(SystemGroup::Action)
+                .label(SystemGroup::EndTurn)
                 .with_system(update_viewsheds.system())
-                .with_system(update_player_viewshed.system()),
+                .with_system(end_player_turn.system()),
         );
 
     let mut render_stage = SystemStage::parallel();
     render_stage
-        .add_system(end_player_turn.system())
-        .set_run_criteria(is_not_waiting_for_input.system());
+        .add_system_set(SystemSet::new().label(SystemGroup::Animate))
+        .add_system_set(
+            SystemSet::new()
+                .after(SystemGroup::Animate)
+                .label(SystemGroup::Visualize)
+                .with_system(apply_player_viewsheds.system()),
+        );
 
     let mut schedule = Schedule::default();
-    schedule
-        .add_stage(MainStage::InputPoll, input_poll)
-        .add_stage_after(MainStage::InputPoll, MainStage::Actor, process_actors)
-        .add_stage_after(MainStage::Actor, MainStage::Action, process_actions)
-        .add_stage_after(MainStage::Action, MainStage::EndOfTurn, end_of_turn)
-        .add_stage_after(MainStage::EndOfTurn, MainStage::Render, render_stage);
+    schedule.add_stage(CoreStage::Update, update_stage)
+    .add_stage_after(CoreStage::Update, CoreStage::Render, render_stage);
 
     let mut gs = ECS { world, schedule };
 
