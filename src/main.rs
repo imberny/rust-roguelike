@@ -13,13 +13,13 @@ mod systems;
 use systems::*;
 
 mod player;
-use player::{PlayerInput, handle_player_input, poll_input};
+use player::{handle_player_input, poll_input, PlayerInput};
 
 mod rendering;
 use rendering::render;
 
 mod actor;
-use actor::{Actor, action::process_move_actions};
+use actor::{action::process_move_actions, Actor};
 
 mod constants;
 
@@ -160,9 +160,8 @@ fn is_player_ready() -> ShouldRun {
     ShouldRun::Yes
 }
 
-fn end_player_turn(mut game: ResMut<Game> /* , actions with player*/) {
+fn end_player_turn(mut game: ResMut<Game>) {
     game.is_waiting_for_input = true;
-    println!("Waiting for input...");
 }
 
 fn init_game() -> ECS {
@@ -175,8 +174,8 @@ fn init_game() -> ECS {
 
     let mut input_poll = SystemStage::parallel();
     input_poll
-    .set_run_criteria(is_not_waiting_for_input.system())
-    .add_system(handle_player_input.system());
+        .set_run_criteria(is_not_waiting_for_input.system())
+        .add_system(handle_player_input.system());
 
     let mut process_actors = SystemStage::parallel();
     process_actors
@@ -204,12 +203,14 @@ fn init_game() -> ECS {
         );
 
     let mut render_stage = SystemStage::parallel();
-    render_stage.add_system(end_player_turn.system()).set_run_criteria(is_not_waiting_for_input.system());
+    render_stage
+        .add_system(end_player_turn.system())
+        .set_run_criteria(is_not_waiting_for_input.system());
 
     let mut schedule = Schedule::default();
     schedule
         .add_stage(MainStage::InputPoll, input_poll)
-        .add_stage_after(MainStage::InputPoll,MainStage::Actor, process_actors)
+        .add_stage_after(MainStage::InputPoll, MainStage::Actor, process_actors)
         .add_stage_after(MainStage::Actor, MainStage::Action, process_actions)
         .add_stage_after(MainStage::Action, MainStage::EndOfTurn, end_of_turn)
         .add_stage_after(MainStage::EndOfTurn, MainStage::Render, render_stage);

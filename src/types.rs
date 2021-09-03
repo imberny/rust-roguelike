@@ -1,5 +1,3 @@
-use rltk::Point;
-
 use crate::constants::facings::SOUTH;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -11,15 +9,6 @@ pub struct Facing {
 impl Facing {
     pub const fn constant(x: i32, y: i32) -> Self {
         Self { x, y }
-    }
-}
-
-impl From<Point> for Facing {
-    fn from(point: Point) -> Self {
-        Facing {
-            x: point.x,
-            y: point.y,
-        }
     }
 }
 
