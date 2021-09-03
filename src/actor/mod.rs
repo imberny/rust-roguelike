@@ -1,5 +1,10 @@
+mod action;
 mod actor;
-pub mod action;
+pub mod ai;
 pub mod constants;
+pub mod systems;
+mod viewshed;
 
-pub use actor::Actor;
+pub use action::Action;
+pub use actor::*;
+pub use viewshed::Viewshed;

@@ -34,3 +34,8 @@ pub struct Actor {
     pub action: Action,
     pub facing: Facing,
 }
+
+#[derive(Debug)]
+pub struct Name {
+    pub name: String,
+}

@@ -1,7 +1,6 @@
-mod player;
-
-pub use player::handle_player_input;
-
 mod input;
+mod player;
+pub mod systems;
 
 pub use input::*;
+pub use player::Player;

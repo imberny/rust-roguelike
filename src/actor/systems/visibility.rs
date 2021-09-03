@@ -1,7 +1,7 @@
-use crate::components::{Player, Position, Viewshed};
-use crate::Map;
 use bevy_ecs::prelude::*;
 use rltk::{field_of_view, Point};
+
+use crate::{actor::Viewshed, map::Map, player::Player, types::Position};
 
 pub fn update_viewsheds(map: ResMut<Map>, mut query: Query<(&mut Viewshed, &Position)>) {
     for (mut viewshed, pos) in query.iter_mut() {

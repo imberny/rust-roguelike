@@ -3,9 +3,11 @@ use rltk::{Rltk, RGB};
 
 use crate::{
     actor::Actor,
-    components::{Position, Renderable},
     map::{self, Map},
+    types::Position,
 };
+
+use super::Renderable;
 
 pub fn render(world: &mut World, ctx: &mut Rltk) {
     ctx.cls();

@@ -10,7 +10,6 @@ pub enum TileType {
     Floor,
 }
 
-type TileMap = Vec<TileType>;
 type Room = Rect;
 
 pub struct Map {

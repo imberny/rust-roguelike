@@ -1,6 +1,11 @@
-use crate::{Monster, Name, Viewshed, components::{Player, Position}};
 use bevy_ecs::prelude::*;
-use rltk::{console};
+use rltk::console;
+
+use crate::{
+    actor::{actor::Name, ai::Monster, Viewshed},
+    player::Player,
+    types::Position,
+};
 
 pub fn monster_ai(
     monster_query: Query<(&Viewshed, &Name), With<Monster>>,
@@ -12,6 +17,5 @@ pub fn monster_ai(
                 console::log(format!("{} shouts insults at the player.", name.name));
             }
         }
-        
     }
 }
