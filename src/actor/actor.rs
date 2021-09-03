@@ -5,6 +5,7 @@ use super::action::Action;
 const BASE_HEALTH: i32 = 100;
 const BASE_SPEED: i32 = 100;
 
+#[derive(Debug)]
 pub struct CharacterSheet {
     pub health: i32, // maybe derive health from attributes
     pub speed: i32,
@@ -20,13 +21,13 @@ impl Default for CharacterSheet {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CharacterProperties {
     pub health: Percentage,
     pub energy: i32, // Available time units
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Actor {
     pub sheet: CharacterSheet,
     pub properties: CharacterProperties,

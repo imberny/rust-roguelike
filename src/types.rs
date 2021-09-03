@@ -1,6 +1,6 @@
 use crate::constants::facings::SOUTH;
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Facing {
     pub x: i32,
     pub y: i32,
@@ -23,6 +23,7 @@ mod percentage {
     const PERCENTAGE_LOWER_BOUND: f32 = 0.0;
     const PERCENTAGE_UPPER_BOUND: f32 = 100.0;
 
+    #[derive(Debug)]
     pub struct Percentage {
         value: f32,
     }
