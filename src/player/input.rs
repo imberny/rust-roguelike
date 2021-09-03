@@ -91,7 +91,7 @@ pub fn input_to_action(key: VirtualKeyCode, is_strafing: bool, skew_move: bool) 
             }
         }
 
-        VirtualKeyCode::Period | VirtualKeyCode::Numpad5 => Action::Move(IDLE),
+        VirtualKeyCode::Period | VirtualKeyCode::Numpad5 => Action::Move(KEEP),
 
         _ => Action::None,
     }
