@@ -19,7 +19,7 @@ mod rendering;
 use rendering::render;
 
 mod actor;
-use actor::{action::process_move_actions, Actor};
+use actor::{Actor, action::{Action, process_move_actions}};
 
 mod constants;
 
@@ -160,8 +160,11 @@ fn is_player_ready() -> ShouldRun {
     ShouldRun::Yes
 }
 
-fn end_player_turn(mut game: ResMut<Game>) {
-    game.is_waiting_for_input = true;
+fn end_player_turn(mut game: ResMut<Game>, players: Query<&Actor, With<Player>>) {
+    game.is_waiting_for_input = players.iter().any(|actor| match actor.action {
+        Action::None => true,
+        Action::Move(_) => false,
+    });
 }
 
 fn init_game() -> ECS {

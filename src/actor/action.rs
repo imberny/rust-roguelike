@@ -23,7 +23,7 @@ impl Default for Action {
     }
 }
 
-fn try_move(
+fn do_move(
     pos: &mut Point,
     viewshed: &mut Viewshed,
     movement_delta: &Facing,
@@ -41,13 +41,14 @@ fn try_move(
 
 pub fn process_move_actions(
     map: Res<Map>,
-    mut query: Query<(&mut Position, &mut Viewshed, &mut Actor)>,
+    mut actors: Query<(&mut Position, &mut Viewshed, &mut Actor)>,
 ) {
-    for (mut pos, mut viewshed, actor) in query.iter_mut() {
-        match &actor.action {
-            Action::None => (),
+    for (mut pos, mut viewshed,  mut actor) in actors.iter_mut() {
+        actor.action = match &actor.action {
+            Action::None => Action::None,
             Action::Move(direction) => {
-                try_move(&mut pos, &mut viewshed, &direction, &map);
+                do_move(&mut pos, &mut viewshed, &direction, &map);
+                Action::None
             }
         }
     }
