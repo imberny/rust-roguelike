@@ -1,7 +1,11 @@
 use bevy_ecs::prelude::*;
-use rltk::{RGB, Rltk};
+use rltk::{Rltk, RGB};
 
-use crate::{actor::Actor, components::{Position, Renderable}, map::{self, Map}};
+use crate::{
+    actor::Actor,
+    components::{Position, Renderable},
+    map::{self, Map},
+};
 
 pub fn render(world: &mut World, ctx: &mut Rltk) {
     ctx.cls();
@@ -43,7 +47,13 @@ fn draw_entities(world: &mut World, ctx: &mut Rltk) {
         let idx = map.xy_idx(pos.x, pos.y);
         if map.visible[idx] {
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
-            ctx.set(pos.x + actor.facing.x, pos.y + actor.facing.y, render.fg, render.bg, rltk::to_cp437('\\'));
+            ctx.set(
+                pos.x + actor.facing.x,
+                pos.y + actor.facing.y,
+                render.fg,
+                render.bg,
+                rltk::to_cp437('\\'),
+            );
         }
     }
 }
