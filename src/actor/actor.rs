@@ -1,6 +1,7 @@
-use crate::types::{Facing, Percentage};
+use crate::types::{Facing, Percentage, Position};
+use bevy_ecs::bundle::Bundle;
 
-use super::action::Action;
+use super::{action::Action, Viewshed};
 
 const BASE_HEALTH: i32 = 100;
 const BASE_SPEED: i32 = 100;
@@ -35,7 +36,23 @@ pub struct Actor {
     pub facing: Facing,
 }
 
-#[derive(Debug)]
-pub struct Name {
-    pub name: String,
+pub type Name = String;
+
+#[derive(Bundle)]
+pub struct ActorBundle {
+    pub name: Name,
+    pub actor: Actor,
+    pub position: Position,
+    pub viewshed: Viewshed,
+}
+
+impl Default for ActorBundle {
+    fn default() -> Self {
+        Self {
+            name: "Missing name!".to_string(),
+            actor: Default::default(),
+            position: Position::zero(),
+            viewshed: Default::default(),
+        }
+    }
 }

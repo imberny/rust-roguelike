@@ -14,7 +14,7 @@ pub fn monster_ai(
     for (viewshed, name) in monster_query.iter() {
         for player_pos in player_query.iter() {
             if viewshed.visible_tiles.contains(player_pos) {
-                console::log(format!("{} shouts insults at the player.", name.name));
+                console::log(format!("{} shouts insults at the player.", name));
             }
         }
     }

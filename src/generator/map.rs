@@ -2,7 +2,7 @@ use bevy_ecs::prelude::World;
 use rltk::RGB;
 
 use crate::{
-    actor::{ai::Monster, Actor, Name, Viewshed},
+    actor::{ai::Monster, ActorBundle, Viewshed},
     map::Map,
     player::Player,
     rendering::Renderable,
@@ -31,20 +31,16 @@ fn add_monsters_to_rooms(world: &mut World, map: &Map) {
         world
             .spawn()
             .insert(Monster {})
-            .insert(Actor::default())
-            .insert(Name {
+            .insert_bundle(ActorBundle {
                 name: format!("{} #{}", &name, i),
+                position: Position { x, y },
+                viewshed: Viewshed::with_range(8),
+                ..Default::default()
             })
-            .insert(Position { x, y })
             .insert(Renderable {
                 glyph,
                 fg: RGB::named(rltk::RED),
                 bg: RGB::named(rltk::BLACK),
-            })
-            .insert(Viewshed {
-                visible_tiles: Vec::new(),
-                range: 8,
-                dirty: true,
             });
     }
 }
@@ -53,23 +49,19 @@ fn create_player_at_pos(world: &mut World, player_x: i32, player_y: i32) {
     world
         .spawn()
         .insert(Player)
-        .insert(Actor::default())
-        .insert(Name {
+        .insert_bundle(ActorBundle {
             name: "Player".to_string(),
-        })
-        .insert(Position {
-            x: player_x,
-            y: player_y,
+            position: Position {
+                x: player_x,
+                y: player_y,
+            },
+            viewshed: Viewshed::with_range(8),
+            ..Default::default()
         })
         .insert(Renderable {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
-        })
-        .insert(Viewshed {
-            visible_tiles: Vec::new(),
-            range: 8,
-            dirty: true,
         });
 }
 

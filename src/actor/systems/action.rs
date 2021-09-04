@@ -40,28 +40,30 @@ mod tests {
     use bevy_ecs::prelude::*;
 
     use crate::{
-        actor::{action::Action, Actor, Viewshed},
-        map::Map,
+        actor::{action::Action, Actor, ActorBundle},
+        constants::facings::SOUTH,
+        map::{Map, TileType},
         types::Position,
     };
 
     use super::process_move_actions;
 
+    fn test_map() -> Map {
+        Map {
+            tiles: vec![TileType::Floor; 80 * 50],
+            rooms: Vec::new(),
+            width: 80,
+            height: 50,
+            revealed: vec![false; 80 * 50],
+            visible: vec![false; 80 * 50],
+        }
+    }
+
     #[test]
     fn none_action() {
         let mut world = World::new();
-        world.insert_resource(Map::new_map_rooms_and_corridors());
-        let entity = world
-            .spawn()
-            .insert_bundle((
-                Position::zero(),
-                Viewshed::default(),
-                Actor {
-                    action: Action::None,
-                    ..Default::default()
-                },
-            ))
-            .id();
+        world.insert_resource(test_map());
+        let entity = world.spawn().insert_bundle(ActorBundle::default()).id();
         let mut stage = SystemStage::single(process_move_actions.system());
 
         // run process_move_action
@@ -70,5 +72,31 @@ mod tests {
         // check action is none
         let actor = world.get::<Actor>(entity).unwrap();
         assert_eq!(Action::None, actor.action);
+    }
+
+    #[test]
+    fn move_action() {
+        let mut world = World::new();
+        world.insert_resource(test_map());
+        let entity = world
+            .spawn()
+            .insert_bundle(ActorBundle {
+                actor: Actor {
+                    action: Action::Move(SOUTH),
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+            .id();
+        let mut stage = SystemStage::single(process_move_actions.system());
+
+        // run process_move_action
+        stage.run(&mut world);
+
+        // check action is consumed
+        let actor = world.get::<Actor>(entity).unwrap();
+        assert_eq!(Action::None, actor.action);
+        let position = world.get::<Position>(entity).unwrap();
+        assert_eq!(Position::new(0, 1), *position);
     }
 }
