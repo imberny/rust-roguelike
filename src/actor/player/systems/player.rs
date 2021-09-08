@@ -69,19 +69,19 @@ pub fn is_player_waiting_for_input(player_query: Query<&Activity, With<Player>>)
     }
 }
 
-pub fn is_player_busy(player_query: Query<&Activity, With<Player>>) -> ShouldRun {
-    if let Ok(activity) = player_query.single() {
-        match activity.action {
-            Action::None => ShouldRun::No,
-            _ => {
-                println!("Player is busy");
-                return ShouldRun::Yes;
-            }
-        }
-    } else {
-        ShouldRun::No
-    }
-}
+// pub fn is_player_busy(player_query: Query<&Activity, With<Player>>) -> ShouldRun {
+//     if let Ok(activity) = player_query.single() {
+//         match activity.action {
+//             Action::None => ShouldRun::No,
+//             _ => {
+//                 println!("Player is busy");
+//                 return ShouldRun::Yes;
+//             }
+//         }
+//     } else {
+//         ShouldRun::No
+//     }
+// }
 
 pub fn pause_game(mut turn_based_game: ResMut<TurnBasedGame>) {
     turn_based_game.state = RunningState::Paused;
@@ -108,7 +108,7 @@ mod tests {
         initialization::{RunningState, TurnBasedGame},
     };
 
-    use super::handle_player_input;
+    use super::{can_accept_input, handle_player_input};
 
     fn test_world() -> World {
         let mut world = World::new();
@@ -121,7 +121,12 @@ mod tests {
     }
 
     fn player_stage() -> SystemStage {
-        SystemStage::single(handle_player_input.system().chain(resume_game.system()))
+        SystemStage::single(
+            handle_player_input
+                .system()
+                .chain(resume_game.system())
+                .with_run_criteria(can_accept_input.system()),
+        )
     }
 
     fn player(world: &mut World) -> Entity {
@@ -131,6 +136,14 @@ mod tests {
             .insert(Player)
             .id()
     }
+
+    // fn run_system(world: &mut World, system: impl Into<SystemDescriptor>) {
+    //     let mut schedule = Schedule::default();
+    //     let mut update = SystemStage::parallel();
+    //     update.add_system(system);
+    //     schedule.add_stage("update", update);
+    //     schedule.run(world);
+    // }
 
     #[test]
     fn no_action() {
@@ -167,7 +180,7 @@ mod tests {
     fn change_facing_action() {
         let mut world = test_world();
         let player = player(&mut world);
-        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(SOUTH);
+        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(NORTH);
 
         player_stage().run(&mut world);
 
@@ -176,6 +189,20 @@ mod tests {
         let turn_based_game = world.get_resource::<TurnBasedGame>().unwrap();
         assert_eq!(NORTH, facing);
         assert_eq!(MOVE_WAIT, activity.action);
+        assert_eq!(RunningState::Running, turn_based_game.state);
+    }
+
+    #[test]
+    fn cannot_accept_input_while_game_is_running() {
+        let mut world = test_world();
+        let player = player(&mut world);
+        world.get_resource_mut::<TurnBasedGame>().unwrap().state = RunningState::Running;
+        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(NORTH);
+
+        player_stage().run(&mut world);
+        let activity = world.get::<Activity>(player).unwrap();
+        let turn_based_game = world.get_resource::<TurnBasedGame>().unwrap();
+        assert_eq!(Action::None, activity.action);
         assert_eq!(RunningState::Running, turn_based_game.state);
     }
 }
