@@ -8,7 +8,7 @@ use crate::{
         player::{self, PlayerInput},
         Activity,
     },
-    game::{Game, ECS},
+    game::ECS,
     generator::map::build_map,
     rendering,
 };
@@ -20,27 +20,19 @@ pub enum CoreStage {
     PreUpdate,  // Prepare for update
     Update,     // Run update systems
     PostUpdate, // React to update
-    Animate,
     Draw,
     Last,
 }
 
 pub fn init_game() -> ECS {
     let mut world = World::new();
-    world.insert_resource::<Game>(Game {
-        is_waiting_for_input: false,
-    });
-    world.insert_resource(PlayerInput::default());
-    world.insert_resource(TurnBasedTime::default());
-    world.insert_resource(TurnBasedGame::default());
+
+    init_resources(&mut world);
 
     let mut game_logic = create_game_schedule();
-    actor::register(&mut game_logic);
-    player::register(&mut game_logic);
-    let mut rendering = Schedule::default();
-    let draw_stage = SystemStage::parallel();
-    rendering.add_stage(CoreStage::Draw, draw_stage);
-    rendering::register(&mut rendering);
+    let mut rendering = create_render_schedule();
+
+    register_modules(&mut game_logic, &mut rendering);
 
     build_map(&mut world);
 
@@ -49,6 +41,12 @@ pub fn init_game() -> ECS {
         game_logic,
         rendering,
     }
+}
+
+fn register_modules(game_logic: &mut Schedule, rendering: &mut Schedule) {
+    actor::register(game_logic);
+    player::register(game_logic);
+    rendering::register(rendering);
 }
 
 fn create_game_schedule() -> Schedule {
@@ -73,6 +71,19 @@ fn create_game_schedule() -> Schedule {
             .with_system(advance_time.system()),
     );
     schedule
+}
+
+fn init_resources(world: &mut World) {
+    world.insert_resource(PlayerInput::default());
+    world.insert_resource(TurnBasedTime::default());
+    world.insert_resource(TurnBasedGame::default());
+}
+
+fn create_render_schedule() -> Schedule {
+    let mut rendering = Schedule::default();
+    let draw_stage = SystemStage::parallel();
+    rendering.add_stage(CoreStage::Draw, draw_stage);
+    rendering
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

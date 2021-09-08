@@ -6,10 +6,6 @@ use rltk::{GameState, Rltk};
 
 use crate::{actor::player::systems::poll_input, initialization::init_game, rendering::render};
 
-pub struct Game {
-    pub is_waiting_for_input: bool,
-}
-
 pub struct ECS {
     pub world: World,
     pub game_logic: Schedule,
