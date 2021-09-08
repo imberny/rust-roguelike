@@ -75,7 +75,7 @@ fn create_game_schedule() -> Schedule {
     schedule
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RunningState {
     Running,
     Paused,

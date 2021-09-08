@@ -100,34 +100,82 @@ mod tests {
 
     use crate::{
         actor::{
+            constants::MOVE_WAIT,
             player::{systems::resume_game, Player, PlayerInput},
-            Action, Activity, ActorBundle,
+            Action, Activity, Actor, ActorBundle,
         },
-        initialization::TurnBasedGame,
+        constants::facings::{NORTH, SOUTH},
+        initialization::{RunningState, TurnBasedGame},
     };
 
     use super::handle_player_input;
 
-    #[test]
-    fn no_action() {
+    fn test_world() -> World {
         let mut world = World::new();
-        let player = world
-            .spawn()
-            .insert_bundle(ActorBundle::default())
-            .insert(Player)
-            .id();
         world.insert_resource(PlayerInput {
             action: Action::None,
             ..Default::default()
         });
         world.insert_resource(TurnBasedGame::default());
-        let mut stage =
-            SystemStage::single(handle_player_input.system().chain(resume_game.system()));
+        world
+    }
 
-        stage.run(&mut world);
+    fn player_stage() -> SystemStage {
+        SystemStage::single(handle_player_input.system().chain(resume_game.system()))
+    }
 
+    fn player(world: &mut World) -> Entity {
+        world
+            .spawn()
+            .insert_bundle(ActorBundle::default())
+            .insert(Player)
+            .id()
+    }
+
+    #[test]
+    fn no_action() {
+        let mut world = test_world();
+        let player = player(&mut world);
+
+        player_stage().run(&mut world);
+
+        let facing = world.get::<Actor>(player).unwrap().facing;
         let activity = world.get::<Activity>(player).unwrap();
-
+        let turn_based_game = world.get_resource::<TurnBasedGame>().unwrap();
+        assert_eq!(SOUTH, facing);
         assert_eq!(Action::None, activity.action);
+        assert_eq!(RunningState::Paused, turn_based_game.state);
+    }
+
+    #[test]
+    fn move_action() {
+        let mut world = test_world();
+        let player = player(&mut world);
+        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(SOUTH);
+
+        player_stage().run(&mut world);
+
+        let facing = world.get::<Actor>(player).unwrap().facing;
+        let activity = world.get::<Activity>(player).unwrap();
+        let turn_based_game = world.get_resource::<TurnBasedGame>().unwrap();
+        assert_eq!(SOUTH, facing);
+        assert_eq!(Action::Move(SOUTH), activity.action);
+        assert_eq!(RunningState::Running, turn_based_game.state);
+    }
+
+    #[test]
+    fn change_facing_action() {
+        let mut world = test_world();
+        let player = player(&mut world);
+        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(SOUTH);
+
+        player_stage().run(&mut world);
+
+        let facing = world.get::<Actor>(player).unwrap().facing;
+        let activity = world.get::<Activity>(player).unwrap();
+        let turn_based_game = world.get_resource::<TurnBasedGame>().unwrap();
+        assert_eq!(NORTH, facing);
+        assert_eq!(MOVE_WAIT, activity.action);
+        assert_eq!(RunningState::Running, turn_based_game.state);
     }
 }
