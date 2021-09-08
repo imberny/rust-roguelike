@@ -4,7 +4,7 @@ use bevy_ecs::prelude::*;
 use rltk::Point;
 
 use crate::{
-    actor::{Action, Actor, Viewshed},
+    actor::{Action, Activity, Viewshed},
     map::{Map, TileType},
     types::{Facing, Position},
 };
@@ -22,10 +22,10 @@ fn do_move(pos: &mut Point, viewshed: &mut Viewshed, movement_delta: &Facing, ma
 
 pub fn process_move_actions(
     map: Res<Map>,
-    mut actors: Query<(&mut Position, &mut Viewshed, &mut Actor)>,
+    mut actors: Query<(&mut Position, &mut Viewshed, &mut Activity)>,
 ) {
-    for (mut pos, mut viewshed, mut actor) in actors.iter_mut() {
-        actor.action = match &actor.action {
+    for (mut pos, mut viewshed, mut activity) in actors.iter_mut() {
+        activity.action = match &activity.action {
             Action::None => Action::None,
             Action::Move(direction) => {
                 do_move(&mut pos, &mut viewshed, &direction, &map);
@@ -40,7 +40,7 @@ mod tests {
     use bevy_ecs::prelude::*;
 
     use crate::{
-        actor::{action::Action, Actor, ActorBundle},
+        actor::{action::Action, Activity, ActorBundle},
         constants::facings::SOUTH,
         map::{Map, TileType},
         types::Position,
@@ -70,8 +70,8 @@ mod tests {
         stage.run(&mut world);
 
         // check action is none
-        let actor = world.get::<Actor>(entity).unwrap();
-        assert_eq!(Action::None, actor.action);
+        let activity = world.get::<Activity>(entity).unwrap();
+        assert_eq!(Action::None, activity.action);
     }
 
     #[test]
@@ -81,7 +81,7 @@ mod tests {
         let entity = world
             .spawn()
             .insert_bundle(ActorBundle {
-                actor: Actor {
+                activity: Activity {
                     action: Action::Move(SOUTH),
                     ..Default::default()
                 },
@@ -94,8 +94,8 @@ mod tests {
         stage.run(&mut world);
 
         // check action is consumed
-        let actor = world.get::<Actor>(entity).unwrap();
-        assert_eq!(Action::None, actor.action);
+        let activity = world.get::<Activity>(entity).unwrap();
+        assert_eq!(Action::None, activity.action);
         let position = world.get::<Position>(entity).unwrap();
         assert_eq!(Position::new(0, 1), *position);
     }

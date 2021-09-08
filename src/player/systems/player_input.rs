@@ -1,18 +1,19 @@
 use bevy_ecs::prelude::*;
 use rltk::{Rltk, VirtualKeyCode};
 
-use crate::{actor::Action, constants::facings::*, game::Game, player::PlayerInput};
+use crate::{
+    actor::Action,
+    constants::facings::*,
+    game::Game,
+    initialization::{RunningState, TurnBasedGame},
+    player::PlayerInput,
+};
 
 const LEFT_MOUSE_BUTTON: usize = 0;
 
 pub fn poll_input(world: &mut World, ctx: &Rltk) {
     let mut input_resource = world.get_resource_mut::<PlayerInput>().unwrap();
     update_player_input(&mut input_resource, ctx);
-
-    if input_resource.is_valid() {
-        let mut game = world.get_resource_mut::<Game>().unwrap();
-        game.is_waiting_for_input = false;
-    }
 }
 
 fn update_player_input(input: &mut PlayerInput, ctx: &Rltk) {

@@ -1,4 +1,7 @@
-use bevy_ecs::{prelude::World, schedule::{Schedule, Stage}};
+use bevy_ecs::{
+    prelude::World,
+    schedule::{Schedule, Stage},
+};
 use rltk::{GameState, Rltk};
 
 use crate::{initialization::init_game, player::systems::poll_input, rendering::render};
@@ -9,7 +12,8 @@ pub struct Game {
 
 pub struct ECS {
     pub world: World,
-    pub schedule: Schedule,
+    pub game_logic: Schedule,
+    pub rendering: Schedule,
 }
 
 impl GameState for ECS {
@@ -17,10 +21,10 @@ impl GameState for ECS {
         // update PlayerInput resource
         poll_input(&mut self.world, ctx);
 
-        // run systems
-        self.schedule.run(&mut self.world);
+        self.game_logic.run(&mut self.world);
+        self.rendering.run(&mut self.world);
 
-        // draw
+        // Print
         render(&mut self.world, ctx);
     }
 }
