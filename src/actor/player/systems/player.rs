@@ -1,32 +1,45 @@
 use crate::{
-    actor::{constants::MOVE_WAIT, Action, Activity, Actor},
+    actor::{
+        constants::MOVE_WAIT,
+        player::{Player, PlayerInput},
+        Action, Activity, Actor,
+    },
     constants::facings,
     initialization::{RunningState, TurnBasedGame},
-    player::{Player, PlayerInput},
 };
 use bevy_ecs::{prelude::*, schedule::ShouldRun};
 
 pub fn handle_player_input(
     input: Res<PlayerInput>,
     mut player_query: Query<(&mut Actor, &mut Activity), With<Player>>,
-) {
+) -> bool {
     if let Ok((mut player, mut activity)) = player_query.single_mut() {
-        let action = match input.action {
-            Action::None => Action::None,
-            Action::Move(direction) => {
-                if direction != player.facing && !input.is_strafing {
-                    if facings::KEEP != direction {
-                        player.facing = direction;
-                    }
-                    MOVE_WAIT
-                } else {
-                    println!("Player is moving: {:?}", direction);
-                    Action::Move(direction)
-                }
-            }
-        };
-        activity.action = action;
+        convert_to_valid_action(input, &mut player, &mut activity);
+        return Action::None != activity.action;
     }
+    false
+}
+
+fn convert_to_valid_action(
+    input: Res<PlayerInput>,
+    mut player: &mut Actor,
+    mut activity: &mut Activity,
+) {
+    let action = match input.action {
+        Action::None => Action::None,
+        Action::Move(direction) => {
+            if direction != player.facing && !input.is_strafing {
+                if facings::KEEP != direction {
+                    player.facing = direction;
+                }
+                MOVE_WAIT
+            } else {
+                println!("Player is moving: {:?}", direction);
+                Action::Move(direction)
+            }
+        }
+    };
+    activity.action = action;
 }
 
 pub fn can_accept_input(
@@ -70,13 +83,27 @@ pub fn is_player_busy(player_query: Query<&Activity, With<Player>>) -> ShouldRun
     }
 }
 
+pub fn pause_game(mut turn_based_game: ResMut<TurnBasedGame>) {
+    turn_based_game.state = RunningState::Paused;
+}
+
+pub fn resume_game(In(can_resume): In<bool>, mut turn_based_game: ResMut<TurnBasedGame>) {
+    if can_resume {
+        turn_based_game.state = RunningState::Running;
+        println!("Resuming game");
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use bevy_ecs::prelude::*;
 
     use crate::{
-        actor::{Action, Activity, ActorBundle},
-        player::{Player, PlayerInput},
+        actor::{
+            player::{systems::resume_game, Player, PlayerInput},
+            Action, Activity, ActorBundle,
+        },
+        initialization::TurnBasedGame,
     };
 
     use super::handle_player_input;
@@ -93,7 +120,9 @@ mod tests {
             action: Action::None,
             ..Default::default()
         });
-        let mut stage = SystemStage::single(handle_player_input.system());
+        world.insert_resource(TurnBasedGame::default());
+        let mut stage =
+            SystemStage::single(handle_player_input.system().chain(resume_game.system()));
 
         stage.run(&mut world);
 

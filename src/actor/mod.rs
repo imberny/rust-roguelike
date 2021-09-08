@@ -10,6 +10,7 @@ mod activity;
 mod actor;
 pub mod ai;
 pub mod constants;
+pub mod player;
 pub mod systems;
 mod viewshed;
 

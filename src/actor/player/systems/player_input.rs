@@ -2,11 +2,8 @@ use bevy_ecs::prelude::*;
 use rltk::{Rltk, VirtualKeyCode};
 
 use crate::{
-    actor::Action,
+    actor::{player::PlayerInput, Action},
     constants::facings::*,
-    game::Game,
-    initialization::{RunningState, TurnBasedGame},
-    player::PlayerInput,
 };
 
 const LEFT_MOUSE_BUTTON: usize = 0;

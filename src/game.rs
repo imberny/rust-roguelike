@@ -4,7 +4,7 @@ use bevy_ecs::{
 };
 use rltk::{GameState, Rltk};
 
-use crate::{initialization::init_game, player::systems::poll_input, rendering::render};
+use crate::{actor::player::systems::poll_input, initialization::init_game, rendering::render};
 
 pub struct Game {
     pub is_waiting_for_input: bool,

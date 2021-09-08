@@ -2,8 +2,7 @@ use bevy_ecs::prelude::*;
 use rltk::console;
 
 use crate::{
-    actor::{actor::Name, ai::Monster, Viewshed},
-    player::Player,
+    actor::{ai::Monster, player::Player, Name, Viewshed},
     types::Position,
 };
 

@@ -1,22 +1,25 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, fmt::Debug};
 
 use bevy_ecs::{prelude::*, schedule::ShouldRun};
 
 use crate::{
-    actor::{self, Action, Activity, Actor},
+    actor::{
+        self,
+        player::{self, PlayerInput},
+        Activity,
+    },
     game::{Game, ECS},
     generator::map::build_map,
-    player::{self, systems::is_player_waiting_for_input, Player, PlayerInput},
     rendering,
 };
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, StageLabel)]
 pub enum CoreStage {
     First,
-    Decision,
-    Update,
-    PreUpdate,
-    PostUpdate,
+    Decision,   // AI and player choose action
+    PreUpdate,  // Prepare for update
+    Update,     // Run update systems
+    PostUpdate, // React to update
     Animate,
     Draw,
     Last,
@@ -29,9 +32,7 @@ pub fn init_game() -> ECS {
     });
     world.insert_resource(PlayerInput::default());
     world.insert_resource(TurnBasedTime::default());
-    world.insert_resource(TurnBasedGame {
-        state: RunningState::Paused,
-    });
+    world.insert_resource(TurnBasedGame::default());
 
     let mut game_logic = create_game_schedule();
     actor::register(&mut game_logic);
@@ -65,20 +66,12 @@ fn create_game_schedule() -> Schedule {
         .add_stage_after(CoreStage::PreUpdate, CoreStage::Update, update_stage)
         .add_stage_after(CoreStage::Update, CoreStage::PostUpdate, post_update_stage)
         .add_stage_after(CoreStage::PostUpdate, CoreStage::Last, last_stage);
-    schedule
-        .add_system_set_to_stage(
-            CoreStage::PostUpdate,
-            SystemSet::new()
-                .with_run_criteria(is_game_running.system())
-                .with_run_criteria(is_player_waiting_for_input.system())
-                .with_system(pause_game.system()),
-        )
-        .add_system_set_to_stage(
-            CoreStage::Last,
-            SystemSet::new()
-                .with_run_criteria(is_game_running.system())
-                .with_system(advance_time.system()),
-        );
+    schedule.add_system_set_to_stage(
+        CoreStage::Last,
+        SystemSet::new()
+            .with_run_criteria(is_game_running.system())
+            .with_system(advance_time.system()),
+    );
     schedule
 }
 
@@ -88,7 +81,13 @@ pub enum RunningState {
     Paused,
 }
 
-#[derive(Debug, Clone, Copy)]
+impl Default for RunningState {
+    fn default() -> Self {
+        RunningState::Paused
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy)]
 pub struct TurnBasedGame {
     pub state: RunningState,
 }
@@ -118,18 +117,9 @@ fn advance_time(mut time: ResMut<TurnBasedTime>, query: Query<&Activity>) {
     }
 }
 
-fn is_game_running(game: Res<TurnBasedGame>) -> ShouldRun {
+pub fn is_game_running(game: Res<TurnBasedGame>) -> ShouldRun {
     match game.state {
         RunningState::Running => ShouldRun::Yes,
         RunningState::Paused => ShouldRun::No,
     }
-}
-
-fn pause_game(mut turn_based_game: ResMut<TurnBasedGame>) {
-    turn_based_game.state = RunningState::Paused;
-}
-
-pub fn resume_game(mut turn_based_game: ResMut<TurnBasedGame>) {
-    turn_based_game.state = RunningState::Running;
-    println!("Resuming game");
 }

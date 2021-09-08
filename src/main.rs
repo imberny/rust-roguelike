@@ -6,7 +6,6 @@ mod game;
 mod generator;
 mod initialization;
 mod map;
-mod player;
 mod rendering;
 mod types;
 mod util;

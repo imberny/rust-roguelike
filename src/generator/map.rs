@@ -2,9 +2,8 @@ use bevy_ecs::prelude::World;
 use rltk::RGB;
 
 use crate::{
-    actor::{ai::Monster, ActorBundle, Viewshed},
+    actor::{ai::Monster, player::Player, ActorBundle, Viewshed},
     map::Map,
-    player::Player,
     rendering::Renderable,
     types::Position,
 };

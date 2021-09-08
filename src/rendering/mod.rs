@@ -1,6 +1,6 @@
 use crate::initialization::CoreStage;
 use bevy_ecs::{
-    schedule::{Schedule, SystemLabel, SystemSet},
+    schedule::{Schedule, SystemSet},
     system::IntoSystem,
 };
 
