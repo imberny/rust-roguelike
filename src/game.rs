@@ -8,6 +8,7 @@ use crate::{actor::player::systems::poll_input, initialization::init_game, rende
 
 pub struct ECS {
     pub world: World,
+    pub input: Schedule,
     pub game_logic: Schedule,
     pub rendering: Schedule,
 }
@@ -17,6 +18,7 @@ impl GameState for ECS {
         // update PlayerInput resource
         poll_input(&mut self.world, ctx);
 
+        self.input.run(&mut self.world);
         self.game_logic.run(&mut self.world);
         self.rendering.run(&mut self.world);
 

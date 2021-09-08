@@ -9,5 +9,4 @@ pub mod facings {
     pub const SOUTH: Facing = Facing::constant(0, 1);
     pub const SOUTH_WEST: Facing = Facing::constant(-1, 1);
     pub const WEST: Facing = Facing::constant(-1, 0);
-    pub const KEEP: Facing = Facing::constant(0, 0);
 }

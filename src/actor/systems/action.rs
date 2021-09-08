@@ -1,10 +1,11 @@
 use std::cmp::{max, min};
 
 use bevy_ecs::prelude::*;
-use rltk::Point;
+use rltk::{console, Point};
 
 use crate::{
-    actor::{Action, Activity, Viewshed},
+    actor::{action::MessageType, Action, Activity, Actor, Viewshed},
+    initialization::TurnBasedTime,
     map::{Map, TileType},
     types::{Facing, Position},
 };
@@ -20,17 +21,33 @@ fn do_move(pos: &mut Point, viewshed: &mut Viewshed, movement_delta: &Facing, ma
     }
 }
 
+pub fn progress_activities(time: Res<TurnBasedTime>, mut activities: Query<&mut Activity>) {
+    for mut activity in activities.iter_mut() {
+        activity.time_to_complete = std::cmp::max(0, activity.time_to_complete - time.delta_time);
+    }
+}
+
 pub fn process_move_actions(
+    mut commands: Commands,
     map: Res<Map>,
-    mut actors: Query<(&mut Position, &mut Viewshed, &mut Activity)>,
+    mut actors: Query<(Entity, &mut Actor, &mut Position, &mut Viewshed, &Activity)>,
 ) {
-    for (mut pos, mut viewshed, mut activity) in actors.iter_mut() {
-        activity.action = match &activity.action {
-            Action::None => Action::None,
-            Action::Move(direction) => {
-                do_move(&mut pos, &mut viewshed, &direction, &map);
-                Action::None
+    for (entity, mut actor, mut pos, mut viewshed, activity) in actors.iter_mut() {
+        if activity.time_to_complete == 0 {
+            // console::log("Doing something");
+            match activity.action {
+                Action::Move(direction) => {
+                    do_move(&mut pos, &mut viewshed, &direction, &map);
+                }
+                Action::Face(direction) => actor.facing = direction,
+                Action::Say(message) => match message.kind {
+                    MessageType::Insult => console::log("*!!$%$#&^%@"),
+                    MessageType::Threaten => console::log("Shouldn't have come here"),
+                    MessageType::Compliment => console::log("Lookin' good today!"),
+                },
+                _ => (),
             }
+            commands.entity(entity).remove::<Activity>();
         }
     }
 }
@@ -41,7 +58,6 @@ mod tests {
 
     use crate::{
         actor::{action::Action, Activity, ActorBundle},
-        constants::facings::SOUTH,
         map::{Map, TileType},
         types::Position,
     };
@@ -78,16 +94,7 @@ mod tests {
     fn move_action() {
         let mut world = World::new();
         world.insert_resource(test_map());
-        let entity = world
-            .spawn()
-            .insert_bundle(ActorBundle {
-                activity: Activity {
-                    action: Action::Move(SOUTH),
-                    ..Default::default()
-                },
-                ..Default::default()
-            })
-            .id();
+        let entity = world.spawn().insert_bundle(ActorBundle::default()).id();
         let mut stage = SystemStage::single(process_move_actions.system());
 
         // run process_move_action

@@ -1,7 +1,7 @@
 use crate::types::{Facing, Percentage, Position};
 use bevy_ecs::bundle::Bundle;
 
-use super::{Activity, Viewshed};
+use super::Viewshed;
 
 const BASE_HEALTH: i32 = 100;
 const BASE_SPEED: i32 = 100;
@@ -41,7 +41,6 @@ pub type Name = String;
 pub struct ActorBundle {
     pub name: Name,
     pub actor: Actor,
-    pub activity: Activity,
     pub position: Position,
     pub viewshed: Viewshed,
 }
@@ -51,7 +50,6 @@ impl Default for ActorBundle {
         Self {
             name: "Missing name!".to_string(),
             actor: Default::default(),
-            activity: Default::default(),
             position: Position::zero(),
             viewshed: Default::default(),
         }

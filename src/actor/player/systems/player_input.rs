@@ -115,7 +115,7 @@ fn input_to_action(key: VirtualKeyCode, is_strafing: bool, skew_move: bool) -> A
             }
         }
 
-        VirtualKeyCode::Period | VirtualKeyCode::Numpad5 => Action::Move(KEEP),
+        VirtualKeyCode::Period | VirtualKeyCode::Numpad5 => Action::Wait,
 
         _ => Action::None,
     }

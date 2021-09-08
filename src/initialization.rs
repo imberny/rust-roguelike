@@ -5,7 +5,11 @@ use bevy_ecs::{prelude::*, schedule::ShouldRun};
 use crate::{
     actor::{
         self,
-        player::{self, PlayerInput},
+        player::{
+            self,
+            systems::{handle_player_input, is_input_valid, set_turn_based_state},
+            Player, PlayerInput,
+        },
         Activity,
     },
     game::ECS,
@@ -29,6 +33,18 @@ pub fn init_game() -> ECS {
 
     init_resources(&mut world);
 
+    let mut input = Schedule::default();
+    input
+        .set_run_criteria(is_player_waiting_for_input.system())
+        .add_stage(
+            "input",
+            SystemStage::single(
+                handle_player_input
+                    .system()
+                    .with_run_criteria(is_input_valid.system()),
+            ),
+        );
+
     let mut game_logic = create_game_schedule();
     let mut rendering = create_render_schedule();
 
@@ -38,6 +54,7 @@ pub fn init_game() -> ECS {
 
     ECS {
         world,
+        input,
         game_logic,
         rendering,
     }
@@ -45,31 +62,43 @@ pub fn init_game() -> ECS {
 
 fn register_modules(game_logic: &mut Schedule, rendering: &mut Schedule) {
     actor::register(game_logic);
-    player::register(game_logic);
+    // player::register(game_logic);
     rendering::register(rendering);
 }
 
 fn create_game_schedule() -> Schedule {
-    let first_stage = SystemStage::parallel();
-    let decision_stage = SystemStage::parallel();
-    let pre_update_stage = SystemStage::parallel();
-    let update_stage = SystemStage::parallel();
-    let post_update_stage = SystemStage::parallel();
-    let last_stage = SystemStage::parallel();
     let mut schedule = Schedule::default();
     schedule
-        .add_stage(CoreStage::First, first_stage)
-        .add_stage_after(CoreStage::First, CoreStage::Decision, decision_stage)
-        .add_stage_after(CoreStage::Decision, CoreStage::PreUpdate, pre_update_stage)
-        .add_stage_after(CoreStage::PreUpdate, CoreStage::Update, update_stage)
-        .add_stage_after(CoreStage::Update, CoreStage::PostUpdate, post_update_stage)
-        .add_stage_after(CoreStage::PostUpdate, CoreStage::Last, last_stage);
-    schedule.add_system_set_to_stage(
-        CoreStage::Last,
-        SystemSet::new()
-            .with_run_criteria(is_game_running.system())
-            .with_system(advance_time.system()),
-    );
+        .add_stage(CoreStage::First, SystemStage::parallel())
+        .add_stage_after(
+            CoreStage::First,
+            CoreStage::Decision,
+            SystemStage::parallel(),
+        )
+        .add_stage_after(
+            CoreStage::Decision,
+            CoreStage::PreUpdate,
+            SystemStage::parallel(),
+        )
+        .add_stage_after(
+            CoreStage::PreUpdate,
+            CoreStage::Update,
+            SystemStage::parallel(),
+        )
+        .add_stage_after(
+            CoreStage::Update,
+            CoreStage::PostUpdate,
+            SystemStage::parallel(),
+        )
+        .add_stage_after(
+            CoreStage::PostUpdate,
+            CoreStage::Last,
+            SystemStage::parallel(),
+        );
+    schedule
+        .set_run_criteria(is_player_busy.system())
+        .add_system_to_stage(CoreStage::PreUpdate, advance_time.system())
+        .add_system_to_stage(CoreStage::PostUpdate, clear_delta_time.system());
     schedule
 }
 
@@ -121,6 +150,7 @@ fn order_by_time_left<'r, 's>(activity1: &'r &Activity, activity2: &'s &Activity
 }
 
 fn advance_time(mut time: ResMut<TurnBasedTime>, query: Query<&Activity>) {
+    // TODO: use events
     if let Some(shortest_activity) = query.iter().min_by(order_by_time_left) {
         time.time += shortest_activity.time_to_complete;
         time.delta_time = shortest_activity.time_to_complete;
@@ -128,9 +158,27 @@ fn advance_time(mut time: ResMut<TurnBasedTime>, query: Query<&Activity>) {
     }
 }
 
+fn clear_delta_time(mut time: ResMut<TurnBasedTime>) {
+    time.delta_time = 0;
+}
+
 pub fn is_game_running(game: Res<TurnBasedGame>) -> ShouldRun {
     match game.state {
         RunningState::Running => ShouldRun::Yes,
         RunningState::Paused => ShouldRun::No,
+    }
+}
+
+pub fn is_player_waiting_for_input(player: Query<&Player, With<Activity>>) -> ShouldRun {
+    match player.single() {
+        Ok(_) => ShouldRun::No,
+        Err(_) => ShouldRun::Yes,
+    }
+}
+
+pub fn is_player_busy(player: Query<&Player, With<Activity>>) -> ShouldRun {
+    match player.single() {
+        Ok(_) => ShouldRun::YesAndCheckAgain,
+        Err(_) => ShouldRun::No,
     }
 }

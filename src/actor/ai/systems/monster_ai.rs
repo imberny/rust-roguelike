@@ -2,18 +2,47 @@ use bevy_ecs::prelude::*;
 use rltk::console;
 
 use crate::{
-    actor::{ai::Monster, player::Player, Name, Viewshed},
+    actor::{
+        action::{Message, MessageType},
+        ai::Monster,
+        player::Player,
+        Action, Activity, Name, Viewshed,
+    },
     types::Position,
 };
 
 pub fn monster_ai(
-    monster_query: Query<(&Viewshed, &Name), With<Monster>>,
+    mut commands: Commands,
+    mut monster_query: Query<(Entity, &Viewshed, &Name), (With<Monster>, Without<Activity>)>,
     player_query: Query<&Position, With<Player>>,
 ) {
-    for (viewshed, name) in monster_query.iter() {
+    for (monster, viewshed, name) in monster_query.iter_mut() {
         for player_pos in player_query.iter() {
             if viewshed.visible_tiles.contains(player_pos) {
-                console::log(format!("{} shouts insults at the player.", name));
+                let roll = rltk::RandomNumberGenerator::new().roll_dice(1, 3);
+                let activity = if roll == 1 {
+                    Activity {
+                        time_to_complete: 32,
+                        action: Action::Say(Message {
+                            kind: MessageType::Compliment,
+                        }),
+                    }
+                } else if roll == 2 {
+                    Activity {
+                        time_to_complete: 13,
+                        action: Action::Say(Message {
+                            kind: MessageType::Threaten,
+                        }),
+                    }
+                } else {
+                    Activity {
+                        time_to_complete: 12,
+                        action: Action::Say(Message {
+                            kind: MessageType::Insult,
+                        }),
+                    }
+                };
+                commands.entity(monster).insert(activity);
             }
         }
     }

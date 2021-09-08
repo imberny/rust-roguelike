@@ -2,7 +2,7 @@ use bevy_ecs::prelude::World;
 use rltk::RGB;
 
 use crate::{
-    actor::{ai::Monster, player::Player, ActorBundle, Viewshed},
+    actor::{ai::Monster, player::Player, Action, Activity, ActorBundle, Viewshed},
     map::Map,
     rendering::Renderable,
     types::Position,
@@ -48,6 +48,10 @@ fn create_player_at_pos(world: &mut World, player_x: i32, player_y: i32) {
     world
         .spawn()
         .insert(Player)
+        .insert(Activity {
+            action: Action::Wait,
+            time_to_complete: 5,
+        })
         .insert_bundle(ActorBundle {
             name: "Player".to_string(),
             position: Position {
