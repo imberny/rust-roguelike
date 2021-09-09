@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, fmt::Debug};
 
-use bevy_ecs::{prelude::*, schedule::ShouldRun};
+use bevy_ecs::{event::Events, prelude::*, schedule::ShouldRun};
 
 use crate::{
     actor::{
@@ -103,6 +103,7 @@ fn create_game_schedule() -> Schedule {
 }
 
 fn init_resources(world: &mut World) {
+    world.insert_resource(Events::<TimeProgressionEvent>::default());
     world.insert_resource(PlayerInput::default());
     world.insert_resource(TurnBasedTime::default());
     world.insert_resource(TurnBasedGame::default());
@@ -147,6 +148,10 @@ fn order_by_time_left<'r, 's>(activity1: &'r &Activity, activity2: &'s &Activity
     } else {
         Ordering::Equal
     }
+}
+
+pub struct TimeProgressionEvent {
+    pub delta_time: i32,
 }
 
 fn advance_time(mut time: ResMut<TurnBasedTime>, query: Query<&Activity>) {
