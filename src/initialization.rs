@@ -6,8 +6,7 @@ use crate::{
     actor::{
         self,
         player::{
-            self,
-            systems::{handle_player_input, is_input_valid, set_turn_based_state},
+            systems::{handle_player_input, is_input_valid},
             Player, PlayerInput,
         },
         Activity,
@@ -97,8 +96,7 @@ fn create_game_schedule() -> Schedule {
         );
     schedule
         .set_run_criteria(is_player_busy.system())
-        .add_system_to_stage(CoreStage::PreUpdate, advance_time.system())
-        .add_system_to_stage(CoreStage::PostUpdate, clear_delta_time.system());
+        .add_system_to_stage(CoreStage::PreUpdate, advance_time.system());
     schedule
 }
 
@@ -106,7 +104,6 @@ fn init_resources(world: &mut World) {
     world.insert_resource(Events::<TimeProgressionEvent>::default());
     world.insert_resource(PlayerInput::default());
     world.insert_resource(TurnBasedTime::default());
-    world.insert_resource(TurnBasedGame::default());
 }
 
 fn create_render_schedule() -> Schedule {
@@ -114,23 +111,6 @@ fn create_render_schedule() -> Schedule {
     let draw_stage = SystemStage::parallel();
     rendering.add_stage(CoreStage::Draw, draw_stage);
     rendering
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum RunningState {
-    Running,
-    Paused,
-}
-
-impl Default for RunningState {
-    fn default() -> Self {
-        RunningState::Paused
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy)]
-pub struct TurnBasedGame {
-    pub state: RunningState,
 }
 
 #[derive(Debug, Default)]
@@ -154,9 +134,9 @@ pub struct TimeProgressionEvent {
     pub delta_time: i32,
 }
 
-fn advance_time(mut time: ResMut<TurnBasedTime>, query: Query<&Activity>) {
+fn advance_time(mut time: ResMut<TurnBasedTime>, activities: Query<&Activity>) {
     // TODO: use events
-    if let Some(shortest_activity) = query.iter().min_by(order_by_time_left) {
+    if let Some(shortest_activity) = activities.iter().min_by(order_by_time_left) {
         time.time += shortest_activity.time_to_complete;
         time.delta_time = shortest_activity.time_to_complete;
         println!("Progressing time by {}", time.delta_time);
@@ -165,13 +145,6 @@ fn advance_time(mut time: ResMut<TurnBasedTime>, query: Query<&Activity>) {
 
 fn clear_delta_time(mut time: ResMut<TurnBasedTime>) {
     time.delta_time = 0;
-}
-
-pub fn is_game_running(game: Res<TurnBasedGame>) -> ShouldRun {
-    match game.state {
-        RunningState::Running => ShouldRun::Yes,
-        RunningState::Paused => ShouldRun::No,
-    }
 }
 
 pub fn is_player_waiting_for_input(player: Query<&Player, With<Activity>>) -> ShouldRun {
