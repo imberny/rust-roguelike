@@ -27,7 +27,7 @@ fn convert_to_valid_action(input: Res<PlayerInput>, actor: &mut Actor) -> Action
             if direction != actor.facing && !input.is_strafing {
                 Action::Face(direction)
             } else {
-                println!("Player is moving: {:?}", direction);
+                console::log(format!("Player is moving: {:?}", direction));
                 Action::Move(direction)
             }
         }

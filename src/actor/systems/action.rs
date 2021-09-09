@@ -5,7 +5,7 @@ use rltk::{console, Point};
 
 use crate::{
     actor::{action::MessageType, Action, Activity, Actor, Viewshed},
-    initialization::TurnBasedTime,
+    initialization::TimeProgressionEvent,
     map::{Map, TileType},
     types::{Facing, Position},
 };
@@ -21,9 +21,15 @@ fn do_move(pos: &mut Point, viewshed: &mut Viewshed, movement_delta: &Facing, ma
     }
 }
 
-pub fn progress_activities(time: Res<TurnBasedTime>, mut activities: Query<&mut Activity>) {
-    for mut activity in activities.iter_mut() {
-        activity.time_to_complete = std::cmp::max(0, activity.time_to_complete - time.delta_time);
+pub fn progress_activities(
+    mut time_events: EventReader<TimeProgressionEvent>,
+    mut activities: Query<&mut Activity>,
+) {
+    for time_event in time_events.iter() {
+        for mut activity in activities.iter_mut() {
+            activity.time_to_complete =
+                std::cmp::max(0, activity.time_to_complete - time_event.delta_time);
+        }
     }
 }
 

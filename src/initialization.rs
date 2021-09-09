@@ -116,7 +116,6 @@ fn create_render_schedule() -> Schedule {
 #[derive(Debug, Default)]
 pub struct TurnBasedTime {
     pub time: i32,
-    pub delta_time: i32,
 }
 
 fn order_by_time_left<'r, 's>(activity1: &'r &Activity, activity2: &'s &Activity) -> Ordering {
@@ -134,17 +133,19 @@ pub struct TimeProgressionEvent {
     pub delta_time: i32,
 }
 
-fn advance_time(mut time: ResMut<TurnBasedTime>, activities: Query<&Activity>) {
+fn advance_time(
+    mut time: ResMut<TurnBasedTime>,
+    mut time_event_writer: EventWriter<TimeProgressionEvent>,
+    activities: Query<&Activity>,
+) {
     // TODO: use events
     if let Some(shortest_activity) = activities.iter().min_by(order_by_time_left) {
         time.time += shortest_activity.time_to_complete;
-        time.delta_time = shortest_activity.time_to_complete;
-        println!("Progressing time by {}", time.delta_time);
+        time_event_writer.send(TimeProgressionEvent {
+            delta_time: shortest_activity.time_to_complete,
+        });
+        println!("Progressing time by {}", shortest_activity.time_to_complete);
     }
-}
-
-fn clear_delta_time(mut time: ResMut<TurnBasedTime>) {
-    time.delta_time = 0;
 }
 
 pub fn is_player_waiting_for_input(player: Query<&Player, With<Activity>>) -> ShouldRun {
