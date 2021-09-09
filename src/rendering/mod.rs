@@ -1,8 +1,5 @@
-use crate::initialization::CoreStage;
-use bevy_ecs::{
-    schedule::{Schedule, SystemSet},
-    system::IntoSystem,
-};
+use crate::{core::RenderingStage, game::ECS};
+use bevy_ecs::{schedule::SystemSet, system::IntoSystem};
 
 mod render;
 mod renderable;
@@ -13,9 +10,9 @@ pub use renderable::Renderable;
 
 use self::systems::apply_player_viewsheds;
 
-pub fn register(schedule: &mut Schedule) {
-    schedule.add_system_set_to_stage(
-        CoreStage::Draw,
+pub fn register(ecs: &mut ECS) {
+    ecs.rendering.add_system_set_to_stage(
+        RenderingStage::Draw,
         SystemSet::new().with_system(apply_player_viewsheds.system()),
     );
 }

@@ -43,6 +43,20 @@ pub fn is_input_valid(input: Res<PlayerInput>) -> ShouldRun {
     }
 }
 
+pub fn is_player_busy(player: Query<&Player, With<Activity>>) -> ShouldRun {
+    match player.single() {
+        Ok(_) => ShouldRun::YesAndCheckAgain,
+        Err(_) => ShouldRun::No,
+    }
+}
+
+pub fn is_player_waiting_for_input(player: Query<&Player, With<Activity>>) -> ShouldRun {
+    match player.single() {
+        Ok(_) => ShouldRun::No,
+        Err(_) => ShouldRun::Yes,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use bevy_ecs::prelude::*;

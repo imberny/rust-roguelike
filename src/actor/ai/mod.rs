@@ -1,7 +1,7 @@
 use self::systems::monster_ai;
-use crate::initialization::CoreStage;
+use crate::{core::TurnGameStage, game::ECS};
 use bevy_ecs::{
-    schedule::{Schedule, SystemLabel, SystemSet},
+    schedule::{SystemLabel, SystemSet},
     system::IntoSystem,
 };
 
@@ -13,9 +13,9 @@ pub use monster::Monster;
 #[derive(Clone, Hash, Debug, PartialEq, Eq, SystemLabel)]
 struct AISystems;
 
-pub fn register(schedule: &mut Schedule) {
-    schedule.add_system_set_to_stage(
-        CoreStage::Decision,
+pub fn register(ecs: &mut ECS) {
+    ecs.game_logic.add_system_set_to_stage(
+        TurnGameStage::Decision,
         SystemSet::new()
             .label(AISystems)
             .with_system(monster_ai.system()),

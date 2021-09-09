@@ -5,7 +5,7 @@ use rltk::{console, Point};
 
 use crate::{
     actor::{action::MessageType, Action, Activity, Actor, Viewshed},
-    initialization::TimeProgressionEvent,
+    core::TimeProgressionEvent,
     map::{Map, TileType},
     types::{Facing, Position},
 };

@@ -2,6 +2,7 @@ use game::run_game;
 
 mod actor;
 mod constants;
+mod core;
 mod game;
 mod generator;
 mod initialization;

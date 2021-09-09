@@ -1,22 +1,21 @@
 use bevy_ecs::prelude::*;
-use rltk::console;
 
 use crate::{
     actor::{
         action::{Message, MessageType},
         ai::Monster,
         player::Player,
-        Action, Activity, Name, Viewshed,
+        Action, Activity, Viewshed,
     },
     types::Position,
 };
 
 pub fn monster_ai(
     mut commands: Commands,
-    mut monster_query: Query<(Entity, &Viewshed, &Name), (With<Monster>, Without<Activity>)>,
+    mut monster_query: Query<(Entity, &Viewshed), (With<Monster>, Without<Activity>)>,
     player_query: Query<&Position, With<Player>>,
 ) {
-    for (monster, viewshed, name) in monster_query.iter_mut() {
+    for (monster, viewshed) in monster_query.iter_mut() {
         for player_pos in player_query.iter() {
             if viewshed.visible_tiles.contains(player_pos) {
                 let roll = rltk::RandomNumberGenerator::new().roll_dice(1, 3);
