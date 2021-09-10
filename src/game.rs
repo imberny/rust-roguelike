@@ -30,7 +30,7 @@ impl GameState for ECS {
 pub fn run_game() -> rltk::RltkError {
     use rltk::RltkBuilder;
     let context = RltkBuilder::simple80x50()
-        .with_dimensions(120, 75)
+        .with_dimensions(160, 128)
         .with_title("The Possession of Barbe Halle")
         .build()?;
 
