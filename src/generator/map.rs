@@ -58,7 +58,7 @@ fn create_player_at_pos(world: &mut World, player_x: i32, player_y: i32) {
                 x: player_x,
                 y: player_y,
             },
-            viewshed: Viewshed::with_range(8),
+            viewshed: Viewshed::with_range(1),
             ..Default::default()
         })
         .insert(Renderable {

@@ -41,6 +41,10 @@ impl Map {
         x >= 0 && x < self.width && y >= 0 && y < self.height
     }
 
+    pub fn is_point_in_bounds(&self, point: Point) -> bool {
+        self.is_in_bounds(point.x, point.y)
+    }
+
     pub fn at(&self, position: Point) -> TileType {
         let idx = self.xy_idx(position.x, position.y);
         self.tiles[idx]

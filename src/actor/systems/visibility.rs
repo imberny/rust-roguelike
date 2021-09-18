@@ -68,9 +68,9 @@ pub fn update_viewsheds(map: ResMut<Map>, mut query: Query<(&mut Viewshed, &Posi
             viewshed.visible_tiles =
                 symmetric_shadowcasting(&map, Point::new(pos.x, pos.y), viewshed.range as usize);
             // viewshed.visible_tiles = field_of_view(Point::new(pos.x, pos.y), viewshed.range, &*map);
-            viewshed
-                .visible_tiles
-                .retain(|p| map.is_in_bounds(p.x, p.y));
+            // viewshed
+            // .visible_tiles
+            // .retain(|p| map.is_in_bounds(p.x, p.y));
         }
     }
 }
