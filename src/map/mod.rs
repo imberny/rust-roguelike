@@ -1,5 +1,5 @@
 mod map;
 
-pub use map::{Map, TileType};
+pub use map::{Map, MapGenerator, TileType};
 
 mod rect;

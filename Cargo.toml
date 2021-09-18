@@ -10,3 +10,4 @@ edition = "2018"
 rltk = { version ="0.8.1", default-features = false, features = ["opengl"] }
 # bevy_ecs 0.5 doesn't expose event module
 bevy_ecs = { path = "../../bevy/crates/bevy_ecs" }
+fraction = "0.8.0"

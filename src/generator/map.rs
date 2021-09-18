@@ -4,7 +4,7 @@ use rltk::RGB;
 use crate::{
     actor::{ai::Monster, player::Player, Action, Activity, ActorBundle, Viewshed},
     core::types::Position,
-    map::Map,
+    map::{Map, MapGenerator},
     rendering::Renderable,
 };
 
@@ -69,7 +69,7 @@ fn create_player_at_pos(world: &mut World, player_x: i32, player_y: i32) {
 }
 
 pub fn build_map(world: &mut World) {
-    let map = Map::new_map_rooms_and_corridors();
+    let map = MapGenerator {}.new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
     add_monsters_to_rooms(world, &map);
