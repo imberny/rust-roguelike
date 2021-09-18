@@ -1,5 +1,5 @@
-use self::systems::{process_move_actions, progress_activities, update_viewsheds};
-use crate::{core::TurnGameStage, game::ECS};
+use self::systems::{advance_activities, process_activities, update_viewsheds};
+use crate::{core::TurnGameStage, game::GameRunner};
 use bevy_ecs::{
     schedule::{SystemLabel, SystemSet},
     system::IntoSystem,
@@ -25,19 +25,19 @@ enum ActorSystems {
     Viewshed,
 }
 
-pub fn register(ecs: &mut ECS) {
+pub fn register(ecs: &mut GameRunner) {
     ecs.game_logic
         .add_system_set_to_stage(
             TurnGameStage::Update,
             SystemSet::new()
                 .before(ActorSystems::Action)
-                .with_system(progress_activities.system()),
+                .with_system(advance_activities.system()),
         )
         .add_system_set_to_stage(
             TurnGameStage::Update,
             SystemSet::new()
                 .label(ActorSystems::Action)
-                .with_system(process_move_actions.system()),
+                .with_system(process_activities.system()),
         )
         .add_system_set_to_stage(
             TurnGameStage::PostUpdate,

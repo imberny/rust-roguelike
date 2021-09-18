@@ -1,4 +1,4 @@
-use crate::types::Facing;
+use crate::core::types::Facing;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Action {

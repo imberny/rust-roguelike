@@ -1,5 +1,5 @@
 use self::systems::{handle_player_input, is_input_valid};
-use crate::{core::InputStage, game::ECS};
+use crate::{core::InputStage, game::GameRunner};
 use bevy_ecs::{schedule::ParallelSystemDescriptorCoercion, system::IntoSystem};
 
 mod input;
@@ -9,7 +9,7 @@ pub mod systems;
 pub use input::*;
 pub use player::Player;
 
-pub fn register(ecs: &mut ECS) {
+pub fn register(ecs: &mut GameRunner) {
     ecs.world.insert_resource(PlayerInput::default());
     ecs.input.add_system_to_stage(
         InputStage::Handle,

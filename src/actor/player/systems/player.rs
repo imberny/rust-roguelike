@@ -27,7 +27,7 @@ fn convert_to_valid_action(input: Res<PlayerInput>, actor: &mut Actor) -> Action
             if direction != actor.facing && !input.is_strafing {
                 Action::Face(direction)
             } else {
-                console::log(format!("Player is moving: {:?}", direction));
+                // console::log(format!("Player is moving: {:?}", direction));
                 Action::Move(direction)
             }
         }
@@ -66,7 +66,7 @@ mod tests {
             player::{Player, PlayerInput},
             Action, Activity, Actor, ActorBundle,
         },
-        constants::facings::{NORTH, SOUTH},
+        core::constants::facings::{NORTH, SOUTH},
     };
 
     use super::{handle_player_input, is_input_valid};

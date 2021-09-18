@@ -7,7 +7,7 @@ use crate::{
         player::Player,
         Action, Activity, Viewshed,
     },
-    types::Position,
+    core::types::Position,
 };
 
 pub fn monster_ai(

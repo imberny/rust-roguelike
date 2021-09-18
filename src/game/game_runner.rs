@@ -4,16 +4,16 @@ use bevy_ecs::{
 };
 use rltk::{GameState, Rltk};
 
-use crate::{actor::player::systems::poll_input, initialization::init_game, rendering::render};
+use crate::{actor::player::systems::poll_input, game::init_game, rendering::render};
 
-pub struct ECS {
+pub struct GameRunner {
     pub world: World,
     pub input: Schedule,
     pub game_logic: Schedule,
     pub rendering: Schedule,
 }
 
-impl GameState for ECS {
+impl GameState for GameRunner {
     fn tick(&mut self, ctx: &mut Rltk) {
         // update PlayerInput resource
         poll_input(&mut self.world, ctx);

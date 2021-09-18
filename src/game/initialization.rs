@@ -7,14 +7,14 @@ use crate::{
         },
     },
     core::*,
-    game::ECS,
+    game::GameRunner,
     generator::map::build_map,
     rendering,
 };
 use bevy_ecs::{event::Events, prelude::*};
 
-pub fn init_game() -> ECS {
-    let mut ecs = ECS {
+pub fn init_game() -> GameRunner {
+    let mut ecs = GameRunner {
         world: create_world(),
         input: create_input_schedule(),
         game_logic: create_game_schedule(),
@@ -91,7 +91,7 @@ fn create_render_schedule() -> Schedule {
     rendering
 }
 
-fn register_modules(ecs: &mut ECS) {
+fn register_modules(ecs: &mut GameRunner) {
     actor::register(ecs);
     player::register(ecs);
     rendering::register(ecs);

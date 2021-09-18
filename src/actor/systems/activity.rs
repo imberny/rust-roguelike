@@ -5,9 +5,9 @@ use rltk::{console, Point};
 
 use crate::{
     actor::{action::MessageType, Action, Activity, Actor, Viewshed},
+    core::types::{Facing, Position},
     core::TimeProgressionEvent,
     map::{Map, TileType},
-    types::{Facing, Position},
 };
 
 fn do_move(pos: &mut Point, viewshed: &mut Viewshed, movement_delta: &Facing, map: &Res<Map>) {
@@ -21,7 +21,7 @@ fn do_move(pos: &mut Point, viewshed: &mut Viewshed, movement_delta: &Facing, ma
     }
 }
 
-pub fn progress_activities(
+pub fn advance_activities(
     mut time_events: EventReader<TimeProgressionEvent>,
     mut activities: Query<&mut Activity>,
 ) {
@@ -33,7 +33,7 @@ pub fn progress_activities(
     }
 }
 
-pub fn process_move_actions(
+pub fn process_activities(
     mut commands: Commands,
     map: Res<Map>,
     mut actors: Query<(Entity, &mut Actor, &mut Position, &mut Viewshed, &Activity)>,
@@ -46,11 +46,11 @@ pub fn process_move_actions(
                     do_move(&mut pos, &mut viewshed, &direction, &map);
                 }
                 Action::Face(direction) => actor.facing = direction,
-                Action::Say(message) => match message.kind {
-                    MessageType::Insult => console::log("*!!$%$#&^%@"),
-                    MessageType::Threaten => console::log("Shouldn't have come here"),
-                    MessageType::Compliment => console::log("Lookin' good today!"),
-                },
+                // Action::Say(message) => match message.kind {
+                //     MessageType::Insult => console::log("*!!$%$#&^%@"),
+                //     MessageType::Threaten => console::log("Shouldn't have come here"),
+                //     MessageType::Compliment => console::log("Lookin' good today!"),
+                // },
                 _ => (),
             }
             commands.entity(entity).remove::<Activity>();
@@ -64,11 +64,11 @@ mod tests {
 
     use crate::{
         actor::{action::Action, Activity, ActorBundle},
+        core::types::Position,
         map::{Map, TileType},
-        types::Position,
     };
 
-    use super::process_move_actions;
+    use super::process_activities;
 
     fn test_map() -> Map {
         Map {
@@ -86,7 +86,7 @@ mod tests {
         let mut world = World::new();
         world.insert_resource(test_map());
         let entity = world.spawn().insert_bundle(ActorBundle::default()).id();
-        let mut stage = SystemStage::single(process_move_actions.system());
+        let mut stage = SystemStage::single(process_activities.system());
 
         // run process_move_action
         stage.run(&mut world);
@@ -101,7 +101,7 @@ mod tests {
         let mut world = World::new();
         world.insert_resource(test_map());
         let entity = world.spawn().insert_bundle(ActorBundle::default()).id();
-        let mut stage = SystemStage::single(process_move_actions.system());
+        let mut stage = SystemStage::single(process_activities.system());
 
         // run process_move_action
         stage.run(&mut world);

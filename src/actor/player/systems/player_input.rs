@@ -1,10 +1,33 @@
 use bevy_ecs::prelude::*;
 use rltk::{Rltk, VirtualKeyCode};
+use std::collections::HashMap;
 
 use crate::{
     actor::{player::PlayerInput, Action},
-    constants::facings::*,
+    core::constants::facings::*,
 };
+
+struct PlayerSettings {
+    input_map: HashMap<VirtualKeyCode, Action>,
+}
+
+impl PlayerSettings {
+    pub fn new() -> Self {
+        Self {
+            input_map: HashMap::from([
+                (VirtualKeyCode::Y, Action::Move(NORTH_WEST)),
+                (VirtualKeyCode::K, Action::Move(NORTH)),
+                (VirtualKeyCode::U, Action::Move(NORTH_EAST)),
+                (VirtualKeyCode::L, Action::Move(EAST)),
+                (VirtualKeyCode::N, Action::Move(SOUTH_EAST)),
+                (VirtualKeyCode::J, Action::Move(SOUTH)),
+                (VirtualKeyCode::B, Action::Move(SOUTH_WEST)),
+                (VirtualKeyCode::H, Action::Move(WEST)),
+                (VirtualKeyCode::Period, Action::Wait),
+            ]),
+        }
+    }
+}
 
 const LEFT_MOUSE_BUTTON: usize = 0;
 
@@ -37,15 +60,22 @@ fn update_player_input(input: &mut PlayerInput, ctx: &Rltk) {
 // H . L       4 5 6          Left     .      Right
 // B J N       1 2 3       Ctrl+Down  Down  Ctrl+Right
 fn input_to_action(key: VirtualKeyCode, is_strafing: bool, skew_move: bool) -> Action {
+    let player_settings = PlayerSettings::new();
+
+    if player_settings.input_map.contains_key(&key) {
+        return player_settings.input_map[&key];
+    }
+
+    // player can't change those
     match key {
-        VirtualKeyCode::Numpad7 | VirtualKeyCode::Y => Action::Move(NORTH_WEST),
-        VirtualKeyCode::Numpad8 | VirtualKeyCode::K => Action::Move(NORTH),
-        VirtualKeyCode::Numpad9 | VirtualKeyCode::U => Action::Move(NORTH_EAST),
-        VirtualKeyCode::Numpad6 | VirtualKeyCode::L => Action::Move(EAST),
-        VirtualKeyCode::Numpad3 | VirtualKeyCode::N => Action::Move(SOUTH_EAST),
-        VirtualKeyCode::Numpad2 | VirtualKeyCode::J => Action::Move(SOUTH),
-        VirtualKeyCode::Numpad1 | VirtualKeyCode::B => Action::Move(SOUTH_WEST),
-        VirtualKeyCode::Numpad4 | VirtualKeyCode::H => Action::Move(WEST),
+        VirtualKeyCode::Numpad7 => Action::Move(NORTH_WEST),
+        VirtualKeyCode::Numpad8 => Action::Move(NORTH),
+        VirtualKeyCode::Numpad9 => Action::Move(NORTH_EAST),
+        VirtualKeyCode::Numpad6 => Action::Move(EAST),
+        VirtualKeyCode::Numpad3 => Action::Move(SOUTH_EAST),
+        VirtualKeyCode::Numpad2 => Action::Move(SOUTH),
+        VirtualKeyCode::Numpad1 => Action::Move(SOUTH_WEST),
+        VirtualKeyCode::Numpad4 => Action::Move(WEST),
 
         // Shift + 7 => Home
         VirtualKeyCode::Home => {
@@ -115,7 +145,7 @@ fn input_to_action(key: VirtualKeyCode, is_strafing: bool, skew_move: bool) -> A
             }
         }
 
-        VirtualKeyCode::Period | VirtualKeyCode::Numpad5 => Action::Wait,
+        VirtualKeyCode::Numpad5 => Action::Wait,
 
         _ => Action::None,
     }

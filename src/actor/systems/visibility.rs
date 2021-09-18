@@ -1,7 +1,7 @@
 use bevy_ecs::prelude::*;
 use rltk::{field_of_view, Point};
 
-use crate::{actor::Viewshed, map::Map, types::Position};
+use crate::{actor::Viewshed, core::types::Position, map::Map};
 
 pub fn update_viewsheds(map: ResMut<Map>, mut query: Query<(&mut Viewshed, &Position)>) {
     for (mut viewshed, pos) in query.iter_mut() {

@@ -1,5 +1,5 @@
-mod action;
+mod activity;
 mod visibility;
 
-pub use action::*;
+pub use activity::*;
 pub use visibility::*;

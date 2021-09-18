@@ -3,8 +3,8 @@ use rltk::{Rltk, RGB};
 
 use crate::{
     actor::Actor,
+    core::types::Position,
     map::{self, Map},
-    types::Position,
 };
 
 use super::Renderable;

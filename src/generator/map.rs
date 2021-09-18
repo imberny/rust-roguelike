@@ -3,9 +3,9 @@ use rltk::RGB;
 
 use crate::{
     actor::{ai::Monster, player::Player, Action, Activity, ActorBundle, Viewshed},
+    core::types::Position,
     map::Map,
     rendering::Renderable,
-    types::Position,
 };
 
 fn add_monsters_to_rooms(world: &mut World, map: &Map) {

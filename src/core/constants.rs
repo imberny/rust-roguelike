@@ -1,5 +1,5 @@
 pub mod facings {
-    use crate::types::Facing;
+    use crate::core::types::Facing;
 
     pub const NORTH_WEST: Facing = Facing::constant(-1, -1);
     pub const NORTH: Facing = Facing::constant(0, -1);

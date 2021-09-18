@@ -1,4 +1,4 @@
-use crate::types::{Facing, Percentage, Position};
+use crate::core::types::{Facing, Percentage, Position};
 use bevy_ecs::bundle::Bundle;
 
 use super::Viewshed;

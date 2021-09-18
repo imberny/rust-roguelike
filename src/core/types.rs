@@ -1,7 +1,7 @@
 use rltk::Point;
 
 mod facing {
-    use crate::constants::facings::SOUTH;
+    use crate::core::constants::facings::SOUTH;
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct Facing {

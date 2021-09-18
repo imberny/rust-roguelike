@@ -1,4 +1,4 @@
-use crate::types::Position;
+use crate::core::types::Position;
 
 #[derive(Debug, Default)]
 pub struct Viewshed {
