@@ -12,6 +12,7 @@ const EAST: Cardinal = 1;
 const SOUTH: Cardinal = 2;
 const WEST: Cardinal = 3;
 
+#[derive(Debug, Clone, Copy)]
 struct Quadrant {
     pub cardinal: Cardinal,
     pub origin: Point,
@@ -28,25 +29,27 @@ impl Quadrant {
         if self.cardinal == NORTH {
             Point::new(self.origin.x + col, self.origin.y - row)
         } else if self.cardinal == SOUTH {
-            Point::new(self.origin.x + col, self.origin.y + row - 1)
+            Point::new(self.origin.x + col, self.origin.y + row)
         } else if self.cardinal == EAST {
             Point::new(self.origin.x + row, self.origin.y + col)
         } else {
-            Point::new(self.origin.x - row, self.origin.y + col - 1)
+            Point::new(self.origin.x - row, self.origin.y + col)
         }
     }
 }
 
 #[derive(Clone, Copy)]
 struct Row {
+    quadrant: Quadrant,
     depth: u16,
     start_slope: Fraction,
     end_slope: Fraction,
 }
 
 impl Row {
-    fn new(depth: u16, start_slope: Fraction, end_slope: Fraction) -> Self {
+    fn new(quadrant: Quadrant, depth: u16, start_slope: Fraction, end_slope: Fraction) -> Self {
         Self {
+            quadrant,
             depth,
             start_slope,
             end_slope,
@@ -58,12 +61,22 @@ impl Row {
         // let sum = sloped + Fraction::new(1u16, 2u32);
         // let floored = sum.ceil();
         // floored
-        (sloped + Fraction::new(1u16, 2u32)).floor()
+        let sum = sloped + Fraction::new(1u16, 2u32);
+        if sum.is_sign_negative() {
+            sum.ceil()
+        } else {
+            sum.floor()
+        }
     }
 
     pub fn round_ties_down(&self, n: Fraction) -> Fraction {
         let sloped = n * self.end_slope;
-        (sloped - Fraction::new(1u16, 2u32)).ceil()
+        let sum = sloped - Fraction::new(1u16, 2u32);
+        if sum.is_sign_negative() {
+            sum.floor()
+        } else {
+            sum.ceil()
+        }
     }
 
     fn tiles(&self) -> Vec<Point> {
@@ -77,7 +90,12 @@ impl Row {
     }
 
     fn next(&self) -> Row {
-        Row::new(self.depth + 1, self.start_slope, self.end_slope)
+        Row::new(
+            self.quadrant,
+            self.depth + 1,
+            self.start_slope,
+            self.end_slope,
+        )
     }
 }
 
@@ -89,34 +107,31 @@ fn scan(map: &Map, quadrant: &Quadrant, row: &mut Row) -> HashSet<Point> {
     let mut previous_tile: Option<Point> = None;
     let mut visible_tiles: HashSet<Point> = HashSet::new();
 
-    for position in row.tiles() {
-        if !map.is_point_in_bounds(quadrant.transform(position)) {
+    for tile in row.tiles() {
+        let position = quadrant.transform(tile);
+        if !map.is_point_in_bounds(position) {
             continue;
         }
-        if is_wall(map, quadrant, position) || is_symmetric(&row, position) {
-            visible_tiles.insert(quadrant.transform(position));
+        if is_wall(map, position) || is_symmetric(&row, tile) {
+            visible_tiles.insert(position);
         }
         if let Some(previous_tile) = previous_tile {
-            if is_wall(map, quadrant, position) && is_floor(map, quadrant, position) {
-                row.start_slope = slope(position);
+            let previous_position = quadrant.transform(previous_tile);
+            if is_wall(map, previous_position) && is_floor(map, position) {
+                row.start_slope = slope(tile);
             }
 
-            if is_floor(map, quadrant, previous_tile) && is_wall(map, quadrant, position) {
+            if is_floor(map, previous_position) && is_wall(map, position) {
                 let mut next_row = row.next();
-                next_row.end_slope = slope(position);
-                visible_tiles.extend(scan(map, quadrant, &mut next_row));
-            }
-
-            if is_floor(map, quadrant, previous_tile) && is_wall(map, quadrant, position) {
-                let mut next_row = row.next();
-                next_row.end_slope = slope(position);
+                next_row.end_slope = slope(tile);
                 visible_tiles.extend(scan(map, quadrant, &mut next_row));
             }
         }
         previous_tile = Some(position);
     }
     if let Some(previous_tile) = previous_tile {
-        if is_floor(map, quadrant, previous_tile) {
+        let previous_position = quadrant.transform(previous_tile);
+        if is_floor(map, previous_position) {
             visible_tiles.extend(scan(map, quadrant, &mut row.next()));
         }
     }
@@ -124,21 +139,23 @@ fn scan(map: &Map, quadrant: &Quadrant, row: &mut Row) -> HashSet<Point> {
     visible_tiles
 }
 
-fn scan_iterative(map: &Map, quadrant: &Quadrant, row: &mut Row) -> HashSet<Point> {
+fn scan_iterative(map: &Map, row: &mut Row) -> HashSet<Point> {
     let mut rows = vec![row.clone()];
     let mut visible: HashSet<Point> = HashSet::new();
     while 0 < rows.len() {
         let mut row = rows.pop().unwrap();
         let mut prev_tile: Option<Point> = None;
         for tile in row.tiles() {
-            if is_wall(map, quadrant, tile) || is_symmetric(&row, tile) {
-                visible.insert(quadrant.transform(tile));
+            let position = row.quadrant.transform(tile);
+            if is_wall(map, position) || is_symmetric(&row, tile) {
+                visible.insert(position);
             }
             if let Some(prev_tile) = prev_tile {
-                if is_wall(map, quadrant, prev_tile) && is_floor(map, quadrant, tile) {
+                let prev_pos = row.quadrant.transform(prev_tile);
+                if is_wall(map, prev_pos) && is_floor(map, position) {
                     row.start_slope = slope(tile);
                 }
-                if is_floor(map, quadrant, prev_tile) && is_wall(map, quadrant, tile) {
+                if is_floor(map, prev_pos) && is_wall(map, position) {
                     let mut next_row = row.next();
                     next_row.end_slope = slope(tile);
                     rows.push(next_row);
@@ -148,7 +165,8 @@ fn scan_iterative(map: &Map, quadrant: &Quadrant, row: &mut Row) -> HashSet<Poin
             prev_tile = Some(tile);
         }
         if let Some(prev_tile) = prev_tile {
-            if is_floor(map, quadrant, prev_tile) {
+            let prev_pos = row.quadrant.transform(prev_tile);
+            if is_floor(map, prev_pos) {
                 rows.push(row.next());
             }
         }
@@ -163,28 +181,36 @@ fn slope(tile: Point) -> Fraction {
     if 0 < num {
         Fraction::new(num as u16, 2u32 * row_depth)
     } else {
-        Fraction::new_neg(-num as u16, 2u32 * row_depth)
+        Fraction::new_neg(num.abs() as u16, 2u32 * row_depth)
     }
 }
 
 fn is_symmetric(row: &Row, position: Point) -> bool {
     let col = position.y;
     let depth_fraction = Fraction::new(row.depth as u16, 1u32);
-    col >= (depth_fraction * row.start_slope).round().to_i32().unwrap()
-        && col <= (depth_fraction * row.end_slope).round().to_i32().unwrap()
+
+    let start_slope = depth_fraction * row.start_slope;
+    let start_sign = start_slope.signum();
+    // let start_slope_val = (start_sign * start_slope.abs().round()).to_i32().unwrap();
+    let start_slope_val = (start_slope.round()).to_i32().unwrap();
+
+    let end_slope = depth_fraction * row.end_slope;
+    let end_sign = end_slope.signum();
+    // let end_slope_val = (end_sign * end_slope.abs().round()).to_i32().unwrap();
+    let end_slope_val = (end_slope.round()).to_i32().unwrap();
+
+    col + 1 >= start_slope_val && col - 1 <= end_slope_val
 }
 
-fn is_wall(map: &Map, quadrant: &Quadrant, tile: Point) -> bool {
-    let position = quadrant.transform(tile);
-    match map.at(position) {
+fn is_wall(map: &Map, tile: Point) -> bool {
+    match map.at(tile) {
         TileType::Wall => true,
         TileType::Floor => false,
     }
 }
 
-fn is_floor(map: &Map, quadrant: &Quadrant, tile: Point) -> bool {
-    let position = quadrant.transform(tile);
-    match map.at(position) {
+fn is_floor(map: &Map, tile: Point) -> bool {
+    match map.at(tile) {
         TileType::Wall => false,
         TileType::Floor => true,
     }
@@ -196,9 +222,14 @@ pub fn symmetric_shadowcasting(map: &Map, origin: Point, range: usize) -> Vec<Po
 
     for cardinal in NORTH..=WEST {
         let quadrant = Quadrant::new(cardinal, origin);
-        let mut first_row = Row::new(1, Fraction::new_neg(1u16, 1u32), Fraction::new(1u16, 1u32));
+        let mut first_row = Row::new(
+            quadrant,
+            1,
+            Fraction::new_neg(1u16, 1u32),
+            Fraction::new(1u16, 1u32),
+        );
         // visible_positions.extend(scan(&map, &quadrant, &mut first_row));
-        visible_positions.extend(scan_iterative(&map, &quadrant, &mut first_row));
+        visible_positions.extend(scan_iterative(&map, &mut first_row));
     }
 
     visible_positions
