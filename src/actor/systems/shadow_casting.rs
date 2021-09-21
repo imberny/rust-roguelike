@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use fraction::{Fraction, ToPrimitive};
 use rltk::Point;
 
-use crate::map::{Map, TileType};
+use crate::game_world::{AreaGrid, TileType};
 
 type Cardinal = usize;
 
@@ -99,11 +99,11 @@ impl Row {
     }
 }
 
-fn is_out_of_bounds(map: &Map, position: Point) -> bool {
+fn is_out_of_bounds(map: &AreaGrid, position: Point) -> bool {
     position.x < 0 || position.y < 0 || position.x >= map.width || position.y >= map.height
 }
 
-fn scan(map: &Map, quadrant: &Quadrant, row: &mut Row) -> HashSet<Point> {
+fn scan(map: &AreaGrid, quadrant: &Quadrant, row: &mut Row) -> HashSet<Point> {
     let mut previous_tile: Option<Point> = None;
     let mut visible_tiles: HashSet<Point> = HashSet::new();
 
@@ -139,7 +139,7 @@ fn scan(map: &Map, quadrant: &Quadrant, row: &mut Row) -> HashSet<Point> {
     visible_tiles
 }
 
-fn scan_iterative(map: &Map, row: &mut Row) -> HashSet<Point> {
+fn scan_iterative(map: &AreaGrid, row: &mut Row) -> HashSet<Point> {
     let mut rows = vec![row.clone()];
     let mut visible: HashSet<Point> = HashSet::new();
     while 0 < rows.len() {
@@ -193,33 +193,31 @@ fn is_symmetric(row: &Row, position: Point) -> bool {
     let depth_fraction = Fraction::new(row.depth as u16, 1u32);
 
     let start_slope = depth_fraction * row.start_slope;
-    let start_sign = start_slope.signum();
     // let start_slope_val = (start_sign * start_slope.abs().round()).to_i32().unwrap();
     let start_slope_val = (start_slope.round()).to_i32().unwrap();
 
     let end_slope = depth_fraction * row.end_slope;
-    let end_sign = end_slope.signum();
     // let end_slope_val = (end_sign * end_slope.abs().round()).to_i32().unwrap();
     let end_slope_val = (end_slope.round()).to_i32().unwrap();
 
     col + 1 >= start_slope_val && col - 1 <= end_slope_val
 }
 
-fn is_wall(map: &Map, tile: Point) -> bool {
+fn is_wall(map: &AreaGrid, tile: Point) -> bool {
     match map.at(tile) {
         TileType::Wall => true,
         TileType::Floor => false,
     }
 }
 
-fn is_floor(map: &Map, tile: Point) -> bool {
+fn is_floor(map: &AreaGrid, tile: Point) -> bool {
     match map.at(tile) {
         TileType::Wall => false,
         TileType::Floor => true,
     }
 }
 
-pub fn symmetric_shadowcasting(map: &Map, origin: Point, range: usize) -> Vec<Point> {
+pub fn symmetric_shadowcasting(map: &AreaGrid, origin: Point, range: usize) -> Vec<Point> {
     let mut visible_positions: HashSet<Point> = HashSet::new();
     visible_positions.insert(origin);
 
@@ -246,12 +244,12 @@ mod tests {
     use fraction::{Fraction, ToPrimitive};
     use rltk::Point;
 
-    use crate::map::Map;
+    use crate::game_world::AreaGrid;
 
     use super::symmetric_shadowcasting;
 
-    fn square_room() -> Map {
-        Map::from_ascii(
+    fn square_room() -> AreaGrid {
+        AreaGrid::from_ascii(
             r"######
 #....#
 #....#

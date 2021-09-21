@@ -1,13 +1,10 @@
 use bevy_ecs::prelude::*;
 
 use crate::{
-    actor::{
-        action::{Message, MessageType},
-        ai::Monster,
-        player::Player,
-        Action, Activity, Viewshed,
-    },
+    actor::{player::Player, Action, Activity, Message, MessageType},
+    ai::Monster,
     core::types::Position,
+    game_world::Viewshed,
 };
 
 pub fn monster_ai(

@@ -4,13 +4,13 @@ use bevy_ecs::prelude::*;
 use rltk::{console, Point};
 
 use crate::{
-    actor::{action::MessageType, Action, Activity, Actor, Viewshed},
+    actor::{Action, Activity, Actor},
     core::types::{Facing, Position},
     core::TimeProgressionEvent,
-    map::{Map, TileType},
+    game_world::{AreaGrid, TileType, Viewshed},
 };
 
-fn do_move(pos: &mut Point, viewshed: &mut Viewshed, movement_delta: &Facing, map: &Res<Map>) {
+fn do_move(pos: &mut Point, viewshed: &mut Viewshed, movement_delta: &Facing, map: &Res<AreaGrid>) {
     let destination_idx = map.xy_idx(pos.x + movement_delta.x, pos.y + movement_delta.y);
     let destination_tile = map.tiles[destination_idx];
     if destination_tile != TileType::Wall {
@@ -35,7 +35,7 @@ pub fn advance_activities(
 
 pub fn process_activities(
     mut commands: Commands,
-    map: Res<Map>,
+    map: Res<AreaGrid>,
     mut actors: Query<(Entity, &mut Actor, &mut Position, &mut Viewshed, &Activity)>,
 ) {
     for (entity, mut actor, mut pos, mut viewshed, activity) in actors.iter_mut() {
@@ -63,17 +63,16 @@ mod tests {
     use bevy_ecs::prelude::*;
 
     use crate::{
-        actor::{action::Action, Activity, ActorBundle},
+        actor::{Action, Activity, ActorBundle},
         core::types::Position,
-        map::{Map, TileType},
+        game_world::{AreaGrid, TileType},
     };
 
     use super::process_activities;
 
-    fn test_map() -> Map {
-        Map {
+    fn test_map() -> AreaGrid {
+        AreaGrid {
             tiles: vec![TileType::Floor; 80 * 50],
-            rooms: Vec::new(),
             width: 80,
             height: 50,
             revealed: vec![false; 80 * 50],

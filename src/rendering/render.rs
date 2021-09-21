@@ -4,7 +4,7 @@ use rltk::{Rltk, RGB};
 use crate::{
     actor::Actor,
     core::types::Position,
-    map::{self, Map},
+    game_world::{self, AreaGrid},
 };
 
 use super::Renderable;
@@ -16,7 +16,7 @@ pub fn render(world: &mut World, ctx: &mut Rltk) {
 }
 
 fn draw_map(world: &World, ctx: &mut Rltk) {
-    let map = world.get_resource::<Map>().unwrap();
+    let map = world.get_resource::<AreaGrid>().unwrap();
     for (idx, tile) in map.tiles.iter().enumerate() {
         if !map.revealed[idx] {
             continue;
@@ -26,11 +26,11 @@ fn draw_map(world: &World, ctx: &mut Rltk) {
         let mut fg;
         let glyph;
         match tile {
-            map::TileType::Floor => {
+            game_world::TileType::Floor => {
                 fg = RGB::from_f32(0.0, 0.5, 0.5);
                 glyph = rltk::to_cp437('.');
             }
-            map::TileType::Wall => {
+            game_world::TileType::Wall => {
                 fg = RGB::from_f32(0., 1.0, 0.);
                 glyph = rltk::to_cp437('#');
             }
@@ -44,7 +44,7 @@ fn draw_map(world: &World, ctx: &mut Rltk) {
 
 fn draw_entities(world: &mut World, ctx: &mut Rltk) {
     let mut renderables = world.query::<(&Position, &Renderable, &Actor)>();
-    let map = world.get_resource::<Map>().unwrap();
+    let map = world.get_resource::<AreaGrid>().unwrap();
     for (pos, render, actor) in renderables.iter(&world) {
         let idx = map.xy_idx(pos.x, pos.y);
         if map.visible[idx] {

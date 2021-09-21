@@ -1,10 +1,11 @@
 use game::run_game;
 
 mod actor;
+mod ai;
 mod core;
 mod game;
+mod game_world;
 mod generator;
-mod map;
 mod rendering;
 mod util;
 

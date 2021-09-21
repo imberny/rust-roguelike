@@ -6,9 +6,11 @@ use crate::{
             systems::{is_player_busy, is_player_waiting_for_input},
         },
     },
+    ai,
     core::*,
     game::GameRunner,
-    generator::map::build_map,
+    game_world,
+    generator::MapGenerator,
     rendering,
 };
 use bevy_ecs::{event::Events, prelude::*};
@@ -31,7 +33,7 @@ fn create_world() -> World {
     world.insert_resource(Events::<TimeProgressionEvent>::default());
     world.insert_resource(TurnBasedTime::default());
 
-    build_map(&mut world);
+    MapGenerator {}.new_map_rooms_and_corridors(&mut world);
 
     world
 }
@@ -93,6 +95,7 @@ fn create_render_schedule() -> Schedule {
 
 fn register_modules(ecs: &mut GameRunner) {
     actor::register(ecs);
+    ai::register(ecs);
     player::register(ecs);
-    rendering::register(ecs);
+    game_world::register(ecs);
 }

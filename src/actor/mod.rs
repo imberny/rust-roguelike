@@ -1,23 +1,21 @@
-use self::systems::{advance_activities, process_activities, update_viewsheds};
+use self::{
+    activity::systems::{advance_activities, process_activities},
+    systems::update_viewsheds,
+};
 use crate::{core::TurnGameStage, game::GameRunner};
 use bevy_ecs::{
     schedule::{SystemLabel, SystemSet},
     system::IntoSystem,
 };
 
-mod action;
 mod activity;
 mod actor;
-pub mod ai;
 pub mod constants;
 pub mod player;
 pub mod systems;
-mod viewshed;
 
-pub use action::Action;
-pub use activity::Activity;
+pub use activity::*;
 pub use actor::*;
-pub use viewshed::Viewshed;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
 enum ActorSystems {
@@ -45,5 +43,4 @@ pub fn register(ecs: &mut GameRunner) {
                 .label(ActorSystems::Viewshed)
                 .with_system(update_viewsheds.system()),
         );
-    ai::register(ecs);
 }

@@ -1,7 +1,8 @@
-use crate::core::types::{Facing, Percentage, Position};
+use crate::{
+    core::types::{Facing, Percentage, Position},
+    game_world::Viewshed,
+};
 use bevy_ecs::bundle::Bundle;
-
-use super::Viewshed;
 
 const BASE_HEALTH: i32 = 100;
 const BASE_SPEED: i32 = 100;
