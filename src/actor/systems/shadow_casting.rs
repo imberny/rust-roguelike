@@ -147,6 +147,9 @@ fn scan_iterative(map: &Map, row: &mut Row) -> HashSet<Point> {
         let mut prev_tile: Option<Point> = None;
         for tile in row.tiles() {
             let position = row.quadrant.transform(tile);
+            if !map.is_point_in_bounds(position) {
+                continue;
+            }
             if is_wall(map, position) || is_symmetric(&row, tile) {
                 visible.insert(position);
             }
@@ -247,7 +250,7 @@ mod tests {
 
     use super::symmetric_shadowcasting;
 
-    fn small_map() -> Map {
+    fn square_room() -> Map {
         Map::from_ascii(
             r"######
 #....#
@@ -258,14 +261,14 @@ mod tests {
 
     #[test]
     fn from_ascii_map() {
-        let map = small_map();
+        let map = square_room();
         assert_eq!(map.width, 6);
         assert_eq!(map.height, 4);
     }
 
     #[test]
     fn given_a_range_of_one_the_origin_is_visible() {
-        let map = small_map();
+        let map = square_room();
 
         let visible_positions = symmetric_shadowcasting(&map, Point::new(1, 3), 0);
 
@@ -273,26 +276,14 @@ mod tests {
     }
 
     #[test]
-    fn given_a_range_of_two() {
-        let map = small_map();
+    fn given_a_rectangular_room_every_square_is_visible() {
+        let map = square_room();
 
         let visible_positions = symmetric_shadowcasting(&map, Point::new(1, 2), 1);
 
-        let expected_positions: Vec<Point> = vec![
-            Point::new(0, 2),
-            Point::new(0, 3),
-            Point::new(0, 4),
-            Point::new(1, 2),
-            Point::new(1, 3),
-            Point::new(1, 4),
-            Point::new(2, 2),
-            Point::new(2, 3),
-            Point::new(2, 4),
-        ];
-
         // assert_eq!(expected_positions, visible_positions);
-        assert_eq!(expected_positions.len(), visible_positions.len());
-        for position in expected_positions {
+        assert_eq!(map.tiles.len(), visible_positions.len());
+        for (position, _tile_type) in map {
             assert!(visible_positions.contains(&position));
         }
     }
