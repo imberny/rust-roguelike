@@ -64,7 +64,7 @@ mod tests {
 
     use crate::{
         actor::{Action, Activity, ActorBundle},
-        core::types::Position,
+        core::{constants::facings, types::Position},
         game_world::{AreaGrid, TileType},
     };
 
@@ -81,33 +81,38 @@ mod tests {
     }
 
     #[test]
-    fn none_action() {
+    fn consume_activity_upon_completion() {
         let mut world = World::new();
         world.insert_resource(test_map());
-        let entity = world.spawn().insert_bundle(ActorBundle::default()).id();
-        let mut stage = SystemStage::single(process_activities.system());
+        let entity = world
+            .spawn()
+            .insert_bundle(ActorBundle::default())
+            .insert(Activity::default())
+            .id();
 
-        // run process_move_action
+        let mut stage = SystemStage::single(process_activities.system());
         stage.run(&mut world);
 
-        // check action is none
-        let activity = world.get::<Activity>(entity).unwrap();
-        assert_eq!(Action::None, activity.action);
+        assert!(world.get::<Activity>(entity).is_none());
     }
 
     #[test]
     fn move_action() {
         let mut world = World::new();
         world.insert_resource(test_map());
-        let entity = world.spawn().insert_bundle(ActorBundle::default()).id();
-        let mut stage = SystemStage::single(process_activities.system());
+        let entity = world
+            .spawn()
+            .insert_bundle(ActorBundle::default())
+            .insert(Activity {
+                action: Action::Move(facings::SOUTH),
+                ..Default::default()
+            })
+            .id();
 
-        // run process_move_action
+        let mut stage = SystemStage::single(process_activities.system());
         stage.run(&mut world);
 
-        // check action is consumed
-        let activity = world.get::<Activity>(entity).unwrap();
-        assert_eq!(Action::None, activity.action);
+        assert!(world.get::<Activity>(entity).is_none());
         let position = world.get::<Position>(entity).unwrap();
         assert_eq!(Position::new(0, 1), *position);
     }

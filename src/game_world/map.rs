@@ -49,6 +49,13 @@ impl AreaGrid {
         Point::new(index as i32 % self.width, index as i32 / self.width)
     }
 
+    pub fn is_blocking(&self, position: Point) -> bool {
+        match self.at(position) {
+            TileType::Wall => true,
+            TileType::Floor => false,
+        }
+    }
+
     pub fn from_ascii(ascii_map: &str) -> Self {
         let mut map = Self {
             tiles: Vec::new(),

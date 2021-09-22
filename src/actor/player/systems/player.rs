@@ -64,7 +64,7 @@ mod tests {
     use crate::{
         actor::{
             player::{Player, PlayerInput},
-            Action, Activity, Actor, ActorBundle,
+            Action, Activity, ActorBundle,
         },
         core::constants::facings::{NORTH, SOUTH},
     };
@@ -84,7 +84,6 @@ mod tests {
         SystemStage::single(
             handle_player_input
                 .system()
-                // .chain(set_turn_based_state.system())
                 .with_run_criteria(is_input_valid.system()),
         )
     }
@@ -92,8 +91,8 @@ mod tests {
     fn player(world: &mut World) -> Entity {
         world
             .spawn()
-            .insert_bundle(ActorBundle::default())
             .insert(Player)
+            .insert_bundle(ActorBundle::default())
             .id()
     }
 
@@ -112,23 +111,18 @@ mod tests {
 
         player_stage().run(&mut world);
 
-        let facing = world.get::<Actor>(player).unwrap().facing;
-        let activity = world.get::<Activity>(player).unwrap();
-        assert_eq!(SOUTH, facing);
-        assert_eq!(Action::None, activity.action);
+        assert!(world.get::<Activity>(player).is_none());
     }
 
     #[test]
-    fn move_action() {
+    fn input_inserts_activity() {
         let mut world = test_world();
         let player = player(&mut world);
         world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(SOUTH);
 
         player_stage().run(&mut world);
 
-        let facing = world.get::<Actor>(player).unwrap().facing;
         let activity = world.get::<Activity>(player).unwrap();
-        assert_eq!(SOUTH, facing);
         assert_eq!(Action::Move(SOUTH), activity.action);
     }
 
@@ -140,20 +134,7 @@ mod tests {
 
         player_stage().run(&mut world);
 
-        let facing = world.get::<Actor>(player).unwrap().facing;
         let activity = world.get::<Activity>(player).unwrap();
-        assert_eq!(NORTH, facing);
-        assert_eq!(Action::Wait, activity.action);
-    }
-
-    #[test]
-    fn cannot_accept_input_while_game_is_running() {
-        let mut world = test_world();
-        let player = player(&mut world);
-        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(NORTH);
-
-        player_stage().run(&mut world);
-        let activity = world.get::<Activity>(player).unwrap();
-        assert_eq!(Action::None, activity.action);
+        assert_eq!(Action::Face(NORTH), activity.action);
     }
 }
