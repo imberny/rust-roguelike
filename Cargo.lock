@@ -627,6 +627,7 @@ dependencies = [
  "bevy_ecs",
  "fraction",
  "rltk",
+ "ultraviolet",
 ]
 
 [[package]]

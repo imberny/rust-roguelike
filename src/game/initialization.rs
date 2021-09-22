@@ -11,7 +11,6 @@ use crate::{
     game::GameRunner,
     game_world,
     generator::MapGenerator,
-    rendering,
 };
 use bevy_ecs::{event::Events, prelude::*};
 

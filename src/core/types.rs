@@ -1,6 +1,9 @@
 use rltk::Point;
 
 mod facing {
+    use rltk::Point;
+    use ultraviolet::vec::Vec2;
+
     use crate::core::constants::facings::SOUTH;
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -13,11 +16,24 @@ mod facing {
         pub const fn constant(x: i32, y: i32) -> Self {
             Self { x, y }
         }
+
+        pub fn to_vec2(self) -> Vec2 {
+            Vec2::new(self.x as f32, self.y as f32)
+        }
     }
 
     impl Default for Facing {
         fn default() -> Self {
             SOUTH
+        }
+    }
+
+    impl From<Point> for Facing {
+        fn from(point: Point) -> Self {
+            Self {
+                x: point.x,
+                y: point.y,
+            }
         }
     }
 }

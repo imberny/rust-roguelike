@@ -1,7 +1,5 @@
-use bevy_ecs::prelude::Entity;
 use rltk::Point;
-use rltk::{Algorithm2D, BaseMap, RandomNumberGenerator};
-use std::cmp::{max, min};
+use rltk::{Algorithm2D, BaseMap};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum TileType {
@@ -65,7 +63,7 @@ impl AreaGrid {
             visible: Vec::new(),
         };
 
-        let mut rows = ascii_map.split('\n');
+        let rows = ascii_map.split('\n');
         for row in rows {
             map.height += 1;
             for tile in row.chars() {

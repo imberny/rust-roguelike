@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
 
 use bevy_ecs::prelude::*;
-use rltk::{console, Point};
+use rltk::Point;
 
 use crate::{
     actor::{Action, Activity, Actor},

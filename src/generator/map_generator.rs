@@ -11,7 +11,7 @@ use crate::{
     rendering::Renderable,
 };
 
-use super::{rect::Rect, types::Room};
+use super::types::Room;
 
 pub struct MapGenerator {}
 
@@ -83,7 +83,7 @@ impl MapGenerator {
             }
         }
 
-        add_monsters_to_rooms(world, &map, &rooms);
+        add_monsters_to_rooms(world, &rooms);
         let (x, y) = rooms[0].center();
         create_player_at_pos(world, x, y);
 
@@ -91,7 +91,7 @@ impl MapGenerator {
     }
 }
 
-fn add_monsters_to_rooms(world: &mut World, map: &AreaGrid, rooms: &Vec<Room>) {
+fn add_monsters_to_rooms(world: &mut World, rooms: &Vec<Room>) {
     let mut rng = rltk::RandomNumberGenerator::new();
     for (i, room) in rooms.iter().skip(1).enumerate() {
         let (x, y) = room.center();
@@ -149,8 +149,4 @@ fn create_player_at_pos(world: &mut World, player_x: i32, player_y: i32) {
             fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
         });
-}
-
-pub fn build_map(world: &mut World) {
-    let map = MapGenerator {}.new_map_rooms_and_corridors(world);
 }

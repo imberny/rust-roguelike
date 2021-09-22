@@ -3,7 +3,6 @@ use crate::actor::{
     Action, Activity, Actor,
 };
 use bevy_ecs::{prelude::*, schedule::ShouldRun};
-use rltk::console;
 
 pub fn handle_player_input(
     mut commands: Commands,
