@@ -2,7 +2,7 @@ use crate::core::types::Facing;
 
 use super::Message;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Action {
     None,
     Wait,

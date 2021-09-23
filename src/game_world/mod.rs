@@ -22,15 +22,14 @@ enum MapSystems {
 }
 
 pub fn register(ecs: &mut GameRunner) {
-    ecs.rendering
-        .add_system_set_to_stage(
-            RenderingStage::Draw,
-            SystemSet::new().with_system(apply_player_viewsheds.system()),
-        )
-        .add_system_set_to_stage(
-            TurnGameStage::PostUpdate,
-            SystemSet::new()
-                .label(MapSystems::Viewshed)
-                .with_system(update_viewsheds.system()),
-        );
+    ecs.game_logic.add_system_set_to_stage(
+        TurnGameStage::PostUpdate,
+        SystemSet::new()
+            .label(MapSystems::Viewshed)
+            .with_system(update_viewsheds.system()),
+    );
+    ecs.rendering.add_system_set_to_stage(
+        RenderingStage::Draw,
+        SystemSet::new().with_system(apply_player_viewsheds.system()),
+    );
 }

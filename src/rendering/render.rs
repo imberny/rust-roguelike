@@ -1,5 +1,6 @@
 use bevy_ecs::prelude::*;
 use rltk::{Rltk, RGB};
+use ultraviolet::Vec2;
 
 use crate::{
     actor::Actor,
@@ -48,10 +49,12 @@ fn draw_entities(world: &mut World, ctx: &mut Rltk) {
     for (pos, render, actor) in renderables.iter(&world) {
         let idx = map.xy_idx(pos.x, pos.y);
         if map.visible[idx] {
+            let weapon_position =
+                Position::from(pos.to_vec2() + actor.facing.reversed() * Vec2::new(0.0, 1.0));
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             ctx.set(
-                pos.x + actor.facing.x,
-                pos.y + actor.facing.y,
+                weapon_position.x,
+                weapon_position.y,
                 render.fg,
                 render.bg,
                 rltk::to_cp437('\\'),

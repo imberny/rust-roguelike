@@ -1,31 +1,32 @@
 use std::collections::HashSet;
 
 use fraction::Fraction;
-use rltk::Point;
 
-use crate::game_world::{
-    field_of_view::FieldOfView,
-    quadrant::{Cardinal, Quadrant, QuadrantRow, QuadrantTile},
-    AreaGrid,
+use crate::{
+    core::types::{Facing, Position},
+    game_world::{
+        field_of_view::FieldOfView,
+        quadrant::{Cardinal, Quadrant, QuadrantRow, QuadrantTile},
+        AreaGrid,
+    },
 };
 
 pub struct SymmetricShadowcaster<'a> {
     area_grid: &'a AreaGrid,
-    fov: FieldOfView,
 }
 
 impl<'a> SymmetricShadowcaster<'a> {
-    pub fn new(area_grid: &'a AreaGrid, fov: FieldOfView) -> Self {
-        SymmetricShadowcaster { area_grid, fov }
+    pub fn new(area_grid: &'a AreaGrid) -> Self {
+        SymmetricShadowcaster { area_grid }
     }
 
-    pub fn visible_positions(&self, origin: Point) -> Vec<Point> {
-        let mut visible_positions: HashSet<Point> = HashSet::new();
+    pub fn visible_positions(&self, origin: Position, fov: impl FieldOfView) -> Vec<Position> {
+        let mut visible_positions: HashSet<Position> = HashSet::new();
         visible_positions.insert(origin);
 
         for cardinal in Cardinal::iterator() {
-            let first_row = QuadrantRow::from_quadrant(Quadrant::new(cardinal, origin), self.fov);
-            visible_positions.extend(self.scan_iterative(first_row));
+            let first_row = QuadrantRow::from_quadrant(Quadrant::new(cardinal, origin));
+            visible_positions.extend(self.scan_iterative(first_row, origin, &fov));
         }
 
         visible_positions
@@ -34,15 +35,20 @@ impl<'a> SymmetricShadowcaster<'a> {
             .collect()
     }
 
-    fn scan_iterative(&self, first_row: QuadrantRow) -> HashSet<Point> {
+    fn scan_iterative(
+        &self,
+        first_row: QuadrantRow,
+        origin: Position,
+        fov: &impl FieldOfView,
+    ) -> HashSet<Position> {
         let mut rows: Vec<QuadrantRow> = vec![first_row];
 
-        let mut visible_positions: HashSet<Point> = HashSet::new();
+        let mut visible_positions: HashSet<Position> = HashSet::new();
 
         while 0 < rows.len() {
             let mut row = rows.pop().unwrap();
             let mut prev_tile: Option<QuadrantTile> = None;
-            for tile in row.tiles(self.fov) {
+            for tile in row.tiles(fov, origin) {
                 if !self.area_grid.is_point_in_bounds(tile.position) {
                     continue;
                 }
@@ -66,7 +72,7 @@ impl<'a> SymmetricShadowcaster<'a> {
         &self,
         tile: QuadrantTile,
         row: &QuadrantRow,
-        visible_positions: &mut HashSet<Point>,
+        visible_positions: &mut HashSet<Position>,
     ) -> Option<QuadrantTile> {
         if self.area_grid.is_blocking(tile.position) || row.is_symmetric(&tile) {
             visible_positions.insert(tile.position);
@@ -112,9 +118,11 @@ impl<'a> SymmetricShadowcaster<'a> {
 
 #[cfg(test)]
 mod tests {
-    use rltk::Point;
 
-    use crate::game_world::{field_of_view::FieldOfView, AreaGrid};
+    use crate::{
+        core::{constants::SOUTH, types::Position},
+        game_world::{field_of_view::*, AreaGrid},
+    };
 
     use super::SymmetricShadowcaster;
 
@@ -152,10 +160,10 @@ mod tests {
     #[test]
     fn given_a_rectangular_room_every_square_is_visible() {
         let map = square_room();
-        let fov = FieldOfView::infinite();
+        let fov = new_infinite();
 
         let visible_positions =
-            SymmetricShadowcaster::new(&map, fov).visible_positions(Point::new(1, 2));
+            SymmetricShadowcaster::new(&map).visible_positions(Position::new(1, 2), fov);
 
         assert_eq!(map.tiles.len(), visible_positions.len());
         for (position, _tile_type) in map {
@@ -166,32 +174,32 @@ mod tests {
     #[test]
     fn given_a_corridor_crossing() {
         let map = cross();
-        let fov = FieldOfView::infinite();
+        let fov = new_infinite();
 
-        let expected_positions: Vec<Point> = vec![
-            Point::new(1, 2),
-            Point::new(0, 4),
-            Point::new(1, 3),
-            Point::new(3, 4),
-            Point::new(5, 5),
-            Point::new(6, 6),
-            Point::new(1, 5),
-            Point::new(2, 5),
-            Point::new(4, 5),
-            Point::new(3, 5),
-            Point::new(2, 4),
-            Point::new(3, 3),
-            Point::new(1, 4),
-            Point::new(3, 2),
-            Point::new(0, 5),
-            Point::new(2, 2),
-            Point::new(2, 3),
-            Point::new(6, 5),
-            Point::new(4, 4),
+        let expected_positions: Vec<Position> = vec![
+            Position::new(1, 2),
+            Position::new(0, 4),
+            Position::new(1, 3),
+            Position::new(3, 4),
+            Position::new(5, 5),
+            Position::new(6, 6),
+            Position::new(1, 5),
+            Position::new(2, 5),
+            Position::new(4, 5),
+            Position::new(3, 5),
+            Position::new(2, 4),
+            Position::new(3, 3),
+            Position::new(1, 4),
+            Position::new(3, 2),
+            Position::new(0, 5),
+            Position::new(2, 2),
+            Position::new(2, 3),
+            Position::new(6, 5),
+            Position::new(4, 4),
         ];
 
         let visible_positions =
-            SymmetricShadowcaster::new(&map, fov).visible_positions(Point::new(2, 3));
+            SymmetricShadowcaster::new(&map).visible_positions(Position::new(2, 3), fov);
 
         assert_eq!(expected_positions.len(), visible_positions.len());
         for position in expected_positions {
@@ -202,32 +210,32 @@ mod tests {
     #[test]
     fn given_a_fov_of_zero_only_the_origin_is_visible() {
         let map = square_room();
-        let fov = FieldOfView::new_omni(0);
+        let fov = new_omni(0);
 
         let visible_positions =
-            SymmetricShadowcaster::new(&map, fov).visible_positions(Point::new(1, 3));
+            SymmetricShadowcaster::new(&map).visible_positions(Position::new(1, 3), fov);
 
-        assert_eq!(visible_positions, [Point::new(1, 3)]);
+        assert_eq!(visible_positions, [Position::new(1, 3)]);
     }
 
     #[test]
-    fn limited_fov() {
-        let fov = FieldOfView::new_omni(2);
+    fn curve_fov() {
+        let fov = new_quadratic(2, SOUTH, 0.5, 1.5);
 
         let map = square_room();
 
-        let expected_positions: Vec<Point> = vec![
-            Point::new(0, 0),
-            Point::new(0, 1),
-            Point::new(1, 0),
-            Point::new(1, 1),
-            Point::new(1, 2),
-            Point::new(2, 1),
-            Point::new(2, 2),
+        let expected_positions: Vec<Position> = vec![
+            Position::new(0, 0),
+            Position::new(0, 1),
+            Position::new(1, 0),
+            Position::new(1, 1),
+            Position::new(1, 2),
+            Position::new(2, 1),
+            Position::new(2, 2),
         ];
 
         let visible_positions =
-            SymmetricShadowcaster::new(&map, fov).visible_positions(Point::new(1, 1));
+            SymmetricShadowcaster::new(&map).visible_positions(Position::new(1, 1), fov);
 
         assert_eq!(expected_positions.len(), visible_positions.len());
         for position in expected_positions {

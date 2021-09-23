@@ -1,43 +1,38 @@
-use rltk::Point;
+// use crate::core::constants::facings::SOUTH;
 
-mod facing {
-    use rltk::Point;
-    use ultraviolet::vec::Vec2;
+// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// pub struct Facing {
+//     pub x: i32,
+//     pub y: i32,
+// }
 
-    use crate::core::constants::facings::SOUTH;
+pub type Facing = uv::Rotor2;
 
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct Facing {
-        pub x: i32,
-        pub y: i32,
-    }
+// impl Facing {
+//     pub const fn constant(x: i32, y: i32) -> Self {
+//         Self { x, y }
+//     }
 
-    impl Facing {
-        pub const fn constant(x: i32, y: i32) -> Self {
-            Self { x, y }
-        }
+//     pub fn to_vec2(self) -> Vec2i {
+//         Vec2i::new(self.x, self.y)
+//     }
+// }
 
-        pub fn to_vec2(self) -> Vec2 {
-            Vec2::new(self.x as f32, self.y as f32)
-        }
-    }
+// impl Default for Facing {
+//     fn default() -> Self {
+//         SOUTH
+//     }
+// }
 
-    impl Default for Facing {
-        fn default() -> Self {
-            SOUTH
-        }
-    }
-
-    impl From<Point> for Facing {
-        fn from(point: Point) -> Self {
-            Self {
-                x: point.x,
-                y: point.y,
-            }
-        }
-    }
-}
-pub use facing::Facing;
+// impl From<Vec2i> for Facing {
+//     fn from(point: Vec2i) -> Self {
+//         Self {
+//             x: point.x,
+//             y: point.y,
+//         }
+//     }
+// }
+// }
 
 mod percentage {
     const PERCENTAGE_LOWER_BOUND: f32 = 0.0;
@@ -65,5 +60,49 @@ mod percentage {
     }
 }
 pub use percentage::Percentage;
+use rltk::Point;
+use ultraviolet as uv;
 
-pub type Position = Point;
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Position {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl Position {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+
+    pub const fn constant(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+
+    pub fn to_vec2(&self) -> uv::Vec2 {
+        uv::Vec2 {
+            x: self.x as f32,
+            y: self.y as f32,
+        }
+    }
+}
+
+impl From<uv::IVec2> for Position {
+    fn from(vec: uv::IVec2) -> Self {
+        Self { x: vec.x, y: vec.y }
+    }
+}
+
+impl From<uv::Vec2> for Position {
+    fn from(vec: uv::Vec2) -> Self {
+        Self {
+            x: vec.x.round() as i32,
+            y: vec.y.round() as i32,
+        }
+    }
+}
+
+impl Into<Point> for Position {
+    fn into(self) -> Point {
+        Point::new(self.x, self.y)
+    }
+}

@@ -65,7 +65,7 @@ mod tests {
             player::{Player, PlayerInput},
             Action, Activity, ActorBundle,
         },
-        core::constants::facings::{NORTH, SOUTH},
+        core::constants::*,
     };
 
     use super::{handle_player_input, is_input_valid};

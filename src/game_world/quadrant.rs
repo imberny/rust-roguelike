@@ -1,5 +1,6 @@
 use fraction::{Fraction, ToPrimitive};
-use rltk::Point;
+
+use crate::core::types::Position;
 
 use super::field_of_view::FieldOfView;
 
@@ -27,20 +28,20 @@ impl Cardinal {
 #[derive(Debug, Clone, Copy)]
 pub struct Quadrant {
     cardinal: Cardinal,
-    origin: Point,
+    origin: Position,
 }
 
 impl Quadrant {
-    pub fn new(cardinal: Cardinal, origin: Point) -> Self {
+    pub fn new(cardinal: Cardinal, origin: Position) -> Self {
         Self { cardinal, origin }
     }
 
-    fn transform(&self, point: Point) -> Point {
+    fn transform(&self, point: Position) -> Position {
         match self.cardinal {
-            Cardinal::North => Point::new(self.origin.x + point.y, self.origin.y - point.x),
-            Cardinal::East => Point::new(self.origin.x + point.x, self.origin.y + point.y),
-            Cardinal::South => Point::new(self.origin.x + point.y, self.origin.y + point.x),
-            Cardinal::West => Point::new(self.origin.x - point.x, self.origin.y + point.y),
+            Cardinal::North => Position::new(self.origin.x + point.y, self.origin.y - point.x),
+            Cardinal::East => Position::new(self.origin.x + point.x, self.origin.y + point.y),
+            Cardinal::South => Position::new(self.origin.x + point.y, self.origin.y + point.x),
+            Cardinal::West => Position::new(self.origin.x - point.x, self.origin.y + point.y),
         }
     }
 }
@@ -49,17 +50,15 @@ impl Quadrant {
 pub struct QuadrantRow {
     quadrant: Quadrant,
     depth: u16,
-    fov: FieldOfView,
     pub start_slope: Fraction,
     pub end_slope: Fraction,
 }
 
 impl QuadrantRow {
-    pub fn from_quadrant(quadrant: Quadrant, fov: FieldOfView) -> Self {
+    pub fn from_quadrant(quadrant: Quadrant) -> Self {
         Self {
             quadrant,
             depth: 1,
-            fov,
             start_slope: Fraction::new_neg(1u16, 1u32),
             end_slope: Fraction::new(1u16, 1u32),
         }
@@ -71,19 +70,21 @@ impl QuadrantRow {
         next
     }
 
-    pub fn tiles(&self, fov: FieldOfView) -> Vec<QuadrantTile> {
+    pub fn tiles(&self, fov: &impl FieldOfView, from: Position) -> Vec<QuadrantTile> {
         let min_col = self.round_ties_up(Fraction::new(self.depth, 1u32));
         let max_col = self.round_ties_down(Fraction::new(self.depth, 1u32));
         let mut tiles: Vec<QuadrantTile> = Vec::new();
         for column in min_col.round().to_i32().unwrap()..=max_col.round().to_i32().unwrap() {
-            let relative_position = Point::new(self.depth as i32, column);
-            let global_position = self.quadrant.transform(relative_position);
-
-            tiles.push(QuadrantTile {
-                row_depth: self.depth,
-                column: column as u32,
-                position: global_position,
-            });
+            let local_quadrant_position = Position::new(self.depth as i32, column);
+            let position = self.quadrant.transform(local_quadrant_position);
+            let delta = Position::new(position.x - from.x, position.y - from.y);
+            if fov.sees(delta) {
+                tiles.push(QuadrantTile {
+                    row_depth: self.depth,
+                    column: column as u32,
+                    position,
+                });
+            }
         }
         tiles
     }
@@ -125,5 +126,5 @@ impl QuadrantRow {
 pub struct QuadrantTile {
     pub row_depth: u16,
     pub column: u32,
-    pub position: Point,
+    pub position: Position,
 }

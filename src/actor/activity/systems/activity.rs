@@ -1,21 +1,22 @@
-use std::cmp::{max, min};
-
 use bevy_ecs::prelude::*;
-use rltk::Point;
 
 use crate::{
     actor::{Action, Activity, Actor},
     core::types::{Facing, Position},
     core::TimeProgressionEvent,
-    game_world::{AreaGrid, TileType, Viewshed},
+    game_world::{AreaGrid, Viewshed},
 };
 
-fn do_move(pos: &mut Point, viewshed: &mut Viewshed, movement_delta: &Facing, map: &Res<AreaGrid>) {
-    let destination_idx = map.xy_idx(pos.x + movement_delta.x, pos.y + movement_delta.y);
-    let destination_tile = map.tiles[destination_idx];
-    if destination_tile != TileType::Wall {
-        pos.x = min(79, max(0, pos.x + movement_delta.x));
-        pos.y = min(49, max(0, pos.y + movement_delta.y));
+fn do_move(pos: &mut Position, viewshed: &mut Viewshed, direction: Facing, map: &Res<AreaGrid>) {
+    let delta = Position::new(0, 1);
+    let mut result_position =
+        Position::from(direction.reversed() * delta.to_vec2() + pos.to_vec2());
+    result_position.x = result_position.x.clamp(0, 79);
+    result_position.y = result_position.y.clamp(0, 49);
+
+    if !map.is_blocking(result_position) {
+        pos.x = result_position.x;
+        pos.y = result_position.y;
 
         viewshed.dirty = true;
     }
@@ -43,9 +44,12 @@ pub fn process_activities(
             // console::log("Doing something");
             match activity.action {
                 Action::Move(direction) => {
-                    do_move(&mut pos, &mut viewshed, &direction, &map);
+                    do_move(&mut pos, &mut viewshed, direction, &map);
                 }
-                Action::Face(direction) => actor.facing = direction,
+                Action::Face(direction) => {
+                    actor.facing = direction;
+                    viewshed.dirty = true
+                }
                 // Action::Say(message) => match message.kind {
                 //     MessageType::Insult => console::log("*!!$%$#&^%@"),
                 //     MessageType::Threaten => console::log("Shouldn't have come here"),
@@ -64,7 +68,7 @@ mod tests {
 
     use crate::{
         actor::{Action, Activity, ActorBundle},
-        core::{constants::facings, types::Position},
+        core::{constants::SOUTH, types::Position},
         game_world::{AreaGrid, TileType},
     };
 
@@ -104,7 +108,7 @@ mod tests {
             .spawn()
             .insert_bundle(ActorBundle::default())
             .insert(Activity {
-                action: Action::Move(facings::SOUTH),
+                action: Action::Move(SOUTH),
                 ..Default::default()
             })
             .id();

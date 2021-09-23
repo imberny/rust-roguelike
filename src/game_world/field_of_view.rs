@@ -1,45 +1,74 @@
 use std::f32::consts::PI;
 
-use rltk::Point;
+use ultraviolet as uv;
 
-use crate::core::types::Facing;
+use crate::core::types::{Facing, Position};
 
-#[derive(Debug, Clone, Copy)]
-pub struct FieldOfView {
-    range: u32,
-    is_directed: bool,
+const ORIGIN: Position = Position::constant(0, 0);
+
+pub trait FieldOfView {
+    fn sees(&self, delta_position: Position) -> bool;
 }
 
-impl FieldOfView {
-    pub fn infinite() -> Self {
-        Self {
-            range: u32::MAX,
-            is_directed: false,
-        }
-    }
+#[derive(Debug, Clone, Copy)]
+struct ConeFOV {
+    range: u32,
+    angle: f32,
+    facing: Facing,
+}
 
-    pub fn new_omni(range: u32) -> Self {
-        Self {
-            range,
-            is_directed: false,
-        }
-    }
+#[derive(Debug, Clone, Copy)]
+struct QuadraticFOV {
+    range: u32,
+    facing: Facing,
+    a: f32,
+    b: f32,
+}
 
-    pub fn new_directed(range: u32) -> Self {
-        Self {
-            range,
-            is_directed: true,
-        }
-    }
+#[derive(Debug, Clone, Copy)]
+struct OmniFOV {
+    range: u32,
+}
 
-    pub fn sees_around(&self, from: Point, to: Point) -> bool {
-        rltk::DistanceAlg::Chebyshev.distance2d(from, to) <= self.range as f32
-    }
+pub fn new_infinite() -> impl FieldOfView {
+    OmniFOV { range: u32::MAX }
+}
 
-    pub fn sees_towards(&self, from: Point, to: Point, towards: Facing) -> bool {
-        let direction = (to - from).to_vec2();
-        let distance = rltk::DistanceAlg::Chebyshev.distance2d(from, to);
-        let angle = direction.normalized().dot(towards.to_vec2()).acos();
+pub fn new_omni(range: u32) -> impl FieldOfView {
+    OmniFOV { range }
+}
+
+pub fn new_cone(range: u32, angle: f32, facing: Facing) -> impl FieldOfView {
+    ConeFOV {
+        range,
+        angle,
+        facing,
+    }
+}
+
+pub fn new_quadratic(range: u32, facing: Facing, a: f32, b: f32) -> impl FieldOfView {
+    QuadraticFOV {
+        range,
+        facing,
+        a,
+        b,
+    }
+}
+
+impl FieldOfView for OmniFOV {
+    fn sees(&self, to: Position) -> bool {
+        rltk::DistanceAlg::Chebyshev.distance2d(ORIGIN.into(), to.into()) <= self.range as f32
+    }
+}
+
+impl FieldOfView for ConeFOV {
+    fn sees(&self, to: Position) -> bool {
+        let direction = to.to_vec2() - ORIGIN.to_vec2();
+        let distance = rltk::DistanceAlg::Chebyshev.distance2d(ORIGIN.into(), to.into());
+        let angle = direction
+            .normalized()
+            .dot(self.facing * uv::Vec2::new(0.0, 1.0))
+            .acos();
         if angle.is_nan() {
             return true;
         }
@@ -47,86 +76,230 @@ impl FieldOfView {
     }
 }
 
+impl FieldOfView for QuadraticFOV {
+    fn sees(&self, to: Position) -> bool {
+        let distance = rltk::DistanceAlg::Chebyshev.distance2d(ORIGIN.into(), to.into()) as u32;
+        let to_vec2 = to.to_vec2();
+        let target = self.facing * to_vec2;
+        let curve_line = (target.x * self.a).powi(2) + self.b;
+
+        // let angle = to_vec2
+        //     .normalized()
+        //     .dot(facing.reversed() * Vec2::new(0.0, 1.0))
+        //     .acos();
+        // if angle.is_nan() {
+        //     return to_vec2.eq(&Vec2::new(0.0, 0.0));
+        // }
+
+        // (angle.abs() <= PI / 4.0 || curve_line < target.y)
+        curve_line < target.y && distance <= self.range
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use rltk::Point;
 
-    use crate::core::constants::facings;
+    use std::f32::consts::PI;
 
-    use super::FieldOfView;
+    use crate::{
+        core::{constants::*, types::Position},
+        game_world::field_of_view::FieldOfView,
+    };
+
+    use super::{new_cone, new_infinite, new_omni, new_quadratic};
 
     #[test]
     fn infinite_fov() {
-        let fov = FieldOfView::infinite();
+        let fov = new_infinite();
 
-        let origin = Point::new(0, 0);
+        let origin = Position::new(0, 0);
         let targets = vec![
-            Point::new(0, -100_000),
-            Point::new(100_000, 0),
-            Point::new(0, 100_000),
-            Point::new(-100_000, 0),
-            Point::new(0, 0),
-            Point::new(100_000, 100_000),
+            Position::new(0, -100_000),
+            Position::new(100_000, 0),
+            Position::new(0, 100_000),
+            Position::new(-100_000, 0),
+            Position::new(0, 0),
+            Position::new(100_000, 100_000),
         ];
 
         for target in targets {
-            let is_seen = fov.sees_around(origin, target);
+            let is_seen = fov.sees(target);
             assert!(is_seen);
         }
     }
 
     #[test]
     fn tiny_fov() {
-        let fov = FieldOfView::new_omni(1);
+        let fov = new_omni(1);
 
-        let origin = Point::new(0, 0);
+        let origin = Position::new(0, 0);
         let far_targets = vec![
-            Point::new(0, -100_000),
-            Point::new(100_000, 0),
-            Point::new(0, 100_000),
-            Point::new(-100_000, 0),
-            Point::new(100_000, 100_000),
+            Position::new(0, -100_000),
+            Position::new(100_000, 0),
+            Position::new(0, 100_000),
+            Position::new(-100_000, 0),
+            Position::new(100_000, 100_000),
         ];
 
-        let near_targets = vec![Point::new(0, 0), Point::new(1, 1), Point::new(-1, -1)];
+        let near_targets = vec![
+            Position::new(0, 0),
+            Position::new(1, 1),
+            Position::new(-1, -1),
+        ];
 
         for target in far_targets {
-            let is_seen = fov.sees_around(origin, target);
+            let is_seen = fov.sees(target);
             assert!(!is_seen);
         }
 
         for target in near_targets {
-            let is_seen = fov.sees_around(origin, target);
+            let is_seen = fov.sees(target);
             assert!(is_seen);
         }
     }
 
     #[test]
     fn directed_fov() {
-        let fov = FieldOfView::new_directed(5);
-        let origin = Point::new(0, 0);
-        let facing = facings::NORTH;
+        let fov = new_cone(5, PI / 2.0, NORTH);
+        let origin = Position::new(0, 0);
 
-        let north_targets = vec![Point::new(0, 0), Point::new(1, -1), Point::new(0, -3)];
-        for target in north_targets {
-            let is_seen = fov.sees_towards(origin, target, facing);
-            assert!(is_seen);
-        }
-
-        let targets_along_diagonal_nw = vec![
-            Point::new(-1, -1),
-            Point::new(-2, -2),
-            Point::new(-3, -3),
-            Point::new(-4, -4),
-            Point::new(-5, -5),
+        let north_targets = vec![
+            Position::new(0, 0),
+            Position::new(1, -1),
+            Position::new(0, -3),
         ];
-
-        for target in targets_along_diagonal_nw {
-            let is_seen = fov.sees_towards(origin, target, facing);
+        for target in north_targets {
+            let is_seen = fov.sees(target);
             assert!(is_seen);
         }
 
-        let is_seen = fov.sees_towards(origin, Point::new(-6, -6), facing);
+        for target in targets_along_diagonal_nw() {
+            let is_seen = fov.sees(target);
+            assert!(is_seen);
+        }
+
+        let is_seen = fov.sees(Position::new(-6, -6));
         assert!(!is_seen);
+    }
+
+    #[test]
+    fn view_curve() {
+        let fov = new_quadratic(5, NORTH, 0.5, -1.5);
+
+        let north_targets = vec![
+            Position::new(0, 0),
+            Position::new(1, -1),
+            Position::new(0, -3),
+        ];
+        for target in north_targets {
+            let is_seen = fov.sees(target);
+            assert!(is_seen);
+        }
+
+        for target in targets_along_diagonal_nw() {
+            let is_seen = fov.sees(target);
+            assert!(is_seen);
+        }
+
+        for target in targets_behind_facing_north() {
+            let is_seen = fov.sees(target);
+            assert!(is_seen);
+        }
+
+        for target in targets_side_facing_north() {
+            let is_seen = fov.sees(target);
+            assert!(is_seen);
+        }
+    }
+
+    #[test]
+    fn view_curve_east() {
+        let fov = new_quadratic(5, EAST, 0.5, -1.5);
+
+        for target in targets_facing_east() {
+            let is_seen = fov.sees(target);
+            assert!(is_seen);
+        }
+    }
+
+    #[test]
+    fn view_curve_west() {
+        let fov = new_quadratic(5, WEST, 0.5, -1.5);
+
+        for target in targets_facing_west() {
+            let is_seen = fov.sees(target);
+            assert!(is_seen);
+        }
+
+        for target in targets_facing_west_hidden() {
+            let is_seen = fov.sees(target);
+            assert!(!is_seen);
+        }
+    }
+
+    fn targets_behind_facing_north() -> Vec<Position> {
+        vec![
+            Position::new(-1, 1),
+            Position::new(0, 1),
+            Position::new(1, 1),
+        ]
+    }
+
+    fn targets_side_facing_north() -> Vec<Position> {
+        vec![
+            Position::new(1, 0),
+            Position::new(-1, 0),
+            Position::new(2, 0),
+            Position::new(-2, 0),
+            Position::new(-2, -1),
+            Position::new(2, -1),
+        ]
+    }
+
+    fn targets_facing_east() -> Vec<Position> {
+        vec![
+            Position::new(1, 0),
+            Position::new(1, 1),
+            Position::new(1, -1),
+            Position::new(2, 2),
+            Position::new(2, -2),
+            Position::new(3, -3),
+        ]
+    }
+
+    fn targets_facing_west() -> Vec<Position> {
+        vec![
+            Position::new(1, -1),
+            Position::new(1, 0),
+            Position::new(1, 1),
+            Position::new(0, 1),
+            Position::new(0, 2),
+            Position::new(-2, -2),
+            Position::new(-2, -1),
+            Position::new(-2, 0),
+            Position::new(-2, 1),
+            Position::new(-2, 2),
+        ]
+    }
+
+    fn targets_facing_west_hidden() -> Vec<Position> {
+        vec![
+            Position::new(1, -2),
+            Position::new(2, -1),
+            Position::new(2, 0),
+            Position::new(2, 1),
+            Position::new(1, 2),
+            Position::new(-6, 0),
+        ]
+    }
+
+    fn targets_along_diagonal_nw() -> Vec<Position> {
+        vec![
+            Position::new(-1, -1),
+            Position::new(-2, -2),
+            Position::new(-3, -3),
+            Position::new(-4, -4),
+            Position::new(-5, -5),
+        ]
     }
 }

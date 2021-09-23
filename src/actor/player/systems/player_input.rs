@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::{
     actor::{player::PlayerInput, Action},
-    core::constants::facings::*,
+    core::constants::*,
 };
 
 struct PlayerSettings {

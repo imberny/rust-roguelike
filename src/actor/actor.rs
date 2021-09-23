@@ -1,5 +1,8 @@
 use crate::{
-    core::types::{Facing, Percentage, Position},
+    core::{
+        constants::*,
+        types::{Facing, Percentage, Position},
+    },
     game_world::Viewshed,
 };
 use bevy_ecs::bundle::Bundle;
@@ -29,11 +32,21 @@ pub struct CharacterProperties {
     pub energy: i32, // Available time units
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Actor {
     pub sheet: CharacterSheet,
     pub properties: CharacterProperties,
     pub facing: Facing,
+}
+
+impl Default for Actor {
+    fn default() -> Self {
+        Self {
+            sheet: Default::default(),
+            properties: Default::default(),
+            facing: SOUTH,
+        }
+    }
 }
 
 pub type Name = String;
@@ -51,7 +64,7 @@ impl Default for ActorBundle {
         Self {
             name: "Missing name!".to_string(),
             actor: Default::default(),
-            position: Position::zero(),
+            position: Position::default(),
             viewshed: Default::default(),
         }
     }
