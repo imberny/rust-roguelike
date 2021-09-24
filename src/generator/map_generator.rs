@@ -6,7 +6,7 @@ use rltk::{RandomNumberGenerator, RGB};
 use crate::{
     actors::{Action, Activity, ActorBundle, Player},
     ai::Monster,
-    core::types::GridPos,
+    core::types::{GridPos, Int},
     game_world::{AreaGrid, TileType, Viewshed},
     rendering::Renderable,
 };
@@ -25,14 +25,14 @@ impl MapGenerator {
         }
     }
 
-    fn apply_horizontal_tunnel(&self, map: &mut AreaGrid, x1: i32, x2: i32, y: i32) {
+    fn apply_horizontal_tunnel(&self, map: &mut AreaGrid, x1: Int, x2: Int, y: Int) {
         for x in min(x1, x2)..=max(x1, x2) {
             let idx = map.xy_idx(x, y);
             map.tiles[idx] = TileType::Floor;
         }
     }
 
-    fn apply_vertical_tunnel(&self, map: &mut AreaGrid, y1: i32, y2: i32, x: i32) {
+    fn apply_vertical_tunnel(&self, map: &mut AreaGrid, y1: Int, y2: Int, x: Int) {
         for y in min(y1, y2)..=max(y1, y2) {
             let idx = map.xy_idx(x, y);
             map.tiles[idx] = TileType::Floor;
@@ -49,9 +49,9 @@ impl MapGenerator {
         };
         let mut rooms: Vec<Room> = Vec::new();
 
-        const MAX_ROOMS: i32 = 30;
-        const MIN_SIZE: i32 = 6;
-        const MAX_SIZE: i32 = 10;
+        const MAX_ROOMS: Int = 30;
+        const MIN_SIZE: Int = 6;
+        const MAX_SIZE: Int = 10;
 
         let mut rng = RandomNumberGenerator::new();
 
@@ -127,7 +127,7 @@ fn add_monsters_to_rooms(world: &mut World, rooms: &[Room]) {
     }
 }
 
-fn create_player_at_pos(world: &mut World, player_x: i32, player_y: i32) {
+fn create_player_at_pos(world: &mut World, player_x: Int, player_y: Int) {
     world
         .spawn()
         .insert(Player)

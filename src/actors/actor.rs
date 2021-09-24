@@ -1,19 +1,19 @@
 use crate::{
     core::{
         constants::*,
-        types::{Facing, GridPos, Percentage},
+        types::{Facing, GridPos, Int, Percentage},
     },
     game_world::Viewshed,
 };
 use bevy_ecs::bundle::Bundle;
 
-const BASE_HEALTH: i32 = 100;
-const BASE_SPEED: i32 = 100;
+const BASE_HEALTH: Int = 100;
+const BASE_SPEED: Int = 100;
 
 #[derive(Debug)]
 pub struct CharacterSheet {
-    pub health: i32, // maybe derive health from attributes
-    pub speed: i32,
+    pub health: Int, // maybe derive health from attributes
+    pub speed: Int,
     // attributes...
 }
 
@@ -29,7 +29,7 @@ impl Default for CharacterSheet {
 #[derive(Debug, Default)]
 pub struct CharacterProperties {
     pub health: Percentage,
-    pub energy: i32, // Available time units
+    pub energy: Int, // Available time units
 }
 
 #[derive(Debug)]

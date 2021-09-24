@@ -31,7 +31,7 @@ impl<'a> SymmetricShadowcaster<'a> {
 
         visible_positions
             .into_iter()
-            // .filter(|point| rltk::DistanceAlg::Chebyshev.distance2d(origin, *point) <= range as f32)
+            // .filter(|point| rltk::DistanceAlg::Chebyshev.distance2d(origin, *point) <= range as Real)
             .collect()
     }
 
@@ -120,7 +120,10 @@ impl<'a> SymmetricShadowcaster<'a> {
 mod tests {
 
     use crate::{
-        core::{constants::SOUTH, types::GridPos},
+        core::{
+            constants::SOUTH,
+            types::{GridPos, Int},
+        },
         game_world::{field_of_view::*, AreaGrid, TileType},
     };
 
@@ -239,7 +242,7 @@ mod tests {
                 }
             }
         }
-        map.width = (map.tiles.len() / (map.height as usize)) as i32;
+        map.width = map.tiles.len() as Int / map.height;
 
         map
     }

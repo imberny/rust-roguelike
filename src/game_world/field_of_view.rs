@@ -1,6 +1,5 @@
-use std::f32::consts::PI;
-
-use crate::core::types::{Facing, GridPos, RealPos};
+use crate::core::constants::PI;
+use crate::core::types::{Facing, GridPos, Int, Real, RealPos};
 use crate::util::algorithms::distance2d_chebyshev;
 
 const ORIGIN: GridPos = GridPos { x: 0, y: 0 };
@@ -11,36 +10,36 @@ pub trait FieldOfView {
 
 #[derive(Debug, Clone, Copy)]
 struct ConeFOV {
-    range: i32,
-    // angle: f32,
+    range: Int,
+    // angle: Real,
     facing: Facing,
 }
 
 #[derive(Debug, Clone, Copy)]
 struct QuadraticFOV {
-    range: i32,
+    range: Int,
     facing: Facing,
-    a: f32,
-    b: f32,
+    a: Real,
+    b: Real,
 }
 
 #[derive(Debug, Clone, Copy)]
 struct OmniFOV {
-    range: i32,
+    range: Int,
 }
 
 #[allow(dead_code)]
 pub fn new_infinite() -> impl FieldOfView {
-    OmniFOV { range: i32::MAX }
+    OmniFOV { range: Int::MAX }
 }
 
 #[allow(dead_code)]
-pub fn new_omni(range: i32) -> impl FieldOfView {
+pub fn new_omni(range: Int) -> impl FieldOfView {
     OmniFOV { range: range.abs() }
 }
 
 #[allow(dead_code)]
-pub fn new_cone(range: i32, _angle: f32, facing: Facing) -> impl FieldOfView {
+pub fn new_cone(range: Int, _angle: Real, facing: Facing) -> impl FieldOfView {
     ConeFOV {
         range,
         // angle,
@@ -48,7 +47,7 @@ pub fn new_cone(range: i32, _angle: f32, facing: Facing) -> impl FieldOfView {
     }
 }
 
-pub fn new_quadratic(range: i32, facing: Facing, a: f32, b: f32) -> impl FieldOfView {
+pub fn new_quadratic(range: Int, facing: Facing, a: Real, b: Real) -> impl FieldOfView {
     QuadraticFOV {
         range,
         facing,
@@ -100,8 +99,6 @@ impl FieldOfView for QuadraticFOV {
 
 #[cfg(test)]
 mod tests {
-
-    use std::f32::consts::PI;
 
     use crate::{
         core::{constants::*, types::GridPos},

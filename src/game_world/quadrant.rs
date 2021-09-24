@@ -1,6 +1,9 @@
-use fraction::{Fraction, ToPrimitive};
+use fraction::Fraction;
 
-use crate::core::types::GridPos;
+use crate::{
+    core::types::{GridPos, Int},
+    util::math::RealToInt,
+};
 
 use super::field_of_view::FieldOfView;
 
@@ -74,8 +77,8 @@ impl QuadrantRow {
         let min_col = self.round_ties_up(Fraction::new(self.depth, 1u32));
         let max_col = self.round_ties_down(Fraction::new(self.depth, 1u32));
         let mut tiles: Vec<QuadrantTile> = Vec::new();
-        for column in min_col.round().to_i32().unwrap()..=max_col.round().to_i32().unwrap() {
-            let local_quadrant_position = GridPos::new(self.depth as i32, column);
+        for column in min_col.round().int()..=max_col.round().int() {
+            let local_quadrant_position = GridPos::new(self.depth as Int, column);
             let position = self.quadrant.transform(local_quadrant_position);
             let delta = GridPos::new(position.x - from.x, position.y - from.y);
             if fov.sees(delta) {
@@ -94,12 +97,12 @@ impl QuadrantRow {
         let depth_fraction = Fraction::new(self.depth, 1u32);
 
         let start_slope = depth_fraction * self.start_slope;
-        let start_slope_val = (start_slope.round()).to_i32().unwrap();
+        let start_slope_val = start_slope.int();
 
         let end_slope = depth_fraction * self.end_slope;
-        let end_slope_val = (end_slope.round()).to_i32().unwrap();
+        let end_slope_val = end_slope.int();
 
-        col as i32 + 1 >= start_slope_val && col as i32 - 1 <= end_slope_val
+        col as Int + 1 >= start_slope_val && col as Int - 1 <= end_slope_val
     }
 
     fn round_ties_up(&self, n: Fraction) -> Fraction {

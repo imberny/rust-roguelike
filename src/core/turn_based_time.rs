@@ -2,13 +2,15 @@ use crate::actors::Activity;
 use bevy_ecs::prelude::*;
 use std::cmp::Ordering;
 
+use super::types::Increment;
+
 pub struct TimeProgressionEvent {
-    pub delta_time: i32,
+    pub delta_time: Increment,
 }
 
 #[derive(Debug, Default)]
 pub struct TurnBasedTime {
-    pub time: i32,
+    pub time: Increment,
 }
 
 fn order_by_time_left<'r, 's>(first: &'r &Activity, second: &'s &Activity) -> Ordering {

@@ -1,9 +1,9 @@
-use crate::actors::Action;
+use crate::{actors::Action, core::types::Int};
 
 #[derive(Default)]
 pub struct PlayerInput {
     pub action: Action,
-    pub cursor_pos: (i32, i32),
+    pub cursor_pos: (Int, Int),
     pub left_click: bool,
     pub is_strafing: bool,
     pub skew_move: bool,

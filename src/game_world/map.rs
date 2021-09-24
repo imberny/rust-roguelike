@@ -1,6 +1,6 @@
 use rltk::{Algorithm2D, BaseMap, Point};
 
-use crate::core::types::GridPos;
+use crate::core::types::{GridPos, Int};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum TileType {
@@ -16,22 +16,22 @@ pub enum TileType {
 pub struct AreaGrid {
     pub tiles: Vec<TileType>,
     // pub contents: Vec<Vec>, // items, actors, ...
-    pub width: i32,
-    pub height: i32,
+    pub width: Int,
+    pub height: Int,
     pub revealed: Vec<bool>,
     pub visible: Vec<bool>,
 }
 
 impl AreaGrid {
-    pub fn xy_idx(&self, x: i32, y: i32) -> usize {
+    pub fn xy_idx(&self, x: Int, y: Int) -> usize {
         ((y * self.width) + x) as usize
     }
 
-    pub fn idx_xy(&self, idx: usize) -> (i32, i32) {
-        (idx as i32 % self.width, idx as i32 / self.width)
+    pub fn idx_xy(&self, idx: usize) -> (Int, Int) {
+        (idx as Int % self.width, idx as Int / self.width)
     }
 
-    pub fn is_in_bounds(&self, x: i32, y: i32) -> bool {
+    pub fn is_in_bounds(&self, x: Int, y: Int) -> bool {
         x >= 0 && x < self.width && y >= 0 && y < self.height
     }
 
@@ -45,7 +45,7 @@ impl AreaGrid {
     }
 
     pub fn index_to_point(&self, index: usize) -> GridPos {
-        GridPos::new(index as i32 % self.width, index as i32 / self.width)
+        GridPos::new(index as Int % self.width, index as Int / self.width)
     }
 
     pub fn is_blocking(&self, position: GridPos) -> bool {

@@ -1,14 +1,14 @@
-use crate::core::types::GridPos;
+use crate::core::types::{GridPos, Int};
 
 #[derive(Debug, Default)]
 pub struct Viewshed {
     pub visible_tiles: Vec<GridPos>,
-    pub range: i32,
+    pub range: Int,
     pub dirty: bool,
 }
 
 impl Viewshed {
-    pub fn with_range(range: i32) -> Self {
+    pub fn with_range(range: Int) -> Self {
         Self {
             range,
             dirty: true,
