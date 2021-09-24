@@ -54,31 +54,6 @@ impl AreaGrid {
             TileType::Floor => false,
         }
     }
-
-    pub fn from_ascii(ascii_map: &str) -> Self {
-        let mut map = Self {
-            tiles: Vec::new(),
-            width: 0,
-            height: 0,
-            revealed: Vec::new(),
-            visible: Vec::new(),
-        };
-
-        let rows = ascii_map.split('\n');
-        for row in rows {
-            map.height += 1;
-            for tile in row.chars() {
-                match tile {
-                    '.' => map.tiles.push(TileType::Floor),
-                    '#' => map.tiles.push(TileType::Wall),
-                    _ => panic!("Unrecognized map tile: {:?}", tile),
-                }
-            }
-        }
-        map.width = (map.tiles.len() / (map.height as usize)) as i32;
-
-        map
-    }
 }
 
 impl IntoIterator for AreaGrid {

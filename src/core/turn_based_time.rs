@@ -1,4 +1,4 @@
-use crate::actor::Activity;
+use crate::actors::Activity;
 use bevy_ecs::prelude::*;
 use std::cmp::Ordering;
 
@@ -11,15 +11,8 @@ pub struct TurnBasedTime {
     pub time: i32,
 }
 
-fn order_by_time_left<'r, 's>(activity1: &'r &Activity, activity2: &'s &Activity) -> Ordering {
-    let delta = activity1.time_to_complete - activity2.time_to_complete;
-    if 0 > delta {
-        Ordering::Less
-    } else if 0 < delta {
-        Ordering::Greater
-    } else {
-        Ordering::Equal
-    }
+fn order_by_time_left<'r, 's>(first: &'r &Activity, second: &'s &Activity) -> Ordering {
+    first.time_to_complete.cmp(&second.time_to_complete)
 }
 
 pub fn advance_time(

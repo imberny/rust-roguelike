@@ -1,7 +1,4 @@
-use crate::actor::{
-    player::{Player, PlayerInput},
-    Action, Activity, Actor,
-};
+use crate::actors::{input::PlayerInput, Action, Activity, Actor, Player};
 use bevy_ecs::{prelude::*, schedule::ShouldRun};
 
 pub fn handle_player_input(
@@ -61,10 +58,7 @@ mod tests {
     use bevy_ecs::prelude::*;
 
     use crate::{
-        actor::{
-            player::{Player, PlayerInput},
-            Action, Activity, ActorBundle,
-        },
+        actors::{input::PlayerInput, Action, Activity, ActorBundle, Player},
         core::constants::*,
     };
 

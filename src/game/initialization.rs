@@ -1,10 +1,7 @@
 use crate::{
-    actor::{
+    actors::{
         self,
-        player::{
-            self,
-            systems::{is_player_busy, is_player_waiting_for_input},
-        },
+        systems::{is_player_busy, is_player_waiting_for_input},
     },
     ai,
     core::*,
@@ -93,8 +90,7 @@ fn create_render_schedule() -> Schedule {
 }
 
 fn register_modules(ecs: &mut GameRunner) {
-    actor::register(ecs);
+    actors::register(ecs);
     ai::register(ecs);
-    player::register(ecs);
     game_world::register(ecs);
 }

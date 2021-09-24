@@ -78,7 +78,7 @@ impl Position {
         Self { x, y }
     }
 
-    pub fn to_vec2(&self) -> uv::Vec2 {
+    pub fn as_vec2(&self) -> uv::Vec2 {
         uv::Vec2 {
             x: self.x as f32,
             y: self.y as f32,
@@ -98,6 +98,12 @@ impl From<uv::Vec2> for Position {
             x: vec.x.round() as i32,
             y: vec.y.round() as i32,
         }
+    }
+}
+
+impl From<Point> for Position {
+    fn from(point: Point) -> Self {
+        Self::new(point.x, point.y)
     }
 }
 

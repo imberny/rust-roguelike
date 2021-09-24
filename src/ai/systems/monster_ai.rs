@@ -1,7 +1,7 @@
 use bevy_ecs::prelude::*;
 
 use crate::{
-    actor::{player::Player, Action, Activity, Message, MessageType},
+    actors::{Action, Activity, Message, MessageType, Player},
     ai::Monster,
     core::types::Position,
     game_world::Viewshed,

@@ -1,5 +1,5 @@
 use crate::{
-    actor::player::Player,
+    actors::Player,
     game_world::{AreaGrid, Viewshed},
 };
 use bevy_ecs::prelude::{Query, ResMut, With};

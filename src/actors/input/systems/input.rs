@@ -3,7 +3,7 @@ use rltk::{Rltk, VirtualKeyCode};
 use std::collections::HashMap;
 
 use crate::{
-    actor::{player::PlayerInput, Action},
+    actors::{input::PlayerInput, Action},
     core::constants::*,
 };
 

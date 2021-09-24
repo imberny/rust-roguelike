@@ -1,7 +1,7 @@
 use bevy_ecs::prelude::*;
 
 use crate::{
-    actor::Actor,
+    actors::Actor,
     core::types::Position,
     game_world::{field_of_view::new_quadratic, AreaGrid, Viewshed},
 };

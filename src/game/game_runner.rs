@@ -4,7 +4,7 @@ use bevy_ecs::{
 };
 use rltk::{GameState, Rltk};
 
-use crate::{actor::player::systems::poll_input, game::init_game, rendering::render};
+use crate::{actors::input::systems::poll_input, game::init_game, rendering::render};
 
 pub struct GameRunner {
     pub world: World,

@@ -1,6 +1,6 @@
 use game::run_game;
 
-mod actor;
+mod actors;
 mod ai;
 mod core;
 mod game;

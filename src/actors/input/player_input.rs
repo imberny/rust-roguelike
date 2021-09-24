@@ -1,4 +1,4 @@
-use crate::actor::Action;
+use crate::actors::Action;
 
 #[derive(Default)]
 pub struct PlayerInput {
@@ -12,9 +12,6 @@ pub struct PlayerInput {
 
 impl PlayerInput {
     pub fn is_valid(&self) -> bool {
-        match self.action {
-            Action::None => false,
-            _ => true,
-        }
+        !matches!(self.action, Action::None)
     }
 }

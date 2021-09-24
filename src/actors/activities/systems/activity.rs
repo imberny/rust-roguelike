@@ -1,7 +1,7 @@
 use bevy_ecs::prelude::*;
 
 use crate::{
-    actor::{Action, Activity, Actor},
+    actors::{Action, Activity, Actor},
     core::types::{Facing, Position},
     core::TimeProgressionEvent,
     game_world::{AreaGrid, Viewshed},
@@ -10,7 +10,7 @@ use crate::{
 fn do_move(pos: &mut Position, viewshed: &mut Viewshed, direction: Facing, map: &Res<AreaGrid>) {
     let delta = Position::new(0, 1);
     let mut result_position =
-        Position::from(direction.reversed() * delta.to_vec2() + pos.to_vec2());
+        Position::from(direction.reversed() * delta.as_vec2() + pos.as_vec2());
     result_position.x = result_position.x.clamp(0, 79);
     result_position.y = result_position.y.clamp(0, 49);
 
@@ -67,7 +67,7 @@ mod tests {
     use bevy_ecs::prelude::*;
 
     use crate::{
-        actor::{Action, Activity, ActorBundle},
+        actors::{Action, Activity, ActorBundle},
         core::{constants::SOUTH, types::Position},
         game_world::{AreaGrid, TileType},
     };

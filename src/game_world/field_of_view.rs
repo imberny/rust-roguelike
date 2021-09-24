@@ -63,7 +63,7 @@ impl FieldOfView for OmniFOV {
 
 impl FieldOfView for ConeFOV {
     fn sees(&self, to: Position) -> bool {
-        let direction = to.to_vec2() - ORIGIN.to_vec2();
+        let direction = to.as_vec2() - ORIGIN.as_vec2();
         let distance = rltk::DistanceAlg::Chebyshev.distance2d(ORIGIN.into(), to.into());
         let angle = direction
             .normalized()
@@ -79,7 +79,7 @@ impl FieldOfView for ConeFOV {
 impl FieldOfView for QuadraticFOV {
     fn sees(&self, to: Position) -> bool {
         let distance = rltk::DistanceAlg::Chebyshev.distance2d(ORIGIN.into(), to.into()) as u32;
-        let to_vec2 = to.to_vec2();
+        let to_vec2 = to.as_vec2();
         let target = self.facing * to_vec2;
         let curve_line = (target.x * self.a).powi(2) + self.b;
 
@@ -112,7 +112,6 @@ mod tests {
     fn infinite_fov() {
         let fov = new_infinite();
 
-        let origin = Position::new(0, 0);
         let targets = vec![
             Position::new(0, -100_000),
             Position::new(100_000, 0),
@@ -132,7 +131,6 @@ mod tests {
     fn tiny_fov() {
         let fov = new_omni(1);
 
-        let origin = Position::new(0, 0);
         let far_targets = vec![
             Position::new(0, -100_000),
             Position::new(100_000, 0),
@@ -161,7 +159,6 @@ mod tests {
     #[test]
     fn directed_fov() {
         let fov = new_cone(5, PI / 2.0, NORTH);
-        let origin = Position::new(0, 0);
 
         let north_targets = vec![
             Position::new(0, 0),

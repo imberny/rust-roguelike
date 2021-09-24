@@ -4,7 +4,7 @@ use bevy_ecs::prelude::World;
 use rltk::{RandomNumberGenerator, RGB};
 
 use crate::{
-    actor::{player::Player, Action, Activity, ActorBundle},
+    actors::{Action, Activity, ActorBundle, Player},
     ai::Monster,
     core::types::Position,
     game_world::{AreaGrid, TileType, Viewshed},
@@ -63,7 +63,7 @@ impl MapGenerator {
             let new_room = Room::new(x, y, w, h);
             if !rooms
                 .iter()
-                .any(|other_room| new_room.intersect(&other_room))
+                .any(|other_room| new_room.intersect(other_room))
             {
                 self.apply_room_to_map(&mut map, &new_room);
                 if !rooms.is_empty() {
@@ -91,7 +91,7 @@ impl MapGenerator {
     }
 }
 
-fn add_monsters_to_rooms(world: &mut World, rooms: &Vec<Room>) {
+fn add_monsters_to_rooms(world: &mut World, rooms: &[Room]) {
     let mut rng = rltk::RandomNumberGenerator::new();
     for (i, room) in rooms.iter().skip(1).enumerate() {
         let (x, y) = room.center();

@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use fraction::Fraction;
 
 use crate::{
-    core::types::{Facing, Position},
+    core::types::Position,
     game_world::{
         field_of_view::FieldOfView,
         quadrant::{Cardinal, Quadrant, QuadrantRow, QuadrantTile},
@@ -45,7 +45,7 @@ impl<'a> SymmetricShadowcaster<'a> {
 
         let mut visible_positions: HashSet<Position> = HashSet::new();
 
-        while 0 < rows.len() {
+        while !rows.is_empty() {
             let mut row = rows.pop().unwrap();
             let mut prev_tile: Option<QuadrantTile> = None;
             for tile in row.tiles(fov, origin) {
@@ -121,34 +121,10 @@ mod tests {
 
     use crate::{
         core::{constants::SOUTH, types::Position},
-        game_world::{field_of_view::*, AreaGrid},
+        game_world::{field_of_view::*, AreaGrid, TileType},
     };
 
     use super::SymmetricShadowcaster;
-
-    fn square_room() -> AreaGrid {
-        AreaGrid::from_ascii(
-            r"######
-#....#
-#....#
-######",
-        )
-    }
-
-    fn cross() -> AreaGrid {
-        AreaGrid::from_ascii(
-            r"###########
-#####.#####
-#####.#####
-#####.#####
-#.........#
-#####.#####
-#####.#####
-#####.#####
-#####.#####
-###########",
-        )
-    }
 
     #[test]
     fn from_ascii_map() {
@@ -241,5 +217,54 @@ mod tests {
         for position in expected_positions {
             assert!(visible_positions.contains(&position));
         }
+    }
+
+    fn from_ascii(ascii_map: &str) -> AreaGrid {
+        let mut map = AreaGrid {
+            tiles: Vec::new(),
+            width: 0,
+            height: 0,
+            revealed: Vec::new(),
+            visible: Vec::new(),
+        };
+
+        let rows = ascii_map.split('\n');
+        for row in rows {
+            map.height += 1;
+            for tile in row.chars() {
+                match tile {
+                    '.' => map.tiles.push(TileType::Floor),
+                    '#' => map.tiles.push(TileType::Wall),
+                    _ => panic!("Unrecognized map tile: {:?}", tile),
+                }
+            }
+        }
+        map.width = (map.tiles.len() / (map.height as usize)) as i32;
+
+        map
+    }
+
+    fn square_room() -> AreaGrid {
+        from_ascii(
+            r"######
+#....#
+#....#
+######",
+        )
+    }
+
+    fn cross() -> AreaGrid {
+        from_ascii(
+            r"###########
+#####.#####
+#####.#####
+#####.#####
+#.........#
+#####.#####
+#####.#####
+#####.#####
+#####.#####
+###########",
+        )
     }
 }
