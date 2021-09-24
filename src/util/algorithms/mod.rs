@@ -1,3 +1,3 @@
 mod chebyshev_distance;
 
-pub use chebyshev_distance::distance2d_chebyshev;
+pub use chebyshev_distance::chebyshev_distance;

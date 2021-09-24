@@ -1,6 +1,6 @@
 use crate::core::constants::PI;
 use crate::core::types::{Facing, GridPos, Int, Real, RealPos};
-use crate::util::algorithms::distance2d_chebyshev;
+use crate::util::algorithms::chebyshev_distance;
 
 const ORIGIN: GridPos = GridPos { x: 0, y: 0 };
 
@@ -58,14 +58,14 @@ pub fn new_quadratic(range: Int, facing: Facing, a: Real, b: Real) -> impl Field
 
 impl FieldOfView for OmniFOV {
     fn sees(&self, to: GridPos) -> bool {
-        distance2d_chebyshev(ORIGIN, to) <= self.range
+        chebyshev_distance(ORIGIN, to) <= self.range
     }
 }
 
 impl FieldOfView for ConeFOV {
     fn sees(&self, to: GridPos) -> bool {
         let direction = RealPos::from(to - ORIGIN);
-        let distance = distance2d_chebyshev(ORIGIN, to);
+        let distance = chebyshev_distance(ORIGIN, to);
         let angle = direction
             .normalized()
             .dot(self.facing * RealPos::new(0.0, 1.0))
@@ -79,7 +79,7 @@ impl FieldOfView for ConeFOV {
 
 impl FieldOfView for QuadraticFOV {
     fn sees(&self, to: GridPos) -> bool {
-        let distance = distance2d_chebyshev(ORIGIN, to);
+        let distance = chebyshev_distance(ORIGIN, to);
         let real_pos = RealPos::from(to);
         let target = self.facing * real_pos;
         let curve_line = (target.x * self.a).powi(2) + self.b;
