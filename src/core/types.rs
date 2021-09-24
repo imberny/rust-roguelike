@@ -60,55 +60,64 @@ mod percentage {
     }
 }
 pub use percentage::Percentage;
-use rltk::Point;
 use ultraviolet as uv;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Position {
-    pub x: i32,
-    pub y: i32,
+pub type GridPos = uv::IVec2;
+pub type RealPos = uv::Vec2;
+
+pub trait IntoGridPos {
+    fn as_grid_pos(&self) -> GridPos;
 }
 
-impl Position {
-    pub fn new(x: i32, y: i32) -> Self {
-        Self { x, y }
-    }
-
-    pub const fn constant(x: i32, y: i32) -> Self {
-        Self { x, y }
-    }
-
-    pub fn as_vec2(&self) -> uv::Vec2 {
-        uv::Vec2 {
-            x: self.x as f32,
-            y: self.y as f32,
+impl IntoGridPos for RealPos {
+    fn as_grid_pos(&self) -> GridPos {
+        GridPos {
+            x: self.x.round() as i32,
+            y: self.y.round() as i32,
         }
     }
 }
 
-impl From<uv::IVec2> for Position {
-    fn from(vec: uv::IVec2) -> Self {
-        Self { x: vec.x, y: vec.y }
-    }
-}
+// #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+// pub struct Position {
+//     pub x: i32,
+//     pub y: i32,
+// }
 
-impl From<uv::Vec2> for Position {
-    fn from(vec: uv::Vec2) -> Self {
-        Self {
-            x: vec.x.round() as i32,
-            y: vec.y.round() as i32,
-        }
-    }
-}
+// impl Position {
+//     pub fn new(x: i32, y: i32) -> Self {
+//         Self { x, y }
+//     }
 
-impl From<Point> for Position {
-    fn from(point: Point) -> Self {
-        Self::new(point.x, point.y)
-    }
-}
+//     pub const fn constant(x: i32, y: i32) -> Self {
+//         Self { x, y }
+//     }
 
-impl Into<Point> for Position {
-    fn into(self) -> Point {
-        Point::new(self.x, self.y)
-    }
-}
+//     pub fn as_vec2(&self) -> uv::Vec2 {
+//         uv::Vec2 {
+//             x: self.x as f32,
+//             y: self.y as f32,
+//         }
+//     }
+// }
+
+// impl From<uv::IVec2> for Position {
+//     fn from(vec: uv::IVec2) -> Self {
+//         Self { x: vec.x, y: vec.y }
+//     }
+// }
+
+// impl From<uv::Vec2> for Position {
+//     fn from(vec: uv::Vec2) -> Self {
+//         Self {
+//             x: vec.x.round() as i32,
+//             y: vec.y.round() as i32,
+//         }
+//     }
+// }
+
+// impl From<Point> for Position {
+//     fn from(point: Point) -> Self {
+//         Self::new(point.x, point.y)
+//     }
+// }

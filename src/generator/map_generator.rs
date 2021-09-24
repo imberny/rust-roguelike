@@ -6,7 +6,7 @@ use rltk::{RandomNumberGenerator, RGB};
 use crate::{
     actors::{Action, Activity, ActorBundle, Player},
     ai::Monster,
-    core::types::Position,
+    core::types::GridPos,
     game_world::{AreaGrid, TileType, Viewshed},
     rendering::Renderable,
 };
@@ -115,7 +115,7 @@ fn add_monsters_to_rooms(world: &mut World, rooms: &[Room]) {
             .insert(Monster {})
             .insert_bundle(ActorBundle {
                 name: format!("{} #{}", &name, i),
-                position: Position { x, y },
+                position: GridPos { x, y },
                 viewshed: Viewshed::with_range(8),
                 ..Default::default()
             })
@@ -137,7 +137,7 @@ fn create_player_at_pos(world: &mut World, player_x: i32, player_y: i32) {
         })
         .insert_bundle(ActorBundle {
             name: "Player".to_string(),
-            position: Position {
+            position: GridPos {
                 x: player_x,
                 y: player_y,
             },

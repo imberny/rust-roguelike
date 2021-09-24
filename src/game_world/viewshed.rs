@@ -1,8 +1,8 @@
-use crate::core::types::Position;
+use crate::core::types::GridPos;
 
 #[derive(Debug, Default)]
 pub struct Viewshed {
-    pub visible_tiles: Vec<Position>,
+    pub visible_tiles: Vec<GridPos>,
     pub range: i32,
     pub dirty: bool,
 }

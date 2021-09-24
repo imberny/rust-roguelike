@@ -3,14 +3,14 @@ use bevy_ecs::prelude::*;
 use crate::{
     actors::{Action, Activity, Message, MessageType, Player},
     ai::Monster,
-    core::types::Position,
+    core::types::GridPos,
     game_world::Viewshed,
 };
 
 pub fn monster_ai(
     mut commands: Commands,
     mut monster_query: Query<(Entity, &Viewshed), (With<Monster>, Without<Activity>)>,
-    player_query: Query<&Position, With<Player>>,
+    player_query: Query<&GridPos, With<Player>>,
 ) {
     for (monster, viewshed) in monster_query.iter_mut() {
         for player_pos in player_query.iter() {

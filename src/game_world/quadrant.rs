@@ -1,6 +1,6 @@
 use fraction::{Fraction, ToPrimitive};
 
-use crate::core::types::Position;
+use crate::core::types::GridPos;
 
 use super::field_of_view::FieldOfView;
 
@@ -28,20 +28,20 @@ impl Cardinal {
 #[derive(Debug, Clone, Copy)]
 pub struct Quadrant {
     cardinal: Cardinal,
-    origin: Position,
+    origin: GridPos,
 }
 
 impl Quadrant {
-    pub fn new(cardinal: Cardinal, origin: Position) -> Self {
+    pub fn new(cardinal: Cardinal, origin: GridPos) -> Self {
         Self { cardinal, origin }
     }
 
-    fn transform(&self, point: Position) -> Position {
+    fn transform(&self, point: GridPos) -> GridPos {
         match self.cardinal {
-            Cardinal::North => Position::new(self.origin.x + point.y, self.origin.y - point.x),
-            Cardinal::East => Position::new(self.origin.x + point.x, self.origin.y + point.y),
-            Cardinal::South => Position::new(self.origin.x + point.y, self.origin.y + point.x),
-            Cardinal::West => Position::new(self.origin.x - point.x, self.origin.y + point.y),
+            Cardinal::North => GridPos::new(self.origin.x + point.y, self.origin.y - point.x),
+            Cardinal::East => GridPos::new(self.origin.x + point.x, self.origin.y + point.y),
+            Cardinal::South => GridPos::new(self.origin.x + point.y, self.origin.y + point.x),
+            Cardinal::West => GridPos::new(self.origin.x - point.x, self.origin.y + point.y),
         }
     }
 }
@@ -70,14 +70,14 @@ impl QuadrantRow {
         next
     }
 
-    pub fn tiles(&self, fov: &impl FieldOfView, from: Position) -> Vec<QuadrantTile> {
+    pub fn tiles(&self, fov: &impl FieldOfView, from: GridPos) -> Vec<QuadrantTile> {
         let min_col = self.round_ties_up(Fraction::new(self.depth, 1u32));
         let max_col = self.round_ties_down(Fraction::new(self.depth, 1u32));
         let mut tiles: Vec<QuadrantTile> = Vec::new();
         for column in min_col.round().to_i32().unwrap()..=max_col.round().to_i32().unwrap() {
-            let local_quadrant_position = Position::new(self.depth as i32, column);
+            let local_quadrant_position = GridPos::new(self.depth as i32, column);
             let position = self.quadrant.transform(local_quadrant_position);
-            let delta = Position::new(position.x - from.x, position.y - from.y);
+            let delta = GridPos::new(position.x - from.x, position.y - from.y);
             if fov.sees(delta) {
                 tiles.push(QuadrantTile {
                     row_depth: self.depth,
@@ -126,5 +126,5 @@ impl QuadrantRow {
 pub struct QuadrantTile {
     pub row_depth: u16,
     pub column: u32,
-    pub position: Position,
+    pub position: GridPos,
 }

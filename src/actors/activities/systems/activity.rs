@@ -2,15 +2,15 @@ use bevy_ecs::prelude::*;
 
 use crate::{
     actors::{Action, Activity, Actor},
-    core::types::{Facing, Position},
+    core::types::{Facing, GridPos, IntoGridPos, RealPos},
     core::TimeProgressionEvent,
     game_world::{AreaGrid, Viewshed},
 };
 
-fn do_move(pos: &mut Position, viewshed: &mut Viewshed, direction: Facing, map: &Res<AreaGrid>) {
-    let delta = Position::new(0, 1);
-    let mut result_position =
-        Position::from(direction.reversed() * delta.as_vec2() + pos.as_vec2());
+fn do_move(pos: &mut GridPos, viewshed: &mut Viewshed, direction: Facing, map: &Res<AreaGrid>) {
+    let delta = GridPos::new(0, 1);
+    let mut result_position: GridPos =
+        (direction.reversed() * RealPos::from(delta) + RealPos::from(*pos)).as_grid_pos();
     result_position.x = result_position.x.clamp(0, 79);
     result_position.y = result_position.y.clamp(0, 49);
 
@@ -18,6 +18,7 @@ fn do_move(pos: &mut Position, viewshed: &mut Viewshed, direction: Facing, map: 
         pos.x = result_position.x;
         pos.y = result_position.y;
 
+        // TODO: replace with event writer
         viewshed.dirty = true;
     }
 }
@@ -37,7 +38,7 @@ pub fn advance_activities(
 pub fn process_activities(
     mut commands: Commands,
     map: Res<AreaGrid>,
-    mut actors: Query<(Entity, &mut Actor, &mut Position, &mut Viewshed, &Activity)>,
+    mut actors: Query<(Entity, &mut Actor, &mut GridPos, &mut Viewshed, &Activity)>,
 ) {
     for (entity, mut actor, mut pos, mut viewshed, activity) in actors.iter_mut() {
         if activity.time_to_complete == 0 {
@@ -68,7 +69,7 @@ mod tests {
 
     use crate::{
         actors::{Action, Activity, ActorBundle},
-        core::{constants::SOUTH, types::Position},
+        core::{constants::SOUTH, types::GridPos},
         game_world::{AreaGrid, TileType},
     };
 
@@ -117,7 +118,7 @@ mod tests {
         stage.run(&mut world);
 
         assert!(world.get::<Activity>(entity).is_none());
-        let position = world.get::<Position>(entity).unwrap();
-        assert_eq!(Position::new(0, 1), *position);
+        let position = world.get::<GridPos>(entity).unwrap();
+        assert_eq!(GridPos::new(0, 1), *position);
     }
 }

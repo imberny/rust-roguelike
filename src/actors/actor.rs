@@ -1,7 +1,7 @@
 use crate::{
     core::{
         constants::*,
-        types::{Facing, Percentage, Position},
+        types::{Facing, GridPos, Percentage},
     },
     game_world::Viewshed,
 };
@@ -55,7 +55,7 @@ pub type Name = String;
 pub struct ActorBundle {
     pub name: Name,
     pub actor: Actor,
-    pub position: Position,
+    pub position: GridPos,
     pub viewshed: Viewshed,
 }
 
@@ -64,7 +64,7 @@ impl Default for ActorBundle {
         Self {
             name: "Missing name!".to_string(),
             actor: Default::default(),
-            position: Position::default(),
+            position: GridPos::default(),
             viewshed: Default::default(),
         }
     }

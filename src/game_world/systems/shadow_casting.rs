@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use fraction::Fraction;
 
 use crate::{
-    core::types::Position,
+    core::types::GridPos,
     game_world::{
         field_of_view::FieldOfView,
         quadrant::{Cardinal, Quadrant, QuadrantRow, QuadrantTile},
@@ -20,8 +20,8 @@ impl<'a> SymmetricShadowcaster<'a> {
         SymmetricShadowcaster { area_grid }
     }
 
-    pub fn visible_positions(&self, origin: Position, fov: impl FieldOfView) -> Vec<Position> {
-        let mut visible_positions: HashSet<Position> = HashSet::new();
+    pub fn visible_positions(&self, origin: GridPos, fov: impl FieldOfView) -> Vec<GridPos> {
+        let mut visible_positions: HashSet<GridPos> = HashSet::new();
         visible_positions.insert(origin);
 
         for cardinal in Cardinal::iterator() {
@@ -38,12 +38,12 @@ impl<'a> SymmetricShadowcaster<'a> {
     fn scan_iterative(
         &self,
         first_row: QuadrantRow,
-        origin: Position,
+        origin: GridPos,
         fov: &impl FieldOfView,
-    ) -> HashSet<Position> {
+    ) -> HashSet<GridPos> {
         let mut rows: Vec<QuadrantRow> = vec![first_row];
 
-        let mut visible_positions: HashSet<Position> = HashSet::new();
+        let mut visible_positions: HashSet<GridPos> = HashSet::new();
 
         while !rows.is_empty() {
             let mut row = rows.pop().unwrap();
@@ -72,7 +72,7 @@ impl<'a> SymmetricShadowcaster<'a> {
         &self,
         tile: QuadrantTile,
         row: &QuadrantRow,
-        visible_positions: &mut HashSet<Position>,
+        visible_positions: &mut HashSet<GridPos>,
     ) -> Option<QuadrantTile> {
         if self.area_grid.is_blocking(tile.position) || row.is_symmetric(&tile) {
             visible_positions.insert(tile.position);
@@ -120,7 +120,7 @@ impl<'a> SymmetricShadowcaster<'a> {
 mod tests {
 
     use crate::{
-        core::{constants::SOUTH, types::Position},
+        core::{constants::SOUTH, types::GridPos},
         game_world::{field_of_view::*, AreaGrid, TileType},
     };
 
@@ -139,7 +139,7 @@ mod tests {
         let fov = new_infinite();
 
         let visible_positions =
-            SymmetricShadowcaster::new(&map).visible_positions(Position::new(1, 2), fov);
+            SymmetricShadowcaster::new(&map).visible_positions(GridPos::new(1, 2), fov);
 
         assert_eq!(map.tiles.len(), visible_positions.len());
         for (position, _tile_type) in map {
@@ -152,30 +152,30 @@ mod tests {
         let map = cross();
         let fov = new_infinite();
 
-        let expected_positions: Vec<Position> = vec![
-            Position::new(1, 2),
-            Position::new(0, 4),
-            Position::new(1, 3),
-            Position::new(3, 4),
-            Position::new(5, 5),
-            Position::new(6, 6),
-            Position::new(1, 5),
-            Position::new(2, 5),
-            Position::new(4, 5),
-            Position::new(3, 5),
-            Position::new(2, 4),
-            Position::new(3, 3),
-            Position::new(1, 4),
-            Position::new(3, 2),
-            Position::new(0, 5),
-            Position::new(2, 2),
-            Position::new(2, 3),
-            Position::new(6, 5),
-            Position::new(4, 4),
+        let expected_positions: Vec<GridPos> = vec![
+            GridPos::new(1, 2),
+            GridPos::new(0, 4),
+            GridPos::new(1, 3),
+            GridPos::new(3, 4),
+            GridPos::new(5, 5),
+            GridPos::new(6, 6),
+            GridPos::new(1, 5),
+            GridPos::new(2, 5),
+            GridPos::new(4, 5),
+            GridPos::new(3, 5),
+            GridPos::new(2, 4),
+            GridPos::new(3, 3),
+            GridPos::new(1, 4),
+            GridPos::new(3, 2),
+            GridPos::new(0, 5),
+            GridPos::new(2, 2),
+            GridPos::new(2, 3),
+            GridPos::new(6, 5),
+            GridPos::new(4, 4),
         ];
 
         let visible_positions =
-            SymmetricShadowcaster::new(&map).visible_positions(Position::new(2, 3), fov);
+            SymmetricShadowcaster::new(&map).visible_positions(GridPos::new(2, 3), fov);
 
         assert_eq!(expected_positions.len(), visible_positions.len());
         for position in expected_positions {
@@ -189,9 +189,9 @@ mod tests {
         let fov = new_omni(0);
 
         let visible_positions =
-            SymmetricShadowcaster::new(&map).visible_positions(Position::new(1, 3), fov);
+            SymmetricShadowcaster::new(&map).visible_positions(GridPos::new(1, 3), fov);
 
-        assert_eq!(visible_positions, [Position::new(1, 3)]);
+        assert_eq!(visible_positions, [GridPos::new(1, 3)]);
     }
 
     #[test]
@@ -200,18 +200,18 @@ mod tests {
 
         let map = square_room();
 
-        let expected_positions: Vec<Position> = vec![
-            Position::new(0, 0),
-            Position::new(0, 1),
-            Position::new(1, 0),
-            Position::new(1, 1),
-            Position::new(1, 2),
-            Position::new(2, 1),
-            Position::new(2, 2),
+        let expected_positions: Vec<GridPos> = vec![
+            GridPos::new(0, 0),
+            GridPos::new(0, 1),
+            GridPos::new(1, 0),
+            GridPos::new(1, 1),
+            GridPos::new(1, 2),
+            GridPos::new(2, 1),
+            GridPos::new(2, 2),
         ];
 
         let visible_positions =
-            SymmetricShadowcaster::new(&map).visible_positions(Position::new(1, 1), fov);
+            SymmetricShadowcaster::new(&map).visible_positions(GridPos::new(1, 1), fov);
 
         assert_eq!(expected_positions.len(), visible_positions.len());
         for position in expected_positions {

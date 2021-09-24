@@ -1,10 +1,9 @@
 use bevy_ecs::prelude::*;
 use rltk::{Rltk, RGB};
-use ultraviolet::Vec2;
 
 use crate::{
     actors::Actor,
-    core::types::Position,
+    core::types::{GridPos, IntoGridPos, RealPos},
     game_world::{self, AreaGrid},
 };
 
@@ -44,13 +43,14 @@ fn draw_map(world: &World, ctx: &mut Rltk) {
 }
 
 fn draw_entities(world: &mut World, ctx: &mut Rltk) {
-    let mut renderables = world.query::<(&Position, &Renderable, &Actor)>();
+    let mut renderables = world.query::<(&GridPos, &Renderable, &Actor)>();
     let map = world.get_resource::<AreaGrid>().unwrap();
     renderables.for_each(world, |(pos, render, actor)| {
         let idx = map.xy_idx(pos.x, pos.y);
         if map.visible[idx] {
-            let weapon_position =
-                Position::from(pos.as_vec2() + actor.facing.reversed() * Vec2::new(0.0, 1.0));
+            let weapon_position = (RealPos::from(*pos)
+                + actor.facing.reversed() * RealPos::new(0.0, 1.0))
+            .as_grid_pos();
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             ctx.set(
                 weapon_position.x,

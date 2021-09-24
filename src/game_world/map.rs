@@ -1,6 +1,6 @@
 use rltk::{Algorithm2D, BaseMap, Point};
 
-use crate::core::types::Position;
+use crate::core::types::GridPos;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum TileType {
@@ -35,20 +35,20 @@ impl AreaGrid {
         x >= 0 && x < self.width && y >= 0 && y < self.height
     }
 
-    pub fn is_point_in_bounds(&self, point: Position) -> bool {
+    pub fn is_point_in_bounds(&self, point: GridPos) -> bool {
         self.is_in_bounds(point.x, point.y)
     }
 
-    pub fn at(&self, position: Position) -> TileType {
+    pub fn at(&self, position: GridPos) -> TileType {
         let idx = self.xy_idx(position.x, position.y);
         self.tiles[idx]
     }
 
-    pub fn index_to_point(&self, index: usize) -> Position {
-        Position::new(index as i32 % self.width, index as i32 / self.width)
+    pub fn index_to_point(&self, index: usize) -> GridPos {
+        GridPos::new(index as i32 % self.width, index as i32 / self.width)
     }
 
-    pub fn is_blocking(&self, position: Position) -> bool {
+    pub fn is_blocking(&self, position: GridPos) -> bool {
         match self.at(position) {
             TileType::Wall => true,
             TileType::Floor => false,
@@ -57,7 +57,7 @@ impl AreaGrid {
 }
 
 impl IntoIterator for AreaGrid {
-    type Item = (Position, TileType);
+    type Item = (GridPos, TileType);
 
     type IntoIter = MapIterator;
 
@@ -75,7 +75,7 @@ pub struct MapIterator {
 }
 
 impl Iterator for MapIterator {
-    type Item = (Position, TileType);
+    type Item = (GridPos, TileType);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.map.tiles.len() == self.index {
