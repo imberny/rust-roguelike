@@ -13,7 +13,7 @@ pub trait FieldOfView {
 #[derive(Debug, Clone, Copy)]
 struct ConeFOV {
     range: u32,
-    angle: f32,
+    // angle: f32,
     facing: Facing,
 }
 
@@ -30,18 +30,21 @@ struct OmniFOV {
     range: u32,
 }
 
+#[allow(dead_code)]
 pub fn new_infinite() -> impl FieldOfView {
     OmniFOV { range: u32::MAX }
 }
 
+#[allow(dead_code)]
 pub fn new_omni(range: u32) -> impl FieldOfView {
     OmniFOV { range }
 }
 
-pub fn new_cone(range: u32, angle: f32, facing: Facing) -> impl FieldOfView {
+#[allow(dead_code)]
+pub fn new_cone(range: u32, _angle: f32, facing: Facing) -> impl FieldOfView {
     ConeFOV {
         range,
-        angle,
+        // angle,
         facing,
     }
 }
