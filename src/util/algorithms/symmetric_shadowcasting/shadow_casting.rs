@@ -2,9 +2,9 @@ use std::collections::HashSet;
 
 use fraction::Fraction;
 
+use super::quadrant::{Cardinal, Quadrant, QuadrantRow, QuadrantTile};
 use crate::{
     core::types::{GridPos, GridPosPredicate, Int},
-    game_world::quadrant::{Cardinal, Quadrant, QuadrantRow, QuadrantTile},
     util::math::RealToInt,
 };
 
@@ -159,7 +159,8 @@ mod tests {
             constants::SOUTH,
             types::{GridPos, Int},
         },
-        game_world::{field_of_view::*, AreaGrid, TileType},
+        game_world::{AreaGrid, TileType},
+        util::algorithms::field_of_view::{self, FieldOfView},
     };
 
     use super::symmetric_shadowcasting;
@@ -174,7 +175,7 @@ mod tests {
     #[test]
     fn given_a_rectangular_room_every_square_is_visible() {
         let map = square_room();
-        let fov = new_infinite();
+        let fov = field_of_view::infinite_fov();
 
         let visible_positions =
             symmetric_shadowcasting(GridPos::new(1, 2), &|pos1| fov.sees(pos1), &|pos2| {
@@ -190,7 +191,7 @@ mod tests {
     #[test]
     fn given_a_corridor_crossing() {
         let map = cross();
-        let fov = new_infinite();
+        let fov = field_of_view::infinite_fov();
 
         let expected_positions: Vec<GridPos> = vec![
             GridPos::new(1, 2),
@@ -228,7 +229,7 @@ mod tests {
     #[test]
     fn given_a_fov_of_zero_only_the_origin_is_visible() {
         let map = square_room();
-        let fov = new_omni(0);
+        let fov = field_of_view::omnidirectional_fov(0);
 
         let visible_positions =
             symmetric_shadowcasting(GridPos::new(1, 3), &|pos| fov.sees(pos), &|pos| {
@@ -240,7 +241,7 @@ mod tests {
 
     #[test]
     fn curve_fov() {
-        let fov = new_quadratic(2, SOUTH, 0.5, 1.5);
+        let fov = field_of_view::quadratic_fov(2, SOUTH, 0.5, 1.5);
 
         let map = square_room();
 

@@ -1,3 +1,6 @@
-mod chebyshev_distance;
+pub mod distance;
 
-pub use chebyshev_distance::chebyshev_distance;
+mod symmetric_shadowcasting;
+pub use symmetric_shadowcasting::symmetric_shadowcasting;
+
+pub mod field_of_view;

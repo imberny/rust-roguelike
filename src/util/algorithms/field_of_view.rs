@@ -2,7 +2,8 @@ use std::ops::Sub;
 
 use crate::core::constants::PI;
 use crate::core::types::{Facing, GridPos, Int, Real, RealPos};
-use crate::util::algorithms::chebyshev_distance;
+
+use super::distance::chebyshev_distance;
 
 const ORIGIN: GridPos = GridPos { x: 0, y: 0 };
 
@@ -31,17 +32,17 @@ struct OmniFOV {
 }
 
 #[allow(dead_code)]
-pub fn new_infinite() -> impl FieldOfView {
+pub fn infinite_fov() -> impl FieldOfView {
     OmniFOV { range: Int::MAX }
 }
 
 #[allow(dead_code)]
-pub fn new_omni(range: Int) -> impl FieldOfView {
+pub fn omnidirectional_fov(range: Int) -> impl FieldOfView {
     OmniFOV { range: range.abs() }
 }
 
 #[allow(dead_code)]
-pub fn new_cone(range: Int, _angle: Real, facing: Facing) -> impl FieldOfView {
+pub fn cone_fov(range: Int, _angle: Real, facing: Facing) -> impl FieldOfView {
     ConeFOV {
         range,
         // angle,
@@ -49,7 +50,7 @@ pub fn new_cone(range: Int, _angle: Real, facing: Facing) -> impl FieldOfView {
     }
 }
 
-pub fn new_quadratic(range: Int, facing: Facing, a: Real, b: Real) -> impl FieldOfView {
+pub fn quadratic_fov(range: Int, facing: Facing, a: Real, b: Real) -> impl FieldOfView {
     QuadraticFOV {
         range,
         facing,
@@ -102,16 +103,14 @@ impl FieldOfView for QuadraticFOV {
 #[cfg(test)]
 mod tests {
 
-    use crate::{
-        core::{constants::*, types::GridPos},
-        game_world::field_of_view::FieldOfView,
-    };
+    use super::FieldOfView;
+    use crate::core::{constants::*, types::GridPos};
 
-    use super::{new_cone, new_infinite, new_omni, new_quadratic};
+    use super::{cone_fov, infinite_fov, omnidirectional_fov, quadratic_fov};
 
     #[test]
-    fn infinite_fov() {
-        let fov = new_infinite();
+    fn infinite() {
+        let fov = infinite_fov();
 
         let targets = vec![
             GridPos::new(0, -100_000),
@@ -130,7 +129,7 @@ mod tests {
 
     #[test]
     fn tiny_fov() {
-        let fov = new_omni(1);
+        let fov = omnidirectional_fov(1);
 
         let far_targets = vec![
             GridPos::new(0, -100_000),
@@ -155,7 +154,7 @@ mod tests {
 
     #[test]
     fn directed_fov() {
-        let fov = new_cone(5, PI / 2.0, NORTH);
+        let fov = cone_fov(5, PI / 2.0, NORTH);
 
         let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
         for target in north_targets {
@@ -174,7 +173,7 @@ mod tests {
 
     #[test]
     fn view_curve() {
-        let fov = new_quadratic(5, NORTH, 0.5, -1.5);
+        let fov = quadratic_fov(5, NORTH, 0.5, -1.5);
 
         let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
         for target in north_targets {
@@ -200,7 +199,7 @@ mod tests {
 
     #[test]
     fn view_curve_east() {
-        let fov = new_quadratic(5, EAST, 0.5, -1.5);
+        let fov = quadratic_fov(5, EAST, 0.5, -1.5);
 
         for target in targets_facing_east() {
             let is_seen = fov.sees(target);
@@ -210,7 +209,7 @@ mod tests {
 
     #[test]
     fn view_curve_west() {
-        let fov = new_quadratic(5, WEST, 0.5, -1.5);
+        let fov = quadratic_fov(5, WEST, 0.5, -1.5);
 
         for target in targets_facing_west() {
             let is_seen = fov.sees(target);

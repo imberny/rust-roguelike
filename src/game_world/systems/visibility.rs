@@ -3,13 +3,12 @@ use bevy_ecs::prelude::*;
 use crate::{
     actors::Actor,
     core::types::GridPos,
-    game_world::{
-        field_of_view::{new_quadratic, FieldOfView},
-        AreaGrid, Viewshed,
+    game_world::{AreaGrid, Viewshed},
+    util::algorithms::{
+        field_of_view::{self, FieldOfView},
+        symmetric_shadowcasting,
     },
 };
-
-use super::shadow_casting::symmetric_shadowcasting;
 
 pub fn update_viewsheds(
     map: ResMut<AreaGrid>,
@@ -20,7 +19,7 @@ pub fn update_viewsheds(
         if viewshed.dirty {
             viewshed.dirty = false;
 
-            let fov = new_quadratic(15, actor.facing, 0.5, -1.5);
+            let fov = field_of_view::quadratic_fov(15, actor.facing, 0.5, -1.5);
             viewshed.visible_tiles =
                 symmetric_shadowcasting(pos.clone(), &|pos| fov.sees(pos), &|pos| {
                     map_clone.is_blocking(pos)

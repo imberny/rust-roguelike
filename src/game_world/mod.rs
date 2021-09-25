@@ -1,13 +1,12 @@
-mod field_of_view;
 mod map;
-mod quadrant;
+pub use map::{AreaGrid, TileType};
+
 mod viewshed;
+pub use viewshed::Viewshed;
 
 pub mod systems;
 
 use bevy_ecs::prelude::*;
-pub use map::{AreaGrid, TileType};
-pub use viewshed::Viewshed;
 
 use crate::{
     core::{RenderingStage, TurnGameStage},
