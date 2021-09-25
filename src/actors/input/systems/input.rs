@@ -15,15 +15,15 @@ impl PlayerSettings {
     pub fn new() -> Self {
         Self {
             input_map: HashMap::from([
-                (VirtualKeyCode::Y, Action::Move(NORTH_WEST)),
-                (VirtualKeyCode::K, Action::Move(NORTH)),
-                (VirtualKeyCode::U, Action::Move(NORTH_EAST)),
-                (VirtualKeyCode::L, Action::Move(EAST)),
-                (VirtualKeyCode::N, Action::Move(SOUTH_EAST)),
-                (VirtualKeyCode::J, Action::Move(SOUTH)),
-                (VirtualKeyCode::B, Action::Move(SOUTH_WEST)),
-                (VirtualKeyCode::H, Action::Move(WEST)),
-                (VirtualKeyCode::Period, Action::Wait),
+                (VirtualKeyCode::Q, Action::Move(NORTH_WEST)),
+                (VirtualKeyCode::W, Action::Move(NORTH)),
+                (VirtualKeyCode::E, Action::Move(NORTH_EAST)),
+                (VirtualKeyCode::D, Action::Move(EAST)),
+                (VirtualKeyCode::C, Action::Move(SOUTH_EAST)),
+                (VirtualKeyCode::S, Action::Move(SOUTH)),
+                (VirtualKeyCode::Z, Action::Move(SOUTH_WEST)),
+                (VirtualKeyCode::A, Action::Move(WEST)),
+                (VirtualKeyCode::X, Action::Wait),
             ]),
         }
     }
@@ -56,9 +56,9 @@ fn update_player_input(input: &mut PlayerInput, ctx: &Rltk) {
 
 // Laptop      Numpad         Arrow keys + Control
 // ---------------------------------------------------
-// Y K U       7 8 9       Ctrl+Left   Up    Ctrl-Up
-// H . L       4 5 6          Left     .      Right
-// B J N       1 2 3       Ctrl+Down  Down  Ctrl+Right
+// Q W E       7 8 9       Ctrl+Left   Up    Ctrl-Up
+// S X D       4 5 6          Left     .      Right
+// Z S C       1 2 3       Ctrl+Down  Down  Ctrl+Right
 fn input_to_action(key: VirtualKeyCode, is_strafing: bool, skew_move: bool) -> Action {
     let player_settings = PlayerSettings::new();
 
