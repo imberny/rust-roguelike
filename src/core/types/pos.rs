@@ -17,3 +17,5 @@ impl IntoGridPos for RealPos {
         }
     }
 }
+
+pub type GridPosPredicate = dyn Fn(GridPos) -> bool;

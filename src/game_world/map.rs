@@ -13,6 +13,7 @@ pub enum TileType {
 //     pub content: Vec<Entity>,
 // }
 
+#[derive(Debug, Clone)]
 pub struct AreaGrid {
     pub tiles: Vec<TileType>,
     // pub contents: Vec<Vec>, // items, actors, ...

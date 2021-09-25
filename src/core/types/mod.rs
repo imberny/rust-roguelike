@@ -8,7 +8,7 @@ mod percentage;
 pub use percentage::Percentage;
 
 mod pos;
-pub use pos::{GridPos, IntoGridPos, RealPos};
+pub use pos::{GridPos, GridPosPredicate, IntoGridPos, RealPos};
 
 mod increment;
 pub use increment::Increment;
