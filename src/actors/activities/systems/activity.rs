@@ -7,19 +7,19 @@ use crate::{
     game_world::{AreaGrid, Viewshed},
 };
 
-fn do_move(pos: &mut GridPos, viewshed: &mut Viewshed, direction: Facing, map: &Res<AreaGrid>) {
+fn do_move(pos: &mut GridPos, direction: Facing, facing: Facing, map: &Res<AreaGrid>) {
     let delta = GridPos::new(0, 1);
-    let mut result_position: GridPos =
-        (direction.reversed() * RealPos::from(delta) + RealPos::from(*pos)).as_grid_pos();
+
+    // let result_direction =
+    let mut result_position: GridPos = ((direction * facing).reversed() * RealPos::from(delta)
+        + RealPos::from(*pos))
+    .as_grid_pos();
     result_position.x = result_position.x.clamp(0, 79);
     result_position.y = result_position.y.clamp(0, 49);
 
     if !map.is_blocking(result_position) {
         pos.x = result_position.x;
         pos.y = result_position.y;
-
-        // TODO: replace with event writer
-        viewshed.dirty = true;
     }
 }
 
@@ -45,10 +45,12 @@ pub fn process_activities(
             // console::log("Doing something");
             match activity.action {
                 Action::Move(direction) => {
-                    do_move(&mut pos, &mut viewshed, direction, &map);
+                    do_move(&mut pos, direction, actor.facing, &map);
+                    // TODO: replace with event writer
+                    viewshed.dirty = true;
                 }
                 Action::Face(direction) => {
-                    actor.facing = direction;
+                    actor.facing = actor.facing * direction;
                     viewshed.dirty = true;
                 }
                 Action::Attack => {}

@@ -20,13 +20,14 @@ pub fn handle_player_input(
 fn convert_to_valid_action(input: Res<PlayerInput>, actor: &mut Actor) -> Action {
     match input.action {
         Action::Move(direction) => {
-            if direction != actor.facing && !input.is_strafing {
-                Action::Face(direction)
-            } else {
-                // console::log(format!("Player is moving: {:?}", direction));
-                Action::Move(direction)
-            }
+            // if direction != actor.facing && !input.is_strafing {
+            //     Action::Face(direction)
+            // } else {
+            // console::log(format!("Player is moving: {:?}", direction));
+            Action::Move(direction)
+            // }
         }
+        Action::Face(direction) => Action::Face(direction),
         _ => input.action,
     }
 }
