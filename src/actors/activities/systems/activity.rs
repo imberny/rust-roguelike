@@ -1,7 +1,7 @@
 use bevy_ecs::prelude::*;
 
 use crate::{
-    actors::{Action, Activity, Actor},
+    actors::{Action, Activity, Actor, Attack},
     core::types::{Facing, GridPos, IntoGridPos, RealPos},
     core::TimeProgressionEvent,
     game_world::{AreaGrid, Viewshed},
@@ -49,8 +49,9 @@ pub fn process_activities(
                 }
                 Action::Face(direction) => {
                     actor.facing = direction;
-                    viewshed.dirty = true
+                    viewshed.dirty = true;
                 }
+                Action::Attack => {}
                 // Action::Say(message) => match message.kind {
                 //     MessageType::Insult => console::log("*!!$%$#&^%@"),
                 //     MessageType::Threaten => console::log("Shouldn't have come here"),

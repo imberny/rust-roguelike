@@ -9,6 +9,7 @@ pub enum Action {
     Move(Facing),
     Face(Facing),
     Say(Message),
+    Attack,
 }
 
 impl Default for Action {

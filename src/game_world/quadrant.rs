@@ -73,7 +73,10 @@ impl QuadrantRow {
         next
     }
 
-    pub fn tiles(&self, fov: &impl FieldOfView, from: GridPos) -> Vec<QuadrantTile> {
+    pub fn tiles<F>(&self, is_visible: &F, from: GridPos) -> Vec<QuadrantTile>
+    where
+        F: Fn(&GridPos) -> bool,
+    {
         let min_col = self.round_ties_up(Fraction::new(self.depth, 1u32));
         let max_col = self.round_ties_down(Fraction::new(self.depth, 1u32));
         let mut tiles: Vec<QuadrantTile> = Vec::new();
@@ -81,7 +84,7 @@ impl QuadrantRow {
             let local_quadrant_position = GridPos::new(self.depth as Int, column);
             let position = self.quadrant.transform(local_quadrant_position);
             let delta = GridPos::new(position.x - from.x, position.y - from.y);
-            if fov.sees(delta) {
+            if is_visible(&delta) {
                 tiles.push(QuadrantTile {
                     row_depth: self.depth,
                     column: column as u32,

@@ -1,3 +1,5 @@
+use std::ops::Sub;
+
 use crate::core::constants::PI;
 use crate::core::types::{Facing, GridPos, Int, Real, RealPos};
 use crate::util::algorithms::chebyshev_distance;
@@ -5,7 +7,7 @@ use crate::util::algorithms::chebyshev_distance;
 const ORIGIN: GridPos = GridPos { x: 0, y: 0 };
 
 pub trait FieldOfView {
-    fn sees(&self, delta_position: GridPos) -> bool;
+    fn sees(&self, delta_position: &GridPos) -> bool;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -57,15 +59,15 @@ pub fn new_quadratic(range: Int, facing: Facing, a: Real, b: Real) -> impl Field
 }
 
 impl FieldOfView for OmniFOV {
-    fn sees(&self, to: GridPos) -> bool {
-        chebyshev_distance(ORIGIN, to) <= self.range
+    fn sees(&self, to: &GridPos) -> bool {
+        chebyshev_distance(&ORIGIN, to) <= self.range
     }
 }
 
 impl FieldOfView for ConeFOV {
-    fn sees(&self, to: GridPos) -> bool {
-        let direction = RealPos::from(to - ORIGIN);
-        let distance = chebyshev_distance(ORIGIN, to);
+    fn sees(&self, to: &GridPos) -> bool {
+        let direction = RealPos::from(to.sub(ORIGIN));
+        let distance = chebyshev_distance(&ORIGIN, to);
         let angle = direction
             .normalized()
             .dot(self.facing * RealPos::new(0.0, 1.0))
@@ -78,9 +80,9 @@ impl FieldOfView for ConeFOV {
 }
 
 impl FieldOfView for QuadraticFOV {
-    fn sees(&self, to: GridPos) -> bool {
-        let distance = chebyshev_distance(ORIGIN, to);
-        let real_pos = RealPos::from(to);
+    fn sees(&self, to: &GridPos) -> bool {
+        let distance = chebyshev_distance(&ORIGIN, to);
+        let real_pos = RealPos::from(*to);
         let target = self.facing * real_pos;
         let curve_line = (target.x * self.a).powi(2) + self.b;
 
@@ -121,7 +123,7 @@ mod tests {
         ];
 
         for target in targets {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(is_seen);
         }
     }
@@ -141,12 +143,12 @@ mod tests {
         let near_targets = vec![GridPos::new(0, 0), GridPos::new(1, 1), GridPos::new(-1, -1)];
 
         for target in far_targets {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(!is_seen);
         }
 
         for target in near_targets {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(is_seen);
         }
     }
@@ -157,16 +159,16 @@ mod tests {
 
         let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
         for target in north_targets {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(is_seen);
         }
 
         for target in targets_along_diagonal_nw() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(is_seen);
         }
 
-        let is_seen = fov.sees(GridPos::new(-6, -6));
+        let is_seen = fov.sees(&GridPos::new(-6, -6));
         assert!(!is_seen);
     }
 
@@ -176,22 +178,22 @@ mod tests {
 
         let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
         for target in north_targets {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(is_seen);
         }
 
         for target in targets_along_diagonal_nw() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(is_seen);
         }
 
         for target in targets_behind_facing_north() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(is_seen);
         }
 
         for target in targets_side_facing_north() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(is_seen);
         }
     }
@@ -201,7 +203,7 @@ mod tests {
         let fov = new_quadratic(5, EAST, 0.5, -1.5);
 
         for target in targets_facing_east() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(is_seen);
         }
     }
@@ -211,12 +213,12 @@ mod tests {
         let fov = new_quadratic(5, WEST, 0.5, -1.5);
 
         for target in targets_facing_west() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(is_seen);
         }
 
         for target in targets_facing_west_hidden() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target);
             assert!(!is_seen);
         }
     }
