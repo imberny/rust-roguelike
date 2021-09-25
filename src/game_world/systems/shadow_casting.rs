@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use fraction::Fraction;
 
 use crate::{
-    core::types::{GridPos, Int},
+    core::types::{GridPos, GridPosPredicate, Int},
     game_world::quadrant::{Cardinal, Quadrant, QuadrantRow, QuadrantTile},
     util::math::RealToInt,
 };
@@ -38,8 +38,8 @@ impl Iterator for RowProviderIterator {
 
 pub fn symmetric_shadowcasting(
     origin: GridPos,
-    is_visible: &dyn Fn(GridPos) -> bool,
-    is_blocking: &dyn Fn(GridPos) -> bool,
+    is_visible: &GridPosPredicate,
+    is_blocking: &GridPosPredicate,
 ) -> Vec<GridPos> {
     let mut visible_positions: HashSet<GridPos> = HashSet::new();
     visible_positions.insert(origin);
@@ -57,8 +57,8 @@ fn scan_iterative(
     first_row: QuadrantRow,
     // row_provider: RowProvider,
     origin: GridPos,
-    is_visible: &dyn Fn(GridPos) -> bool,
-    is_blocking: &dyn Fn(GridPos) -> bool,
+    is_visible: &GridPosPredicate,
+    is_blocking: &GridPosPredicate,
 ) -> HashSet<GridPos> {
     let mut rows: Vec<QuadrantRow> = vec![first_row];
 
@@ -83,11 +83,7 @@ fn scan_iterative(
     visible_positions
 }
 
-fn tiles(
-    row: &QuadrantRow,
-    is_visible: &dyn Fn(GridPos) -> bool,
-    from: GridPos,
-) -> Vec<QuadrantTile> {
+fn tiles(row: &QuadrantRow, is_visible: &GridPosPredicate, from: GridPos) -> Vec<QuadrantTile> {
     let min_col = row
         .round_ties_up(Fraction::new(row.depth, 1u32))
         .round()
@@ -115,7 +111,7 @@ fn tiles(
 fn try_reveal_tile(
     tile: QuadrantTile,
     row: &QuadrantRow,
-    is_blocking: &dyn Fn(GridPos) -> bool,
+    is_blocking: &GridPosPredicate,
     visible_positions: &mut HashSet<GridPos>,
 ) -> Option<QuadrantTile> {
     if is_blocking(tile.position) || row.is_symmetric(&tile) {
@@ -129,7 +125,7 @@ fn check_next_row(
     prev_tile: &Option<QuadrantTile>,
     tile: &QuadrantTile,
     row: &mut QuadrantRow,
-    is_blocking: &dyn Fn(GridPos) -> bool,
+    is_blocking: &GridPosPredicate,
 ) -> Option<QuadrantRow> {
     if let Some(prev_tile) = prev_tile {
         if is_blocking(prev_tile.position) && !is_blocking(tile.position) {

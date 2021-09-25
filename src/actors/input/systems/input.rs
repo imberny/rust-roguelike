@@ -15,14 +15,14 @@ impl PlayerSettings {
     pub fn new() -> Self {
         Self {
             input_map: HashMap::from([
-                (VirtualKeyCode::Q, Action::Face(SOUTH_EAST)),
-                (VirtualKeyCode::W, Action::Move(SOUTH)),
-                (VirtualKeyCode::E, Action::Face(SOUTH_WEST)),
-                (VirtualKeyCode::D, Action::Move(WEST)),
-                (VirtualKeyCode::C, Action::Move(SOUTH_EAST)),
-                (VirtualKeyCode::S, Action::Move(NORTH)),
-                (VirtualKeyCode::Z, Action::Move(SOUTH_WEST)),
-                (VirtualKeyCode::A, Action::Move(EAST)),
+                (VirtualKeyCode::Q, Action::Face(NORTH_WEST)),
+                (VirtualKeyCode::W, Action::Move(NORTH)),
+                (VirtualKeyCode::E, Action::Face(NORTH_EAST)),
+                (VirtualKeyCode::D, Action::Move(EAST)),
+                // (VirtualKeyCode::C, Action::Move(SOUTH_EAST)),
+                (VirtualKeyCode::S, Action::Move(SOUTH)),
+                // (VirtualKeyCode::Z, Action::Move(SOUTH_WEST)),
+                (VirtualKeyCode::A, Action::Move(WEST)),
                 (VirtualKeyCode::X, Action::Wait),
             ]),
         }
