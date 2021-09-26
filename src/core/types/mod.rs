@@ -1,6 +1,12 @@
 mod primitives;
 pub use primitives::{Int, Real};
 
+mod cardinal;
+pub use cardinal::Cardinal;
+
+mod direction;
+pub use direction::Direction;
+
 mod facing;
 pub use facing::Facing;
 

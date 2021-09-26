@@ -60,7 +60,7 @@ mod tests {
 
     use crate::{
         actors::{input::PlayerInput, Action, Activity, ActorBundle, Player},
-        core::constants::*,
+        core::{constants::*, types::Direction},
     };
 
     use super::{handle_player_input, is_input_valid};
@@ -112,23 +112,23 @@ mod tests {
     fn input_inserts_activity() {
         let mut world = test_world();
         let player = player(&mut world);
-        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(SOUTH);
+        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(Direction::Back);
 
         player_stage().run(&mut world);
 
         let activity = world.get::<Activity>(player).unwrap();
-        assert_eq!(Action::Move(SOUTH), activity.action);
+        assert_eq!(Action::Move(Direction::Back), activity.action);
     }
 
     #[test]
     fn change_facing_action() {
         let mut world = test_world();
         let player = player(&mut world);
-        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(NORTH);
+        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(Direction::Forward);
 
         player_stage().run(&mut world);
 
         let activity = world.get::<Activity>(player).unwrap();
-        assert_eq!(Action::Face(NORTH), activity.action);
+        assert_eq!(false, activity.action);
     }
 }

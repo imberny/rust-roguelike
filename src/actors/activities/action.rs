@@ -1,4 +1,4 @@
-use crate::core::types::Facing;
+use crate::core::types::{Cardinal, Direction};
 
 use super::Message;
 
@@ -6,8 +6,10 @@ use super::Message;
 pub enum Action {
     None,
     Wait,
-    Move(Facing),
-    Face(Facing),
+    Move(Direction),
+    Face(Cardinal),
+    RotateRight,
+    RotateLeft,
     Say(Message),
     Attack,
 }

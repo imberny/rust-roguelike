@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::{
     actors::{input::PlayerInput, Action},
-    core::constants::*,
+    core::types::Direction,
 };
 
 struct PlayerSettings {
@@ -15,14 +15,16 @@ impl PlayerSettings {
     pub fn new() -> Self {
         Self {
             input_map: HashMap::from([
-                (VirtualKeyCode::Q, Action::Face(NORTH_WEST)),
-                (VirtualKeyCode::W, Action::Move(NORTH)),
-                (VirtualKeyCode::E, Action::Face(NORTH_EAST)),
-                (VirtualKeyCode::D, Action::Move(EAST)),
+                // (VirtualKeyCode::Q, Action::Face(NORTH_WEST)),
+                (VirtualKeyCode::Q, Action::RotateLeft),
+                (VirtualKeyCode::W, Action::Move(Direction::Forward)),
+                // (VirtualKeyCode::E, Action::Face(NORTH_EAST)),
+                (VirtualKeyCode::E, Action::RotateRight),
+                (VirtualKeyCode::D, Action::Move(Direction::Right)),
                 // (VirtualKeyCode::C, Action::Move(SOUTH_EAST)),
-                (VirtualKeyCode::S, Action::Move(SOUTH)),
+                (VirtualKeyCode::S, Action::Move(Direction::Back)),
                 // (VirtualKeyCode::Z, Action::Move(SOUTH_WEST)),
-                (VirtualKeyCode::A, Action::Move(WEST)),
+                (VirtualKeyCode::A, Action::Move(Direction::Left)),
                 (VirtualKeyCode::X, Action::Wait),
             ]),
         }
@@ -68,83 +70,82 @@ fn input_to_action(key: VirtualKeyCode, is_strafing: bool, skew_move: bool) -> A
 
     // player can't change those
     match key {
-        VirtualKeyCode::Numpad7 => Action::Move(NORTH_WEST),
-        VirtualKeyCode::Numpad8 => Action::Move(NORTH),
-        VirtualKeyCode::Numpad9 => Action::Move(NORTH_EAST),
-        VirtualKeyCode::Numpad6 => Action::Move(EAST),
-        VirtualKeyCode::Numpad3 => Action::Move(SOUTH_EAST),
-        VirtualKeyCode::Numpad2 => Action::Move(SOUTH),
-        VirtualKeyCode::Numpad1 => Action::Move(SOUTH_WEST),
-        VirtualKeyCode::Numpad4 => Action::Move(WEST),
+        //     VirtualKeyCode::Numpad7 => Action::Move(NORTH_WEST),
+        //     VirtualKeyCode::Numpad8 => Action::Move(NORTH),
+        //     VirtualKeyCode::Numpad9 => Action::Move(NORTH_EAST),
+        //     VirtualKeyCode::Numpad6 => Action::Move(EAST),
+        //     VirtualKeyCode::Numpad3 => Action::Move(SOUTH_EAST),
+        //     VirtualKeyCode::Numpad2 => Action::Move(SOUTH),
+        //     VirtualKeyCode::Numpad1 => Action::Move(SOUTH_WEST),
+        //     VirtualKeyCode::Numpad4 => Action::Move(WEST),
 
-        // Shift + 7 => Home
-        VirtualKeyCode::Home => {
-            if is_strafing {
-                Action::Move(NORTH_WEST)
-            } else {
-                Action::None
-            }
-        }
+        //     // Shift + 7 => Home
+        //     VirtualKeyCode::Home => {
+        //         if is_strafing {
+        //             Action::Move(NORTH_WEST)
+        //         } else {
+        //             Action::None
+        //         }
+        //     }
 
-        // Shift + 9 => Page up
-        VirtualKeyCode::PageUp => {
-            if is_strafing {
-                Action::Move(NORTH_EAST)
-            } else {
-                Action::None
-            }
-        }
+        //     // Shift + 9 => Page up
+        //     VirtualKeyCode::PageUp => {
+        //         if is_strafing {
+        //             Action::Move(NORTH_EAST)
+        //         } else {
+        //             Action::None
+        //         }
+        //     }
 
-        // Shift + 3 => Page down
-        VirtualKeyCode::PageDown => {
-            if is_strafing {
-                Action::Move(SOUTH_EAST)
-            } else {
-                Action::None
-            }
-        }
+        //     // Shift + 3 => Page down
+        //     VirtualKeyCode::PageDown => {
+        //         if is_strafing {
+        //             Action::Move(SOUTH_EAST)
+        //         } else {
+        //             Action::None
+        //         }
+        //     }
 
-        // Shift + 1 => End
-        VirtualKeyCode::End => {
-            if is_strafing {
-                Action::Move(SOUTH_WEST)
-            } else {
-                Action::None
-            }
-        }
+        //     // Shift + 1 => End
+        //     VirtualKeyCode::End => {
+        //         if is_strafing {
+        //             Action::Move(SOUTH_WEST)
+        //         } else {
+        //             Action::None
+        //         }
+        //     }
 
-        VirtualKeyCode::Left => {
-            if skew_move {
-                Action::Move(SOUTH_WEST)
-            } else {
-                Action::Move(WEST)
-            }
-        }
+        //     VirtualKeyCode::Left => {
+        //         if skew_move {
+        //             Action::Move(SOUTH_WEST)
+        //         } else {
+        //             Action::Move(WEST)
+        //         }
+        //     }
 
-        VirtualKeyCode::Up => {
-            if skew_move {
-                Action::Move(NORTH_WEST)
-            } else {
-                Action::Move(NORTH)
-            }
-        }
+        //     VirtualKeyCode::Up => {
+        //         if skew_move {
+        //             Action::Move(NORTH_WEST)
+        //         } else {
+        //             Action::Move(NORTH)
+        //         }
+        //     }
 
-        VirtualKeyCode::Right => {
-            if skew_move {
-                Action::Move(NORTH_EAST)
-            } else {
-                Action::Move(EAST)
-            }
-        }
+        //     VirtualKeyCode::Right => {
+        //         if skew_move {
+        //             Action::Move(NORTH_EAST)
+        //         } else {
+        //             Action::Move(EAST)
+        //         }
+        //     }
 
-        VirtualKeyCode::Down => {
-            if skew_move {
-                Action::Move(SOUTH_EAST)
-            } else {
-                Action::Move(SOUTH)
-            }
-        }
-
+        //     VirtualKeyCode::Down => {
+        //         if skew_move {
+        //             Action::Move(SOUTH_EAST)
+        //         } else {
+        //             Action::Move(SOUTH)
+        //         }
+        //     }
         VirtualKeyCode::Numpad5 => Action::Wait,
 
         _ => Action::None,

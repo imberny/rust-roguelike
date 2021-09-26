@@ -1,19 +1,30 @@
 use bevy_ecs::prelude::*;
+use std::convert::*;
 
 use crate::{
     actors::{Action, Activity, Actor, Attack},
-    core::types::{Facing, GridPos, IntoGridPos, RealPos},
+    core::types::{Cardinal, Direction, Facing, GridPos, Int, IntoGridPos, RealPos},
     core::TimeProgressionEvent,
     game_world::{AreaGrid, Viewshed},
 };
 
-fn do_move(pos: &mut GridPos, direction: Facing, facing: Facing, map: &Res<AreaGrid>) {
+fn compute_facing(direction: Direction, cardinal: Cardinal) -> Facing {
+    let direction: Facing = direction.into();
+    let cardinal: Facing = cardinal.into();
+    direction * cardinal
+}
+
+fn rotate_facing(cardinal: Cardinal, offset: Int) -> Cardinal {
+    let cardinal_index: Int = cardinal.into();
+    ((cardinal_index + offset) % 8).into()
+}
+
+fn do_move(pos: &mut GridPos, direction: Direction, cardinal: Cardinal, map: &Res<AreaGrid>) {
     let delta = GridPos::new(0, -1);
 
-    // let result_direction =
-    let mut result_position: GridPos = ((direction * facing).reversed() * RealPos::from(delta)
-        + RealPos::from(*pos))
-    .as_grid_pos();
+    let facing = compute_facing(direction, cardinal);
+    let mut result_position: GridPos =
+        (facing.reversed() * RealPos::from(delta) + RealPos::from(*pos)).as_grid_pos();
     result_position.x = result_position.x.clamp(0, 79);
     result_position.y = result_position.y.clamp(0, 49);
 
@@ -49,8 +60,16 @@ pub fn process_activities(
                     // TODO: replace with event writer
                     viewshed.dirty = true;
                 }
-                Action::Face(direction) => {
-                    actor.facing = actor.facing * direction;
+                Action::Face(cardinal) => {
+                    actor.facing = cardinal;
+                    viewshed.dirty = true;
+                }
+                Action::RotateRight => {
+                    actor.facing = rotate_facing(actor.facing, 1);
+                    viewshed.dirty = true;
+                }
+                Action::RotateLeft => {
+                    actor.facing = rotate_facing(actor.facing, -1);
                     viewshed.dirty = true;
                 }
                 Action::Attack => {}
@@ -72,7 +91,7 @@ mod tests {
 
     use crate::{
         actors::{Action, Activity, ActorBundle},
-        core::{constants::SOUTH, types::GridPos},
+        core::types::{Direction, GridPos},
         game_world::{AreaGrid, TileType},
     };
 
@@ -112,7 +131,7 @@ mod tests {
             .spawn()
             .insert_bundle(ActorBundle::default())
             .insert(Activity {
-                action: Action::Move(SOUTH),
+                action: Action::Move(Direction::Back),
                 ..Default::default()
             })
             .id();

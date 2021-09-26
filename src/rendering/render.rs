@@ -3,7 +3,7 @@ use rltk::{Rltk, RGB};
 
 use crate::{
     actors::Actor,
-    core::types::{GridPos, IntoGridPos, RealPos},
+    core::types::{Facing, GridPos, IntoGridPos, RealPos},
     game_world::{self, AreaGrid},
 };
 
@@ -48,9 +48,9 @@ fn draw_entities(world: &mut World, ctx: &mut Rltk) {
     renderables.for_each(world, |(pos, render, actor)| {
         let idx = map.xy_idx(pos.x, pos.y);
         if map.visible[idx] {
-            let weapon_position = (RealPos::from(*pos)
-                - actor.facing.reversed() * RealPos::new(0.0, -1.0))
-            .as_grid_pos();
+            let facing: Facing = actor.facing.into();
+            let weapon_position =
+                (RealPos::from(*pos) - facing.reversed() * RealPos::new(0.0, -1.0)).as_grid_pos();
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             ctx.set(
                 weapon_position.x,

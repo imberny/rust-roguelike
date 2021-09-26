@@ -160,10 +160,7 @@ mod tests {
     use serde::Deserialize;
 
     use crate::{
-        core::{
-            constants::{EAST, SOUTH, WEST},
-            types::{GridPos, Int},
-        },
+        core::types::{Cardinal, GridPos, Int},
         game_world::{AreaGrid, TileType},
         util::algorithms::field_of_view::{self, FieldOfView},
     };
@@ -246,7 +243,7 @@ mod tests {
 
     #[test]
     fn curve_fov() {
-        let fov = field_of_view::quadratic_fov(2, SOUTH, 0.5, -1.5);
+        let fov = field_of_view::quadratic_fov(2, Cardinal::South.into(), 0.5, -1.5);
 
         let map = square_room();
 
@@ -422,7 +419,7 @@ mod tests {
             let (origin, map) = from_ascii_layout(&case.layout);
             let expected = from_ascii_expected(&case.expected_visible);
 
-            let fov = field_of_view::quadratic_fov(case.range, EAST, 0.5, -1.5);
+            let fov = field_of_view::quadratic_fov(case.range, Cardinal::East.into(), 0.5, -1.5);
 
             let mut visible_positions =
                 symmetric_shadowcasting(origin, &|pos| fov.sees(pos), &|pos| map.is_blocking(pos));

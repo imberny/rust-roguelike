@@ -19,7 +19,7 @@ pub fn update_viewsheds(
         if viewshed.dirty {
             viewshed.dirty = false;
 
-            let fov = field_of_view::quadratic_fov(15, actor.facing, 0.5, -1.5);
+            let fov = field_of_view::quadratic_fov(15, actor.facing.into(), 0.5, -1.5);
             viewshed.visible_tiles =
                 symmetric_shadowcasting(pos.clone(), &|pos| fov.sees(pos), &|pos| {
                     map_clone.is_blocking(pos)

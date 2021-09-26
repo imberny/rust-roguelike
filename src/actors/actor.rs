@@ -1,8 +1,5 @@
 use crate::{
-    core::{
-        constants::*,
-        types::{Facing, GridPos, Int, Percentage},
-    },
+    core::types::{Cardinal, GridPos, Int, Percentage},
     game_world::Viewshed,
 };
 use bevy_ecs::bundle::Bundle;
@@ -36,7 +33,7 @@ pub struct CharacterProperties {
 pub struct Actor {
     pub sheet: CharacterSheet,
     pub properties: CharacterProperties,
-    pub facing: Facing,
+    pub facing: Cardinal,
 }
 
 impl Default for Actor {
@@ -44,7 +41,7 @@ impl Default for Actor {
         Self {
             sheet: Default::default(),
             properties: Default::default(),
-            facing: NORTH,
+            facing: Cardinal::North,
         }
     }
 }
