@@ -1,10 +1,7 @@
 use std::ops::Sub;
 
 use crate::{
-    core::{
-        constants::PI,
-        types::{Facing, GridPos, Int, Real, RealPos},
-    },
+    core::types::{Facing, GridPos, Int, Real, RealPos},
     util::algorithms::distance::chebyshev_distance,
 };
 
@@ -17,7 +14,7 @@ pub trait FieldOfView {
 #[derive(Debug, Clone, Copy)]
 struct ConeFOV {
     range: Int,
-    // angle: Real,
+    angle: Real,
     facing: Facing,
 }
 
@@ -45,14 +42,15 @@ pub fn omnidirectional_fov(range: Int) -> impl FieldOfView {
 }
 
 #[allow(dead_code)]
-pub fn cone_fov(range: Int, _angle: Real, facing: Facing) -> impl FieldOfView {
+pub fn cone_fov(range: Int, angle: Real, facing: Facing) -> impl FieldOfView {
     ConeFOV {
         range,
-        // angle,
+        angle,
         facing,
     }
 }
 
+#[allow(dead_code)]
 pub fn quadratic_fov_default(range: Int, facing: Facing) -> impl FieldOfView {
     QuadraticFOV {
         range,
@@ -79,36 +77,24 @@ impl FieldOfView for OmniFOV {
 
 impl FieldOfView for ConeFOV {
     fn sees(&self, to: GridPos) -> bool {
-        let direction = RealPos::from(to.sub(ORIGIN));
+        let direction = self.facing * RealPos::from(to.sub(ORIGIN));
         let distance = chebyshev_distance(&ORIGIN, &to);
-        let angle = direction
-            .normalized()
-            .dot(self.facing * RealPos::new(0.0, -1.0))
-            .acos();
+        let normal = self.facing * RealPos::new(0.0, -1.0);
+        let angle = direction.normalized().dot(normal).acos();
         if angle.is_nan() {
             return true;
         }
-        angle.abs() <= PI / 4.0 && distance <= self.range
+        angle.abs() <= self.angle && distance <= self.range
     }
 }
 
 impl FieldOfView for QuadraticFOV {
     fn sees(&self, to: GridPos) -> bool {
         let distance = chebyshev_distance(&ORIGIN, &to);
-        let real_pos = RealPos::from(to);
-        let target = self.facing * real_pos;
-        let curve_line = (target.x * self.a).powi(2) + self.b;
+        let target = self.facing * RealPos::from(to);
+        let fov_limit = (target.x * self.a).powi(2) + self.b;
 
-        // let angle = to_vec2
-        //     .normalized()
-        //     .dot(facing.reversed() * Vec2::new(0.0, 1.0))
-        //     .acos();
-        // if angle.is_nan() {
-        //     return to_vec2.eq(&Vec2::new(0.0, 0.0));
-        // }
-
-        // (angle.abs() <= PI / 4.0 || curve_line < target.y)
-        curve_line < target.y && distance <= self.range
+        fov_limit < target.y && distance <= self.range
     }
 }
 
