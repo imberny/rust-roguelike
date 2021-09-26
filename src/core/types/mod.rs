@@ -1,5 +1,5 @@
 mod primitives;
-pub use primitives::{Int, Real};
+pub use primitives::{Index, Int, Real};
 
 mod cardinal;
 pub use cardinal::Cardinal;

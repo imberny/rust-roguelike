@@ -157,85 +157,17 @@ mod tests {
     use std::cmp::Ordering;
 
     use ron::de::from_reader;
-    use serde::Deserialize;
 
     use crate::{
-        core::types::{Cardinal, GridPos, Int, Real},
-        game_world::{AreaGrid, TileType},
+        core::types::GridPos,
+        test::{
+            helpers::visibility::{from_ascii_expected, from_ascii_layout},
+            visibility::TestMapCases,
+        },
         util::algorithms::field_of_view::{self, FieldOfView},
     };
 
     use super::symmetric_shadowcasting;
-
-    fn from_ascii_layout(ascii_map: &str) -> (GridPos, AreaGrid) {
-        let mut origin = GridPos::zero();
-        let mut tiles: Vec<TileType> = vec![];
-        let width = ascii_map.find('\n').unwrap() as Int;
-
-        let rows = ascii_map.split('\n');
-        let mut y = 0;
-        for row in rows {
-            assert_eq!(width, row.trim_start().len() as Int);
-            for (x, tile) in row.trim_start().char_indices() {
-                match tile {
-                    '.' => tiles.push(TileType::Floor),
-                    '#' => tiles.push(TileType::Wall),
-                    '@' => {
-                        tiles.push(TileType::Floor);
-                        origin.x = x as i32;
-                        origin.y = y as i32;
-                    }
-
-                    _ => panic!("Unrecognized map tile: {:?}", tile),
-                }
-            }
-            y += 1;
-        }
-        let height = y;
-
-        let map = AreaGrid {
-            tiles,
-            width,
-            height,
-            revealed: vec![false; (width * height) as usize],
-            visible: vec![false; (width * height) as usize],
-        };
-        (origin, map)
-    }
-
-    fn from_ascii_expected(ascii_map: &str) -> Vec<GridPos> {
-        let mut visible_positions: Vec<GridPos> = vec![];
-
-        let width = ascii_map.find('\n').unwrap() as Int;
-        let rows = ascii_map.split('\n');
-        let mut y = 0;
-        for row in rows {
-            assert_eq!(width, row.trim_start().len() as Int);
-            for (x, char) in row.trim_start().char_indices() {
-                if char == 'y' {
-                    visible_positions.push(GridPos::new(x as i32, y as i32))
-                }
-            }
-            y += 1
-        }
-
-        visible_positions
-    }
-
-    #[derive(Debug, Deserialize)]
-    struct TestMap {
-        range: Int,
-        a: Real,
-        b: Real,
-        cardinal: Cardinal,
-        layout: String,
-        expected_visible: String,
-    }
-
-    #[derive(Debug, Deserialize)]
-    struct TestMapCases {
-        cases: Vec<TestMap>,
-    }
 
     fn read_test_cases() -> TestMapCases {
         let current_dir = std::env::current_dir().unwrap();

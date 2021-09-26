@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::{
     actors::{input::PlayerInput, Action},
-    core::types::Direction,
+    core::types::{Direction, Index},
 };
 
 struct PlayerSettings {
@@ -31,7 +31,7 @@ impl PlayerSettings {
     }
 }
 
-const LEFT_MOUSE_BUTTON: usize = 0;
+const LEFT_MOUSE_BUTTON: Index = 0;
 
 pub fn poll_input(world: &mut World, ctx: &Rltk) {
     let mut input_resource = world.get_resource_mut::<PlayerInput>().unwrap();

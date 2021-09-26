@@ -1,6 +1,6 @@
 use rltk::{Algorithm2D, BaseMap, Point};
 
-use crate::core::types::{GridPos, Int};
+use crate::core::types::{GridPos, Index, Int};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum TileType {
@@ -24,11 +24,11 @@ pub struct AreaGrid {
 }
 
 impl AreaGrid {
-    pub fn xy_idx(&self, x: Int, y: Int) -> usize {
-        ((y * self.width) + x) as usize
+    pub fn xy_idx(&self, x: Int, y: Int) -> Index {
+        ((y * self.width) + x) as Index
     }
 
-    pub fn idx_xy(&self, idx: usize) -> (Int, Int) {
+    pub fn idx_xy(&self, idx: Index) -> (Int, Int) {
         (idx as Int % self.width, idx as Int / self.width)
     }
 
@@ -45,7 +45,7 @@ impl AreaGrid {
         self.tiles[idx]
     }
 
-    pub fn index_to_point(&self, index: usize) -> GridPos {
+    pub fn index_to_point(&self, index: Index) -> GridPos {
         GridPos::new(index as Int % self.width, index as Int / self.width)
     }
 
@@ -72,7 +72,7 @@ impl IntoIterator for AreaGrid {
 
 pub struct MapIterator {
     map: AreaGrid,
-    index: usize,
+    index: Index,
 }
 
 impl Iterator for MapIterator {
@@ -93,7 +93,7 @@ impl Iterator for MapIterator {
 }
 
 impl BaseMap for AreaGrid {
-    fn is_opaque(&self, idx: usize) -> bool {
+    fn is_opaque(&self, idx: Index) -> bool {
         self.tiles[idx] == TileType::Wall
     }
 }
