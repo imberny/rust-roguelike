@@ -53,6 +53,15 @@ pub fn cone_fov(range: Int, _angle: Real, facing: Facing) -> impl FieldOfView {
     }
 }
 
+pub fn quadratic_fov_default(range: Int, facing: Facing) -> impl FieldOfView {
+    QuadraticFOV {
+        range,
+        facing,
+        a: 0.5,
+        b: -1.5,
+    }
+}
+
 pub fn quadratic_fov(range: Int, facing: Facing, a: Real, b: Real) -> impl FieldOfView {
     QuadraticFOV {
         range,
@@ -107,7 +116,10 @@ impl FieldOfView for QuadraticFOV {
 mod tests {
 
     use super::FieldOfView;
-    use crate::core::{constants::*, types::GridPos};
+    use crate::core::{
+        constants::*,
+        types::{Cardinal, GridPos},
+    };
 
     use super::{cone_fov, infinite_fov, omnidirectional_fov, quadratic_fov};
 
@@ -157,7 +169,7 @@ mod tests {
 
     #[test]
     fn directed_fov() {
-        let fov = cone_fov(5, PI / 2.0, NORTH);
+        let fov = cone_fov(5, PI / 2.0, Cardinal::North.into());
 
         let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
         for target in north_targets {
@@ -176,7 +188,7 @@ mod tests {
 
     #[test]
     fn view_curve() {
-        let fov = quadratic_fov(5, NORTH, 0.5, -1.5);
+        let fov = quadratic_fov(5, Cardinal::North.into(), 0.5, -1.5);
 
         let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
         for target in north_targets {
@@ -202,7 +214,7 @@ mod tests {
 
     #[test]
     fn view_curve_east() {
-        let fov = quadratic_fov(5, EAST, 0.5, -1.5);
+        let fov = quadratic_fov(5, Cardinal::East.into(), 0.5, -1.5);
 
         for target in targets_facing_east() {
             let is_seen = fov.sees(target);
@@ -212,7 +224,7 @@ mod tests {
 
     #[test]
     fn view_curve_west() {
-        let fov = quadratic_fov(5, WEST, 0.5, -1.5);
+        let fov = quadratic_fov(5, Cardinal::West.into(), 0.5, -1.5);
 
         for target in targets_facing_west() {
             let is_seen = fov.sees(target);

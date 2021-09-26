@@ -1,6 +1,8 @@
+use serde::Deserialize;
+
 use super::{Direction, Int};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize)]
 pub enum Cardinal {
     North,
     East,

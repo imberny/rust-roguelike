@@ -124,11 +124,12 @@ mod tests {
     fn change_facing_action() {
         let mut world = test_world();
         let player = player(&mut world);
-        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(Direction::Forward);
+        world.get_resource_mut::<PlayerInput>().unwrap().action =
+            Action::Turn(Direction::ForwardRight);
 
         player_stage().run(&mut world);
 
         let activity = world.get::<Activity>(player).unwrap();
-        assert_eq!(false, activity.action);
+        assert_eq!(Action::Turn(Direction::ForwardRight), activity.action);
     }
 }
