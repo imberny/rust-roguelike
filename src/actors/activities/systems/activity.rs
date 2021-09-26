@@ -64,12 +64,8 @@ pub fn process_activities(
                     actor.facing = cardinal;
                     viewshed.dirty = true;
                 }
-                Action::RotateRight => {
-                    actor.facing = rotate_facing(actor.facing, 1);
-                    viewshed.dirty = true;
-                }
-                Action::RotateLeft => {
-                    actor.facing = rotate_facing(actor.facing, -1);
+                Action::Turn(direction) => {
+                    actor.facing = rotate_facing(actor.facing, direction.into());
                     viewshed.dirty = true;
                 }
                 Action::Attack => {}

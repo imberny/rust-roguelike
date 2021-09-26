@@ -16,10 +16,10 @@ impl PlayerSettings {
         Self {
             input_map: HashMap::from([
                 // (VirtualKeyCode::Q, Action::Face(NORTH_WEST)),
-                (VirtualKeyCode::Q, Action::RotateLeft),
+                (VirtualKeyCode::Q, Action::Turn(Direction::ForwardLeft)),
                 (VirtualKeyCode::W, Action::Move(Direction::Forward)),
                 // (VirtualKeyCode::E, Action::Face(NORTH_EAST)),
-                (VirtualKeyCode::E, Action::RotateRight),
+                (VirtualKeyCode::E, Action::Turn(Direction::ForwardRight)),
                 (VirtualKeyCode::D, Action::Move(Direction::Right)),
                 // (VirtualKeyCode::C, Action::Move(SOUTH_EAST)),
                 (VirtualKeyCode::S, Action::Move(Direction::Back)),

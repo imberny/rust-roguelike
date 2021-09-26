@@ -8,8 +8,7 @@ pub enum Action {
     Wait,
     Move(Direction),
     Face(Cardinal),
-    RotateRight,
-    RotateLeft,
+    Turn(Direction),
     Say(Message),
     Attack,
 }
