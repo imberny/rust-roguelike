@@ -1,7 +1,28 @@
+use ron::de;
+
 use crate::{
     core::types::{GridPos, Index, Int},
     game_world::{AreaGrid, TileType},
+    test::visibility::TestMapCases,
 };
+
+pub fn read_test_cases() -> TestMapCases {
+    let current_dir = std::env::current_dir().unwrap();
+    let path = format!(
+        "{}/{}",
+        current_dir.to_str().unwrap(),
+        "src/test/data/maps.ron"
+    );
+    let maps = std::fs::File::open(&path).expect("Failed opening file");
+
+    match de::from_reader(maps) {
+        Ok(x) => x,
+        Err(e) => {
+            println!("Failed to load config: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
 
 pub fn from_ascii_layout(ascii_map: &str) -> (GridPos, AreaGrid) {
     let mut origin = GridPos::zero();

@@ -156,36 +156,13 @@ mod tests {
 
     use std::cmp::Ordering;
 
-    use ron::de::from_reader;
-
     use crate::{
         core::types::GridPos,
-        test::{
-            helpers::visibility::{from_ascii_expected, from_ascii_layout},
-            visibility::TestMapCases,
-        },
+        test::helpers::visibility::{from_ascii_expected, from_ascii_layout, read_test_cases},
         util::algorithms::field_of_view::{self, FieldOfView},
     };
 
     use super::symmetric_shadowcasting;
-
-    fn read_test_cases() -> TestMapCases {
-        let current_dir = std::env::current_dir().unwrap();
-        let path = format!(
-            "{}/{}",
-            current_dir.to_str().unwrap(),
-            "src/test/data/maps.ron"
-        );
-        let maps = std::fs::File::open(&path).expect("Failed opening file");
-
-        match from_reader(maps) {
-            Ok(x) => x,
-            Err(e) => {
-                println!("Failed to load config: {}", e);
-                std::process::exit(1);
-            }
-        }
-    }
 
     #[test]
     fn symmetric_shadowcasting_tests() {
