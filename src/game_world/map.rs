@@ -50,6 +50,9 @@ impl AreaGrid {
     }
 
     pub fn is_blocking(&self, position: GridPos) -> bool {
+        if !self.is_point_in_bounds(position) {
+            return false;
+        }
         match self.at(position) {
             TileType::Wall => true,
             TileType::Floor => false,

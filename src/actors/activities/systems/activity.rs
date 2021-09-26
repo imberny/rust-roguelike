@@ -22,7 +22,7 @@ fn rotate_facing(cardinal: Cardinal, offset: Int) -> Cardinal {
 }
 
 fn slide(
-    pos: &GridPos,
+    pos: GridPos,
     direction: Direction,
     cardinal: Cardinal,
     is_blocking: &GridPosPredicate,
@@ -34,14 +34,14 @@ fn slide(
 
     let facing = compute_facing(clockwise_slide, cardinal);
     let mut result_position: GridPos =
-        (facing.reversed() * RealPos::from(delta) + RealPos::from(*pos)).as_grid_pos();
+        (facing.reversed() * RealPos::from(delta) + RealPos::from(pos)).as_grid_pos();
 
     if is_blocking(result_position) {
         let facing = compute_facing(counterclockwise_slide, cardinal);
         result_position =
-            (facing.reversed() * RealPos::from(delta) + RealPos::from(*pos)).as_grid_pos();
+            (facing.reversed() * RealPos::from(delta) + RealPos::from(pos)).as_grid_pos();
         if is_blocking(result_position) {
-            return GridPos::zero();
+            return pos;
         }
     }
     result_position
@@ -60,7 +60,7 @@ fn do_move(
         (facing.reversed() * RealPos::from(delta) + RealPos::from(*pos)).as_grid_pos();
 
     if is_blocking(result_position) {
-        result_position = slide(pos, direction, cardinal, is_blocking);
+        result_position = slide(*pos, direction, cardinal, is_blocking);
     }
     result_position.x = result_position.x.clamp(0, 79);
     result_position.y = result_position.y.clamp(0, 49);
@@ -124,11 +124,11 @@ mod tests {
 
     use crate::{
         actors::{Action, Activity, ActorBundle},
-        core::types::{Cardinal, Direction, GridPos},
+        core::types::{Cardinal, Direction, GridPos, GridPosPredicate},
         game_world::{AreaGrid, TileType},
     };
 
-    use super::{process_activities, slide};
+    use super::{do_move, process_activities, slide};
 
     fn test_map() -> AreaGrid {
         AreaGrid {
@@ -214,9 +214,19 @@ mod tests {
         ];
 
         for (dir, card, expected, block) in test_cases {
-            let pos = slide(&from, dir, card, &|pos| pos != expected || block);
+            let pos = slide(from, dir, card, &|pos| pos != expected || block);
 
             assert_eq!(expected, pos);
         }
+    }
+
+    #[test]
+    fn move_zero() {
+        do_move(
+            &mut GridPos::zero(),
+            Direction::Forward,
+            Cardinal::North,
+            &|_pos| false,
+        );
     }
 }
