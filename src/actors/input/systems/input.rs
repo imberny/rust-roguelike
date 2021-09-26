@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::{
     actors::{input::PlayerInput, Action},
-    core::types::{Direction, Index},
+    core::types::{Cardinal, Direction, Index},
 };
 
 struct PlayerSettings {
@@ -15,15 +15,13 @@ impl PlayerSettings {
     pub fn new() -> Self {
         Self {
             input_map: HashMap::from([
-                // (VirtualKeyCode::Q, Action::Face(NORTH_WEST)),
                 (VirtualKeyCode::Q, Action::Turn(Direction::ForwardLeft)),
                 (VirtualKeyCode::W, Action::Move(Direction::Forward)),
-                // (VirtualKeyCode::E, Action::Face(NORTH_EAST)),
                 (VirtualKeyCode::E, Action::Turn(Direction::ForwardRight)),
                 (VirtualKeyCode::D, Action::Move(Direction::Right)),
-                // (VirtualKeyCode::C, Action::Move(SOUTH_EAST)),
+                (VirtualKeyCode::C, Action::Move(Direction::BackRight)),
                 (VirtualKeyCode::S, Action::Move(Direction::Back)),
-                // (VirtualKeyCode::Z, Action::Move(SOUTH_WEST)),
+                (VirtualKeyCode::Z, Action::Move(Direction::BackLeft)),
                 (VirtualKeyCode::A, Action::Move(Direction::Left)),
                 (VirtualKeyCode::X, Action::Wait),
             ]),
@@ -70,14 +68,14 @@ fn input_to_action(key: VirtualKeyCode, is_strafing: bool, skew_move: bool) -> A
 
     // player can't change those
     match key {
-        //     VirtualKeyCode::Numpad7 => Action::Move(NORTH_WEST),
-        //     VirtualKeyCode::Numpad8 => Action::Move(NORTH),
-        //     VirtualKeyCode::Numpad9 => Action::Move(NORTH_EAST),
-        //     VirtualKeyCode::Numpad6 => Action::Move(EAST),
-        //     VirtualKeyCode::Numpad3 => Action::Move(SOUTH_EAST),
-        //     VirtualKeyCode::Numpad2 => Action::Move(SOUTH),
-        //     VirtualKeyCode::Numpad1 => Action::Move(SOUTH_WEST),
-        //     VirtualKeyCode::Numpad4 => Action::Move(WEST),
+        VirtualKeyCode::Numpad7 => Action::Face(Cardinal::NorthWest),
+        VirtualKeyCode::Numpad8 => Action::Face(Cardinal::North),
+        VirtualKeyCode::Numpad9 => Action::Face(Cardinal::NorthEast),
+        VirtualKeyCode::Numpad6 => Action::Face(Cardinal::East),
+        VirtualKeyCode::Numpad3 => Action::Face(Cardinal::SouthEast),
+        VirtualKeyCode::Numpad2 => Action::Face(Cardinal::South),
+        VirtualKeyCode::Numpad1 => Action::Face(Cardinal::SouthWest),
+        VirtualKeyCode::Numpad4 => Action::Face(Cardinal::West),
 
         //     // Shift + 7 => Home
         //     VirtualKeyCode::Home => {
