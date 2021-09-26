@@ -17,7 +17,7 @@ pub fn handle_player_input(
     }
 }
 
-fn convert_to_valid_action(input: Res<PlayerInput>, actor: &mut Actor) -> Action {
+fn convert_to_valid_action(input: Res<PlayerInput>, _actor: &mut Actor) -> Action {
     match input.action {
         Action::Move(direction) => {
             // if direction != actor.facing && !input.is_strafing {
@@ -60,7 +60,7 @@ mod tests {
 
     use crate::{
         actors::{input::PlayerInput, Action, Activity, ActorBundle, Player},
-        core::{constants::*, types::Direction},
+        core::types::Direction,
     };
 
     use super::{handle_player_input, is_input_valid};

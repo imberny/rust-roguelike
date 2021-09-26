@@ -124,7 +124,7 @@ mod tests {
 
     use crate::{
         actors::{Action, Activity, ActorBundle},
-        core::types::{Cardinal, Direction, GridPos, GridPosPredicate},
+        core::types::{Cardinal, Direction, GridPos},
         game_world::{AreaGrid, TileType},
     };
 

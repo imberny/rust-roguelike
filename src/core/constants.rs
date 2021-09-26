@@ -1,5 +1,3 @@
-use ultraviolet as uv;
-
-use super::types::{Facing, Real};
+use super::types::Real;
 
 pub const PI: Real = std::f32::consts::PI;
