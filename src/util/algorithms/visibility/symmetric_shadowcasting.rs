@@ -154,9 +154,14 @@ fn slope_from(tile: &QuadrantTile) -> Fraction {
 #[cfg(test)]
 mod tests {
 
+    use std::cmp::Ordering;
+
+    use ron::de::from_reader;
+    use serde::Deserialize;
+
     use crate::{
         core::{
-            constants::SOUTH,
+            constants::{EAST, SOUTH, WEST},
             types::{GridPos, Int},
         },
         game_world::{AreaGrid, TileType},
@@ -241,7 +246,7 @@ mod tests {
 
     #[test]
     fn curve_fov() {
-        let fov = field_of_view::quadratic_fov(2, SOUTH, 0.5, 1.5);
+        let fov = field_of_view::quadratic_fov(2, SOUTH, 0.5, -1.5);
 
         let map = square_room();
 
@@ -275,8 +280,10 @@ mod tests {
             visible: Vec::new(),
         };
 
+        map.width = ascii_map.find('\n').unwrap() as Int;
         let rows = ascii_map.split('\n');
         for row in rows {
+            assert_eq!(map.width, row.len() as Int);
             map.height += 1;
             for tile in row.chars() {
                 match tile {
@@ -286,9 +293,62 @@ mod tests {
                 }
             }
         }
-        map.width = map.tiles.len() as Int / map.height;
 
         map
+    }
+
+    fn from_ascii_layout(ascii_map: &str) -> (GridPos, AreaGrid) {
+        let mut map = AreaGrid {
+            tiles: Vec::new(),
+            width: 0,
+            height: 0,
+            revealed: Vec::new(),
+            visible: Vec::new(),
+        };
+        let mut origin = GridPos::zero();
+
+        map.width = ascii_map.find('\n').unwrap() as Int;
+        let rows = ascii_map.split('\n');
+        let mut y = 0;
+        for row in rows {
+            assert_eq!(map.width, row.len() as Int);
+            for (x, tile) in row.char_indices() {
+                match tile {
+                    '.' => map.tiles.push(TileType::Floor),
+                    '#' => map.tiles.push(TileType::Wall),
+                    '@' => {
+                        map.tiles.push(TileType::Floor);
+                        origin.x = x as i32;
+                        origin.y = y as i32;
+                    }
+
+                    _ => panic!("Unrecognized map tile: {:?}", tile),
+                }
+            }
+            y += 1;
+        }
+        map.height = y;
+
+        (origin, map)
+    }
+
+    fn from_ascii_expected(ascii_map: &str) -> Vec<GridPos> {
+        let mut visible_positions: Vec<GridPos> = vec![];
+
+        let width = ascii_map.find('\n').unwrap() as Int;
+        let rows = ascii_map.split('\n');
+        let mut y = 0;
+        for row in rows {
+            assert_eq!(width, row.len() as Int);
+            for (x, char) in row.char_indices() {
+                if char == 'y' {
+                    visible_positions.push(GridPos::new(x as i32, y as i32))
+                }
+            }
+            y += 1
+        }
+
+        visible_positions
     }
 
     fn square_room() -> AreaGrid {
@@ -300,18 +360,76 @@ mod tests {
         )
     }
 
+    #[derive(Debug, Deserialize)]
+    struct TestMap {
+        range: Int,
+        layout: String,
+        expected_visible: String,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct TestMapCases {
+        cases: Vec<TestMap>,
+    }
+
     fn cross() -> AreaGrid {
-        from_ascii(
-            r"###########
-#####.#####
-#####.#####
-#####.#####
-#.........#
-#####.#####
-#####.#####
-#####.#####
-#####.#####
-###########",
-        )
+        let current_dir = std::env::current_dir().unwrap();
+        let path = format!(
+            "{}/{}",
+            current_dir.to_str().unwrap(),
+            "src/test/data/maps.ron"
+        );
+        let maps = std::fs::File::open(&path).expect("Failed opening file");
+
+        let test_cases: TestMapCases = match from_reader(maps) {
+            Ok(x) => x,
+            Err(e) => {
+                println!("Failed to load config: {}", e);
+                std::process::exit(1);
+            }
+        };
+        from_ascii(&test_cases.cases[0].layout)
+    }
+
+    fn read_test_cases() -> TestMapCases {
+        let current_dir = std::env::current_dir().unwrap();
+        let path = format!(
+            "{}/{}",
+            current_dir.to_str().unwrap(),
+            "src/test/data/maps.ron"
+        );
+        let maps = std::fs::File::open(&path).expect("Failed opening file");
+
+        match from_reader(maps) {
+            Ok(x) => x,
+            Err(e) => {
+                println!("Failed to load config: {}", e);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    #[test]
+    fn map_test() {
+        let test_cases = read_test_cases();
+        let pos_sorter = |first: &GridPos, second: &GridPos| match first.y.cmp(&second.y) {
+            Ordering::Less => Ordering::Less,
+            Ordering::Greater => Ordering::Greater,
+            Ordering::Equal => first.x.cmp(&second.x),
+        };
+
+        for case in test_cases.cases {
+            let (origin, map) = from_ascii_layout(&case.layout);
+            let expected = from_ascii_expected(&case.expected_visible);
+
+            let fov = field_of_view::quadratic_fov(case.range, EAST, 0.5, -1.5);
+
+            let mut visible_positions =
+                symmetric_shadowcasting(origin, &|pos| fov.sees(pos), &|pos| map.is_blocking(pos));
+
+            visible_positions.sort_by(pos_sorter);
+
+            assert_eq!(expected, visible_positions);
+        }
     }
 }

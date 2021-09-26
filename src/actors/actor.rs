@@ -44,7 +44,7 @@ impl Default for Actor {
         Self {
             sheet: Default::default(),
             properties: Default::default(),
-            facing: SOUTH,
+            facing: NORTH,
         }
     }
 }

@@ -8,7 +8,7 @@ use crate::{
 };
 
 fn do_move(pos: &mut GridPos, direction: Facing, facing: Facing, map: &Res<AreaGrid>) {
-    let delta = GridPos::new(0, 1);
+    let delta = GridPos::new(0, -1);
 
     // let result_direction =
     let mut result_position: GridPos = ((direction * facing).reversed() * RealPos::from(delta)

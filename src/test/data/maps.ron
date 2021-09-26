@@ -1,0 +1,73 @@
+TestMapCases(
+    cases: [
+        TestMap(
+            range: 1,
+            layout:
+"######
+#@...#
+######",
+            expected_visible:
+"yyy###
+yyy..#
+yyy###",
+        ),
+        TestMap(
+            range: 2,
+            layout:
+"######
+#@...#
+######",
+            expected_visible:
+"yyyy##
+yyyy.#
+yyyy##",
+        ),
+        TestMap(
+            range: 3,
+            layout:
+"######
+#@...#
+######",
+            expected_visible:
+"yyyyy#
+yyyyy#
+yyyyy#",
+        ),
+        TestMap(
+            range: 4,
+            layout:
+"######
+#@...#
+######",
+            expected_visible:
+"yyyyyy
+yyyyyy
+yyyyyy",
+        ),
+        TestMap(
+            range: 6,
+            layout:
+r"###########
+#####.#####
+#####.#####
+#####.#####
+#..@......#
+#####.#####
+#####.#####
+#####.#####
+#####.#####
+###########",
+            expected_visible:
+r"###########
+#####.#####
+#####.#####
+##yyyyyyyy#
+#.yyyyyyyy#
+##yyyyyyyy#
+#####.#####
+#####.#####
+#####.#####
+###########",
+        )
+    ]
+)

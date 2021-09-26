@@ -9,6 +9,9 @@ mod generator;
 mod rendering;
 mod util;
 
+#[cfg(test)]
+mod test;
+
 fn main() -> rltk::BError {
     run_game()
 }

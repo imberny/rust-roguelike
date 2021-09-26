@@ -1,9 +1,12 @@
 use std::ops::Sub;
 
-use crate::core::constants::PI;
-use crate::core::types::{Facing, GridPos, Int, Real, RealPos};
-
-use super::distance::chebyshev_distance;
+use crate::{
+    core::{
+        constants::PI,
+        types::{Facing, GridPos, Int, Real, RealPos},
+    },
+    util::algorithms::distance::chebyshev_distance,
+};
 
 const ORIGIN: GridPos = GridPos { x: 0, y: 0 };
 
@@ -71,7 +74,7 @@ impl FieldOfView for ConeFOV {
         let distance = chebyshev_distance(&ORIGIN, &to);
         let angle = direction
             .normalized()
-            .dot(self.facing * RealPos::new(0.0, 1.0))
+            .dot(self.facing * RealPos::new(0.0, -1.0))
             .acos();
         if angle.is_nan() {
             return true;

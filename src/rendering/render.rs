@@ -49,7 +49,7 @@ fn draw_entities(world: &mut World, ctx: &mut Rltk) {
         let idx = map.xy_idx(pos.x, pos.y);
         if map.visible[idx] {
             let weapon_position = (RealPos::from(*pos)
-                + actor.facing.reversed() * RealPos::new(0.0, 1.0))
+                - actor.facing.reversed() * RealPos::new(0.0, -1.0))
             .as_grid_pos();
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             ctx.set(
