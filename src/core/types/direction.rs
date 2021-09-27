@@ -1,6 +1,8 @@
+use serde::Deserialize;
+
 use super::{Cardinal, Int};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize)]
 pub enum Direction {
     Forward,
     Right,

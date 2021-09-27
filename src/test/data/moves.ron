@@ -1,0 +1,32 @@
+MoveTestCases(
+    cases: [(
+            Back,
+            NorthWest,
+            0, 0,
+            true,
+        ),
+        (
+            Back,
+            NorthWest,
+            0, 1,
+            false,
+        ),
+        (
+            Back,
+            NorthWest,
+            1, 0,
+            false,
+        ),
+        (
+            Left,
+            NorthWest,
+            -1, 0,
+            false,
+        ),
+        (
+            Left,
+            NorthWest,
+            0, 1,
+            false,
+        )]
+)

@@ -10,6 +10,7 @@ pub enum Action {
     Face(Cardinal),
     Turn(Direction),
     Say(Message),
+    InitiateAttack,
     Attack,
 }
 

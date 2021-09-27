@@ -13,6 +13,7 @@ pub fn render(world: &mut World, ctx: &mut Rltk) {
     ctx.cls();
     draw_map(world, ctx);
     draw_entities(world, ctx);
+    draw_markers(world, ctx);
 }
 
 fn draw_map(world: &World, ctx: &mut Rltk) {
@@ -50,7 +51,7 @@ fn draw_entities(world: &mut World, ctx: &mut Rltk) {
         if map.visible[idx] {
             let facing: Facing = actor.facing.into();
             let weapon_position =
-                (RealPos::from(*pos) - facing.reversed() * RealPos::new(0.0, -1.0)).as_grid_pos();
+                (RealPos::from(*pos) - facing.reversed() * RealPos::new(0.0, -1.0)).round();
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             ctx.set(
                 weapon_position.x,
@@ -59,6 +60,17 @@ fn draw_entities(world: &mut World, ctx: &mut Rltk) {
                 render.bg,
                 rltk::to_cp437('\\'),
             );
+        }
+    });
+}
+
+fn draw_markers(world: &mut World, ctx: &mut Rltk) {
+    let mut renderables = world.query_filtered::<(&GridPos, &Renderable), Without<Actor>>();
+    let map = world.get_resource::<AreaGrid>().unwrap();
+    renderables.for_each(world, |(pos, render)| {
+        let idx = map.xy_idx(pos.x, pos.y);
+        if map.visible[idx] {
+            ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
         }
     });
 }

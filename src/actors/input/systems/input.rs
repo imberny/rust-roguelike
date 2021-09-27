@@ -24,6 +24,8 @@ impl PlayerSettings {
                 (VirtualKeyCode::Z, Action::Move(Direction::BackLeft)),
                 (VirtualKeyCode::A, Action::Move(Direction::Left)),
                 (VirtualKeyCode::X, Action::Wait),
+                (VirtualKeyCode::Return, Action::InitiateAttack),
+                (VirtualKeyCode::J, Action::InitiateAttack),
             ]),
         }
     }
