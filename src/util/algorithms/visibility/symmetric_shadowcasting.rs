@@ -1,40 +1,12 @@
+use fraction::Fraction;
 use std::collections::HashSet;
 
-use fraction::Fraction;
-
-use super::quadrant::{Cardinal, Quadrant, QuadrantRow, QuadrantTile};
 use crate::{
-    core::types::{GridPos, GridPosPredicate, Int},
+    core::types::{Cardinal, Facing, GridPos, GridPosPredicate, Int, IntoGridPos, RealPos},
     util::math::RealToInt,
 };
 
-struct RowProvider {
-    cardinal: Cardinal,
-    origin: GridPos,
-}
-
-impl IntoIterator for RowProvider {
-    type Item = QuadrantRow;
-
-    type IntoIter = RowProviderIterator;
-
-    fn into_iter(self) -> Self::IntoIter {
-        let first_row = QuadrantRow::from_quadrant(Quadrant::new(self.cardinal, self.origin));
-        RowProviderIterator { row: first_row }
-    }
-}
-
-struct RowProviderIterator {
-    row: QuadrantRow,
-}
-
-impl Iterator for RowProviderIterator {
-    type Item = QuadrantRow;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.row.next())
-    }
-}
+type MarkVisible<'a> = dyn FnMut(GridPos) -> bool + 'a;
 
 pub fn symmetric_shadowcasting(
     origin: GridPos,
@@ -44,110 +16,210 @@ pub fn symmetric_shadowcasting(
     let mut visible_positions: HashSet<GridPos> = HashSet::new();
     visible_positions.insert(origin);
 
-    for cardinal in Cardinal::iterator() {
-        // let row_provider = RowProvider { cardinal, origin };
-        let first_row = QuadrantRow::from_quadrant(Quadrant::new(cardinal, origin));
-        visible_positions.extend(scan_iterative(first_row, origin, is_visible, is_blocking));
+    let cardinals = [
+        Cardinal::North,
+        Cardinal::South,
+        Cardinal::East,
+        Cardinal::West,
+    ];
+
+    for cardinal in cardinals {
+        scan(
+            origin,
+            cardinal,
+            &mut |pos| visible_positions.insert(pos),
+            is_visible,
+            is_blocking,
+        )
     }
 
     visible_positions.into_iter().collect()
 }
 
-fn scan_iterative(
-    first_row: QuadrantRow,
-    // row_provider: RowProvider,
+fn scan(
     origin: GridPos,
+    cardinal: Cardinal,
+    mark_visible: &mut MarkVisible,
     is_visible: &GridPosPredicate,
     is_blocking: &GridPosPredicate,
-) -> HashSet<GridPos> {
-    let mut rows: Vec<QuadrantRow> = vec![first_row];
+) {
+    QuadrantRow::new(origin, cardinal).scan(mark_visible, is_visible, is_blocking);
+}
+#[derive(Debug, Clone, Copy)]
+struct Quadrant {
+    facing: Facing,
+    origin: GridPos,
+}
 
-    let mut visible_positions: HashSet<GridPos> = HashSet::new();
+impl Quadrant {
+    pub fn new(facing: Facing, origin: GridPos) -> Self {
+        Self { facing, origin }
+    }
 
-    while !rows.is_empty() {
-        let mut row = rows.pop().unwrap();
-        let mut prev_tile: Option<QuadrantTile> = None;
-        for tile in tiles(&row, is_visible, origin) {
-            if let Some(next_row) = check_next_row(&prev_tile, &tile, &mut row, is_blocking) {
-                rows.push(next_row);
+    pub fn transform(&self, point: GridPos) -> GridPos {
+        let real_position: RealPos = point.into();
+        self.origin + (self.facing * real_position).as_grid_pos()
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct QuadrantTile {
+    row_depth: u16,
+    column: u32,
+    position: GridPos,
+}
+
+impl From<QuadrantTile> for Fraction {
+    fn from(tile: QuadrantTile) -> Self {
+        let row_depth = tile.row_depth;
+        let column = tile.column as i16;
+        let num = 2i16 * column - 1i16;
+        if 0 < num {
+            Fraction::new(num as u16, 2u16 * row_depth)
+        } else {
+            Fraction::new_neg(num.abs() as u16, 2u16 * row_depth)
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct QuadrantRow {
+    quadrant: Quadrant,
+    depth: u16,
+    start_slope: Fraction,
+    end_slope: Fraction,
+}
+
+impl QuadrantRow {
+    pub fn new(origin: GridPos, cardinal: Cardinal) -> Self {
+        Self {
+            quadrant: Quadrant::new(cardinal.into(), origin),
+            depth: 1,
+            start_slope: Fraction::new_neg(1u16, 1u32),
+            end_slope: Fraction::new(1u16, 1u32),
+        }
+    }
+
+    pub fn scan(
+        &mut self,
+        mark_visible: &mut MarkVisible,
+        is_visible: &GridPosPredicate,
+        is_blocking: &GridPosPredicate,
+    ) {
+        let mut previous = GridPos::zero();
+        for tile in self.tiles(is_visible) {
+            if previous != GridPos::zero() {
+                self.try_update_slope(tile, previous, is_blocking);
             }
 
-            prev_tile = try_reveal_tile(tile, &row, is_blocking, &mut visible_positions);
+            if self.check_next_row(tile.position, previous, is_blocking) {
+                self.next_from(tile.into())
+                    .scan(mark_visible, is_visible, is_blocking);
+            }
+
+            if is_blocking(tile.position) || self.is_symmetric(tile.column as Int) {
+                mark_visible(tile.position);
+            }
+
+            previous = tile.position;
         }
-        if let Some(prev_tile) = prev_tile {
-            if !is_blocking(prev_tile.position) {
-                rows.push(row.next());
+        if !is_blocking(previous) {
+            self.next().scan(mark_visible, is_visible, is_blocking);
+        }
+    }
+
+    fn origin(&self) -> GridPos {
+        self.quadrant.origin
+    }
+
+    fn next_from(&self, slope: Fraction) -> QuadrantRow {
+        let mut next = self.next();
+        next.end_slope = slope;
+        next
+    }
+
+    fn next(&self) -> QuadrantRow {
+        let mut next = self.clone();
+        next.depth += 1;
+        next
+    }
+
+    fn is_symmetric(&self, column: Int) -> bool {
+        let depth_fraction = Fraction::new(self.depth, 1u32);
+
+        let start_slope = depth_fraction * self.start_slope;
+        let start_slope_val = start_slope.int();
+
+        let end_slope = depth_fraction * self.end_slope;
+        let end_slope_val = end_slope.int();
+
+        column + 1 >= start_slope_val && column - 1 <= end_slope_val
+    }
+
+    fn try_update_slope(
+        &mut self,
+        tile: QuadrantTile,
+        previous_position: GridPos,
+        is_blocking: &GridPosPredicate,
+    ) {
+        if is_blocking(previous_position) && !is_blocking(tile.position) {
+            let slope: Fraction = tile.into();
+            self.start_slope = slope;
+        }
+    }
+
+    fn check_next_row(
+        &self,
+        position: GridPos,
+        previous_position: GridPos,
+        is_blocking: &GridPosPredicate,
+    ) -> bool {
+        !is_blocking(previous_position) && is_blocking(position)
+    }
+
+    fn tiles(&self, is_visible: &GridPosPredicate) -> Vec<QuadrantTile> {
+        let min_col = self
+            .round_ties_up(Fraction::new(self.depth, 1u32))
+            .round()
+            .int();
+        let max_col = self
+            .round_ties_down(Fraction::new(self.depth, 1u32))
+            .round()
+            .int();
+        let mut tiles: Vec<QuadrantTile> = Vec::new();
+        for column in min_col..=max_col {
+            let local_quadrant_position = GridPos::new(self.depth as Int, column);
+            let position = self.quadrant.transform(local_quadrant_position);
+            let delta = GridPos::new(position.x - self.origin().x, position.y - self.origin().y);
+            if is_visible(delta) {
+                tiles.push(QuadrantTile {
+                    row_depth: self.depth,
+                    column: column as u32,
+                    position,
+                });
             }
         }
+        tiles
     }
-    visible_positions
-}
 
-fn tiles(row: &QuadrantRow, is_visible: &GridPosPredicate, from: GridPos) -> Vec<QuadrantTile> {
-    let min_col = row
-        .round_ties_up(Fraction::new(row.depth, 1u32))
-        .round()
-        .int();
-    let max_col = row
-        .round_ties_down(Fraction::new(row.depth, 1u32))
-        .round()
-        .int();
-    let mut tiles: Vec<QuadrantTile> = Vec::new();
-    for column in min_col..=max_col {
-        let local_quadrant_position = GridPos::new(row.depth as Int, column);
-        let position = row.quadrant.transform(local_quadrant_position);
-        let delta = GridPos::new(position.x - from.x, position.y - from.y);
-        if is_visible(delta) {
-            tiles.push(QuadrantTile {
-                row_depth: row.depth,
-                column: column as u32,
-                position,
-            });
+    fn round_ties_up(&self, n: Fraction) -> Fraction {
+        let sloped = self.start_slope * n;
+        let sum = sloped + Fraction::new(1u16, 2u32);
+        if sum.is_sign_negative() {
+            sum.ceil()
+        } else {
+            sum.floor()
         }
     }
-    tiles
-}
 
-fn try_reveal_tile(
-    tile: QuadrantTile,
-    row: &QuadrantRow,
-    is_blocking: &GridPosPredicate,
-    visible_positions: &mut HashSet<GridPos>,
-) -> Option<QuadrantTile> {
-    if is_blocking(tile.position) || row.is_symmetric(&tile) {
-        visible_positions.insert(tile.position);
-    }
-
-    Some(tile)
-}
-
-fn check_next_row(
-    prev_tile: &Option<QuadrantTile>,
-    tile: &QuadrantTile,
-    row: &mut QuadrantRow,
-    is_blocking: &GridPosPredicate,
-) -> Option<QuadrantRow> {
-    if let Some(prev_tile) = prev_tile {
-        if is_blocking(prev_tile.position) && !is_blocking(tile.position) {
-            row.start_slope = slope_from(tile);
+    fn round_ties_down(&self, n: Fraction) -> Fraction {
+        let sloped = n * self.end_slope;
+        let sum = sloped - Fraction::new(1u16, 2u32);
+        if sum.is_sign_negative() {
+            sum.floor()
+        } else {
+            sum.ceil()
         }
-        if !is_blocking(prev_tile.position) && is_blocking(tile.position) {
-            let mut next_row = row.next();
-            next_row.end_slope = slope_from(tile);
-            return Some(next_row);
-        }
-    }
-    None
-}
-
-fn slope_from(tile: &QuadrantTile) -> Fraction {
-    let row_depth = tile.row_depth;
-    let column = tile.column as i16;
-    let num = 2i16 * column - 1i16;
-    if 0 < num {
-        Fraction::new(num as u16, 2u16 * row_depth)
-    } else {
-        Fraction::new_neg(num.abs() as u16, 2u16 * row_depth)
     }
 }
 
