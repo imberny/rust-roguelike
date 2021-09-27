@@ -1,5 +1,5 @@
 use self::{
-    activities::systems::{advance_activities, process_activities},
+    activities::systems::{do_activities, progress_activities},
     effects::systems::progress_effects,
     input::PlayerInput,
     systems::{handle_player_input, is_input_valid},
@@ -49,13 +49,13 @@ pub fn register(ecs: &mut GameRunner) {
             TurnGameStage::Update,
             SystemSet::new()
                 .before(ActorSystems::Action)
-                .with_system(advance_activities.system())
+                .with_system(progress_activities.system())
                 .with_system(progress_effects.system()),
         )
         .add_system_set_to_stage(
             TurnGameStage::Update,
             SystemSet::new()
                 .label(ActorSystems::Action)
-                .with_system(process_activities.system()),
+                .with_system(do_activities.system()),
         );
 }

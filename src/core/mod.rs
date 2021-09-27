@@ -1,8 +1,8 @@
+mod incremental_time;
 mod stages;
-mod turn_based_time;
 
 pub mod constants;
 pub mod types;
 
+pub use incremental_time::*;
 pub use stages::*;
-pub use turn_based_time::*;

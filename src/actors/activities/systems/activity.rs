@@ -1,18 +1,18 @@
 use bevy_ecs::prelude::*;
 use rltk::RGB;
-use std::{collections::HashSet, convert::*};
+use std::convert::*;
 
 use crate::{
-    actors::{effects::Effect, Action, Activity, Actor, Attack},
+    actors::{effects::Effect, Action, Activity, Actor},
     core::types::{
         Cardinal, Direction, Facing, GridPos, GridPosPredicate, Int, IntoGridPos, RealPos,
     },
-    core::TimeProgressionEvent,
+    core::TimeIncrementEvent,
     game_world::{AreaGrid, Viewshed},
     rendering::Renderable,
     util::algorithms::{
         field_of_view::{self, FieldOfView},
-        symmetric_shadowcasting, QuadrantRow,
+        symmetric_shadowcasting,
     },
 };
 
@@ -74,8 +74,8 @@ fn do_move(
     pos.y = result_position.y;
 }
 
-pub fn advance_activities(
-    mut time_events: EventReader<TimeProgressionEvent>,
+pub fn progress_activities(
+    mut time_events: EventReader<TimeIncrementEvent>,
     mut activities: Query<&mut Activity>,
 ) {
     for time_event in time_events.iter() {
@@ -89,7 +89,7 @@ pub fn advance_activities(
     }
 }
 
-pub fn process_activities(
+pub fn do_activities(
     mut commands: Commands,
     map: Res<AreaGrid>,
     mut actors: Query<(Entity, &mut Actor, &mut GridPos, &mut Viewshed, &Activity)>,
@@ -183,7 +183,7 @@ mod tests {
         util::helpers::deserialize,
     };
 
-    use super::{do_move, process_activities, slide};
+    use super::{do_activities, do_move, slide};
 
     fn test_map() -> AreaGrid {
         AreaGrid {
@@ -205,7 +205,7 @@ mod tests {
             .insert(Activity::default())
             .id();
 
-        let mut stage = SystemStage::single(process_activities.system());
+        let mut stage = SystemStage::single(do_activities.system());
         stage.run(&mut world);
 
         assert!(world.get::<Activity>(entity).is_none());
@@ -224,7 +224,7 @@ mod tests {
             })
             .id();
 
-        let mut stage = SystemStage::single(process_activities.system());
+        let mut stage = SystemStage::single(do_activities.system());
         stage.run(&mut world);
 
         assert!(world.get::<Activity>(entity).is_none());

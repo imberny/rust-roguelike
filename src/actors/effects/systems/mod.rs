@@ -1,12 +1,12 @@
 use bevy_ecs::prelude::*;
 
-use crate::core::TimeProgressionEvent;
+use crate::core::TimeIncrementEvent;
 
 use super::Effect;
 
 pub fn progress_effects(
     mut commands: Commands,
-    mut time_events: EventReader<TimeProgressionEvent>,
+    mut time_events: EventReader<TimeIncrementEvent>,
     mut query: Query<(Entity, &mut Effect)>,
 ) {
     time_events.iter().for_each(|time_event| {

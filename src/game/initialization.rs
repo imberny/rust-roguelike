@@ -26,8 +26,8 @@ pub fn init_game() -> GameRunner {
 
 fn create_world() -> World {
     let mut world = World::new();
-    world.insert_resource(Events::<TimeProgressionEvent>::default());
-    world.insert_resource(TurnBasedTime::default());
+    world.insert_resource(Events::<TimeIncrementEvent>::default());
+    world.insert_resource(IncrementalClock::default());
 
     MapGenerator {}.new_map_rooms_and_corridors(&mut world);
 

@@ -4,12 +4,12 @@ use std::cmp::Ordering;
 
 use super::types::Increment;
 
-pub struct TimeProgressionEvent {
+pub struct TimeIncrementEvent {
     pub delta_time: Increment,
 }
 
 #[derive(Debug, Default)]
-pub struct TurnBasedTime {
+pub struct IncrementalClock {
     pub time: Increment,
 }
 
@@ -18,13 +18,13 @@ fn order_by_time_left<'r, 's>(first: &'r &Activity, second: &'s &Activity) -> Or
 }
 
 pub fn advance_time(
-    mut time: ResMut<TurnBasedTime>,
-    mut time_event_writer: EventWriter<TimeProgressionEvent>,
+    mut clock: ResMut<IncrementalClock>,
+    mut time_event_writer: EventWriter<TimeIncrementEvent>,
     activities: Query<&Activity>,
 ) {
     if let Some(shortest_activity) = activities.iter().min_by(order_by_time_left) {
-        time.time += shortest_activity.time_to_complete;
-        time_event_writer.send(TimeProgressionEvent {
+        clock.time += shortest_activity.time_to_complete;
+        time_event_writer.send(TimeIncrementEvent {
             delta_time: shortest_activity.time_to_complete,
         });
         // println!("Progressing time by {}", shortest_activity.time_to_complete);
