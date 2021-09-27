@@ -12,7 +12,7 @@ use crate::{
     rendering::Renderable,
     util::algorithms::{
         field_of_view::{self, FieldOfView},
-        QuadrantRow,
+        symmetric_shadowcasting, QuadrantRow,
     },
 };
 
@@ -117,31 +117,14 @@ pub fn process_activities(
                         action: Action::Attack,
                         time_to_complete: 150,
                     });
-                    // initiate attack, mark all tiles in range
-                    // add attacking activity
-                    // when attacking activity is done, perform attack on all tiles
-                    // attack is changed into active effect on tile
                 }
                 Action::Attack => {
                     let origin = pos.clone();
-                    // let facing: Facing = actor.facing.into();
-
-                    // let positions = vec![
-                    //     GridPos::new(-1, 1),
-                    //     GridPos::new(0, 1),
-                    //     GridPos::new(1, 1),
-                    //     GridPos::new(0, 2),
-                    // ];
-
-                    let mut positions: HashSet<GridPos> = HashSet::new();
 
                     let fov = field_of_view::quadratic_fov(2, actor.facing.into(), 0.5, 0.0);
-
-                    QuadrantRow::new(origin, actor.facing).scan(
-                        &mut |pos| positions.insert(pos),
-                        &|pos| fov.sees(pos),
-                        &|_pos| false,
-                    );
+                    let positions = symmetric_shadowcasting(origin, &|pos| fov.sees(pos), &|pos| {
+                        map.is_blocking(pos)
+                    });
 
                     for pos in positions.iter() {
                         commands.spawn().insert(pos.clone()).insert(Renderable {
