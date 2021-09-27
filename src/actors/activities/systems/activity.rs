@@ -3,7 +3,7 @@ use rltk::RGB;
 use std::{collections::HashSet, convert::*};
 
 use crate::{
-    actors::{Action, Activity, Actor, Attack},
+    actors::{effects::Effect, Action, Activity, Actor, Attack},
     core::types::{
         Cardinal, Direction, Facing, GridPos, GridPosPredicate, Int, IntoGridPos, RealPos,
     },
@@ -80,8 +80,11 @@ pub fn advance_activities(
 ) {
     for time_event in time_events.iter() {
         for mut activity in activities.iter_mut() {
-            activity.time_to_complete =
-                std::cmp::max(0, activity.time_to_complete - time_event.delta_time);
+            if time_event.delta_time > activity.time_to_complete {
+                activity.time_to_complete = 0;
+            } else {
+                activity.time_to_complete -= time_event.delta_time;
+            }
         }
     }
 }
@@ -127,11 +130,15 @@ pub fn process_activities(
                     });
 
                     for pos in positions.iter() {
-                        commands.spawn().insert(pos.clone()).insert(Renderable {
-                            glyph: rltk::to_cp437('*'),
-                            fg: RGB::named(rltk::ROYAL_BLUE),
-                            bg: RGB::named(rltk::RED),
-                        });
+                        commands
+                            .spawn()
+                            .insert(pos.clone())
+                            .insert(Renderable {
+                                glyph: rltk::to_cp437('*'),
+                                fg: RGB::named(rltk::ROYAL_BLUE),
+                                bg: RGB::named(rltk::RED),
+                            })
+                            .insert(Effect { time_left: 20 });
                     }
 
                     // for attack_pos in positions {

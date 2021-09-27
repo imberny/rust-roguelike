@@ -1,5 +1,6 @@
 use self::{
     activities::systems::{advance_activities, process_activities},
+    effects::systems::progress_effects,
     input::PlayerInput,
     systems::{handle_player_input, is_input_valid},
 };
@@ -18,6 +19,8 @@ pub use activities::*;
 
 mod actor;
 pub use actor::*;
+
+pub mod effects;
 
 mod player;
 pub use player::Player;
@@ -46,7 +49,8 @@ pub fn register(ecs: &mut GameRunner) {
             TurnGameStage::Update,
             SystemSet::new()
                 .before(ActorSystems::Action)
-                .with_system(advance_activities.system()),
+                .with_system(advance_activities.system())
+                .with_system(progress_effects.system()),
         )
         .add_system_set_to_stage(
             TurnGameStage::Update,
