@@ -12,7 +12,7 @@ pub fn read_test_cases() -> TestMapCases {
 pub fn from_ascii_layout(ascii_map: &str) -> (GridPos, AreaGrid) {
     let mut origin = GridPos::zero();
     let mut tiles: Vec<TileType> = vec![];
-    let width = ascii_map.find('\n').unwrap() as Int;
+    let width = ascii_map.trim_start().find('\n').unwrap() as Int;
 
     let rows = ascii_map.split('\n');
     let mut y = 0;

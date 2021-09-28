@@ -5,7 +5,7 @@ use crate::{
         constants::PI,
         types::{Facing, GridPos, Int, IntoGridPos, Real, RealPos},
     },
-    util::algorithms::distance::chebyshev_distance,
+    util::algorithms::transform::chebyshev_distance,
 };
 
 const ORIGIN: GridPos = GridPos { x: 0, y: 0 };
