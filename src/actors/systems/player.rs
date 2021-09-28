@@ -10,7 +10,7 @@ pub fn handle_player_input(
         let action = convert_to_valid_action(input, &mut actor);
         if Action::None != action {
             commands.entity(player).insert(Activity {
-                time_to_complete: 29,
+                time_to_complete: 30,
                 action,
             });
         }

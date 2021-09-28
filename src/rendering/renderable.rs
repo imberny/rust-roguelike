@@ -1,6 +1,6 @@
 use rltk::{FontCharType, RGB};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Renderable {
     pub glyph: FontCharType,
     pub fg: RGB,
