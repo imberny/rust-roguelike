@@ -1,6 +1,6 @@
 use bevy_ecs::prelude::*;
 use rltk::RGB;
-use std::convert::*;
+use std::{convert::*, f32::consts::PI};
 
 use crate::{
     actors::{effects::Effect, Action, Activity, Actor},
@@ -15,6 +15,73 @@ use crate::{
         symmetric_shadowcasting,
     },
 };
+
+pub fn progress_activities(
+    mut time_events: EventReader<TimeIncrementEvent>,
+    mut activities: Query<&mut Activity>,
+) {
+    for time_event in time_events.iter() {
+        for mut activity in activities.iter_mut() {
+            if time_event.delta_time > activity.time_to_complete {
+                activity.time_to_complete = 0;
+            } else {
+                activity.time_to_complete -= time_event.delta_time;
+            }
+        }
+    }
+}
+
+pub fn do_activities(
+    mut commands: Commands,
+    map: Res<AreaGrid>,
+    mut actors: Query<(Entity, &mut Actor, &mut GridPos, &mut Viewshed, &Activity)>,
+) {
+    for (entity, mut actor, mut pos, mut viewshed, activity) in actors.iter_mut() {
+        if activity.time_to_complete == 0 {
+            // console::log("Doing something");
+            let mut new_activity: Option<Activity> = None;
+
+            match activity.action {
+                Action::Move(direction) => {
+                    do_move(&mut pos, direction, actor.facing, &|pos| {
+                        map.is_blocking(pos)
+                    });
+                    // TODO: replace with event writer
+                    viewshed.dirty = true;
+                }
+                Action::Face(cardinal) => {
+                    actor.facing = cardinal;
+                    viewshed.dirty = true;
+                }
+                Action::Turn(direction) => {
+                    actor.facing = rotate_facing(actor.facing, direction.into());
+                    viewshed.dirty = true;
+                }
+                Action::InitiateAttack => {
+                    new_activity = Some(Activity {
+                        action: Action::Attack,
+                        time_to_complete: 150,
+                    });
+                }
+                Action::Attack => {
+                    do_attack(*pos, actor.facing.into(), &mut commands, &|pos| {
+                        map.is_blocking(pos)
+                    });
+                }
+                // Action::Say(message) => match message.kind {
+                //     MessageType::Insult => console::log("*!!$%$#&^%@"),
+                //     MessageType::Threaten => console::log("Shouldn't have come here"),
+                //     MessageType::Compliment => console::log("Lookin' good today!"),
+                // },
+                _ => (),
+            }
+            commands.entity(entity).remove::<Activity>();
+            if let Some(activity) = new_activity {
+                commands.entity(entity).insert(activity);
+            }
+        }
+    }
+}
 
 fn compute_facing(direction: Direction, cardinal: Cardinal) -> Facing {
     let direction: Facing = direction.into();
@@ -74,100 +141,129 @@ fn do_move(
     pos.y = result_position.y;
 }
 
-pub fn progress_activities(
-    mut time_events: EventReader<TimeIncrementEvent>,
-    mut activities: Query<&mut Activity>,
-) {
-    for time_event in time_events.iter() {
-        for mut activity in activities.iter_mut() {
-            if time_event.delta_time > activity.time_to_complete {
-                activity.time_to_complete = 0;
+fn project_angle(pos: GridPos, radius: f32, angle_radians: f32) -> GridPos {
+    // let degrees_radians = angle_radians + std::f32::consts::PI;
+    GridPos::new(
+        -(pos.x + (0.0 - radius * f32::sin(angle_radians)).round() as i32),
+        pos.y + (radius * f32::cos(angle_radians)).round() as i32,
+    )
+}
+
+fn as_cardinal(pos: &GridPos) -> Cardinal {
+    match pos.x.signum().cmp(&pos.y.signum()) {
+        std::cmp::Ordering::Less => Cardinal::NorthWest,
+        std::cmp::Ordering::Equal => {
+            if pos.x.signum() < 0 {
+                if pos.x < pos.y {
+                    Cardinal::West
+                } else {
+                    Cardinal::SouthWest
+                }
+            } else if pos.x < pos.y {
+                Cardinal::North
             } else {
-                activity.time_to_complete -= time_event.delta_time;
+                Cardinal::NorthEast
             }
         }
+        std::cmp::Ordering::Greater => Cardinal::SouthEast,
     }
 }
 
-pub fn do_activities(
-    mut commands: Commands,
-    map: Res<AreaGrid>,
-    mut actors: Query<(Entity, &mut Actor, &mut GridPos, &mut Viewshed, &Activity)>,
+// https://math.stackexchange.com/questions/383321/rotating-x-y-points-45-degrees
+fn rotate_45(pos: &GridPos) -> GridPos {
+    let i = 1.0;
+    let x = pos.x as f64;
+    let y = pos.y as f64;
+
+    let mut x_prime = ((x + y) / 2.0_f64.sqrt()) as Int;
+    let mut y_prime = ((x - y) / 2.0_f64.sqrt()) as Int;
+
+    x_prime += x_prime.signum();
+    y_prime += y_prime.signum();
+
+    if x_prime.abs() == y_prime.abs() {
+        x_prime = x_prime.signum() * pos.y.abs();
+        y_prime = y_prime.signum() * pos.y.abs();
+    }
+
+    if x_prime == 0 && y_prime == 0 {
+        x_prime = 1;
+        y_prime = -1;
+    }
+
+    GridPos::new(x_prime, y_prime)
+}
+
+fn rotate(pos: &GridPos) -> GridPos {
+    // if diagonal:
+    //  (y, x)
+    // else:
+    //  (x + y, y)
+    if pos.x.signum() == pos.y.signum() {
+        // GridPos::new(-pos.y, -pos.x)
+        GridPos::new(-(pos.y), -(pos.y - pos.x))
+    } else {
+        GridPos::new(-(pos.x + pos.y), -pos.y)
+    }
+}
+
+fn do_attack(
+    origin: GridPos,
+    facing: Facing,
+    commands: &mut Commands,
+    is_blocking: &GridPosPredicate,
 ) {
-    for (entity, mut actor, mut pos, mut viewshed, activity) in actors.iter_mut() {
-        if activity.time_to_complete == 0 {
-            // console::log("Doing something");
-            let mut new_activity: Option<Activity> = None;
+    // let fov = field_of_view::quadratic_fov(4, facing, 1.2, 0.8);
+    // let pattern: Vec<GridPos> = vec![
+    //     GridPos::new(0, 1),
+    //     GridPos::new(0, 2),
+    //     GridPos::new(0, 3),
+    //     GridPos::new(-1, 3),
+    //     GridPos::new(1, 3),
+    //     GridPos::new(0, 4),
+    //     GridPos::new(-1, 4),
+    //     GridPos::new(1, 4),
+    // ];
+    let pattern: Vec<GridPos> = vec![
+        GridPos::new(0, 1),
+        GridPos::new(0, 2),
+        GridPos::new(0, 3),
+        GridPos::new(-1, 3),
+        // GridPos::new(-2, 3),
+        GridPos::new(1, 3),
+        // GridPos::new(2, 3),
+        GridPos::new(0, 4),
+        GridPos::new(-1, 4),
+        // GridPos::new(-3, 4),
+        GridPos::new(1, 4),
+        // GridPos::new(3, 4),
+    ];
+    // let fov = field_of_view::pattern_fov(pattern, facing);
+    // let fov = field_of_view::cone_fov(3, PI / 8.0, facing);
+    // let positions = symmetric_shadowcasting(origin, &|pos| fov.sees(pos), is_blocking);
+    // for pos in positions.iter() {
+    for pos in pattern.iter() {
+        // let card = as_cardinal(pos);
 
-            match activity.action {
-                Action::Move(direction) => {
-                    do_move(&mut pos, direction, actor.facing, &|pos| {
-                        map.is_blocking(pos)
-                    });
-                    // TODO: replace with event writer
-                    viewshed.dirty = true;
-                }
-                Action::Face(cardinal) => {
-                    actor.facing = cardinal;
-                    viewshed.dirty = true;
-                }
-                Action::Turn(direction) => {
-                    actor.facing = rotate_facing(actor.facing, direction.into());
-                    viewshed.dirty = true;
-                }
-                Action::InitiateAttack => {
-                    new_activity = Some(Activity {
-                        action: Action::Attack,
-                        time_to_complete: 150,
-                    });
-                }
-                Action::Attack => {
-                    let origin = pos.clone();
-
-                    let fov = field_of_view::quadratic_fov(2, actor.facing.into(), 0.5, 0.0);
-                    let positions = symmetric_shadowcasting(origin, &|pos| fov.sees(pos), &|pos| {
-                        map.is_blocking(pos)
-                    });
-
-                    for pos in positions.iter() {
-                        commands
-                            .spawn()
-                            .insert(pos.clone())
-                            .insert(Renderable {
-                                glyph: rltk::to_cp437('*'),
-                                fg: RGB::named(rltk::ROYAL_BLUE),
-                                bg: RGB::named(rltk::RED),
-                            })
-                            .insert(Effect { time_left: 20 });
-                    }
-
-                    // for attack_pos in positions {
-                    //     let delta = GridPos::new(0, -1);
-
-                    //     let facing:Facing = actor.facing.into();
-                    //     let mut result_facing: GridPos =
-                    //         (facing.reversed() * RealPos::from(delta)).round();
-
-                    //     let pos: GridPos = origin + ;
-                    //     commands.spawn().insert(pos).insert(Renderable {
-                    //         glyph: rltk::to_cp437('*'),
-                    //         fg: RGB::named(rltk::ROYAL_BLUE),
-                    //         bg: RGB::named(rltk::RED),
-                    //     });
-                    // }
-                }
-                // Action::Say(message) => match message.kind {
-                //     MessageType::Insult => console::log("*!!$%$#&^%@"),
-                //     MessageType::Threaten => console::log("Shouldn't have come here"),
-                //     MessageType::Compliment => console::log("Lookin' good today!"),
-                // },
-                _ => (),
-            }
-            commands.entity(entity).remove::<Activity>();
-            if let Some(activity) = new_activity {
-                commands.entity(entity).insert(activity);
-            }
-        }
+        // let radius = std::cmp::max(pos.x, pos.y) as f32;
+        // let target = project_angle(*pos, radius, PI / 4.0);
+        let target = if facing == Cardinal::North.into() {
+            GridPos::new(-pos.x, -pos.y)
+        } else {
+            // rotate_45(pos)
+            rotate(pos)
+        };
+        // let target = pos.clone();
+        commands
+            .spawn()
+            // .insert(pos.clone())
+            .insert(target + origin)
+            .insert(Renderable {
+                glyph: rltk::to_cp437('*'),
+                fg: RGB::named(rltk::ROYAL_BLUE),
+                bg: RGB::named(rltk::RED),
+            })
+            .insert(Effect { time_left: 20 });
     }
 }
 

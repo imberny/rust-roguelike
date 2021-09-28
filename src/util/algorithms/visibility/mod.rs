@@ -16,7 +16,9 @@ pub fn symmetric_shadowcasting(
     is_blocking: &GridPosPredicate,
 ) -> Vec<GridPos> {
     let mut visible_positions: HashSet<GridPos> = HashSet::new();
-    visible_positions.insert(origin);
+    if is_visible(GridPos::zero()) {
+        visible_positions.insert(origin);
+    }
 
     let cardinals = [
         Cardinal::North,

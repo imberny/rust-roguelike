@@ -30,7 +30,7 @@ impl GameState for GameRunner {
 pub fn run_game() -> rltk::RltkError {
     use rltk::RltkBuilder;
     let context = RltkBuilder::simple80x50()
-        .with_dimensions(160, 128)
+        .with_dimensions(160, 100)
         .with_title("The Possession of Barbe Halle")
         .build()?;
 

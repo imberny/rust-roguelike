@@ -1,6 +1,7 @@
 use ron::de;
 use serde::de::DeserializeOwned;
 
+#[allow(dead_code)]
 pub fn deserialize<T>(file_path: &str) -> T
 where
     T: DeserializeOwned,

@@ -20,6 +20,7 @@ pub fn update_viewsheds(
             viewshed.dirty = false;
 
             let fov = field_of_view::quadratic_fov(15, actor.facing.into(), 0.5, -1.5);
+            // let fov = field_of_view::cone_fov(3, std::f32::consts::PI / 4.0, actor.facing.into());
             viewshed.visible_tiles =
                 symmetric_shadowcasting(pos.clone(), &|pos| fov.sees(pos), &|pos| {
                     map_clone.is_blocking(pos)
