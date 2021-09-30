@@ -4,19 +4,17 @@ fn chessboard_rotate(pos: &GridPos, octants: Int) -> GridPos {
     let mut result = pos.clone();
 
     if 1 == octants % 2 {
-        if result.x.signum() == -result.y.signum() {
+        result = if result.x.signum() == -result.y.signum() {
             if result.x.abs() > result.y.abs() {
-                result = GridPos::new(result.x, result.x + result.y)
+                GridPos::new(result.x, result.x + result.y)
             } else {
-                result = GridPos::new(-result.y, result.x + result.y)
+                GridPos::new(-result.y, result.x + result.y)
             }
+        } else if result.x.abs() > result.y.abs() {
+            GridPos::new(result.x - result.y, result.x)
         } else {
-            if result.x.abs() > result.y.abs() {
-                result = GridPos::new(result.x - result.y, result.x)
-            } else {
-                result = GridPos::new(result.x - result.y, result.y)
-            }
-        }
+            GridPos::new(result.x - result.y, result.y)
+        };
     }
 
     if octants >= 6 {
