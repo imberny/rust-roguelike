@@ -253,8 +253,7 @@ mod tests {
             let (origin, map) = from_ascii_layout(&case.layout);
             let expected = from_ascii_expected(&case.expected_visible);
 
-            let fov =
-                field_of_view::quadratic_fov(case.range, case.cardinal.into(), case.a, case.b);
+            let fov = field_of_view::quadratic_fov(case.range, case.cardinal, case.a, case.b);
 
             let mut visible_positions =
                 symmetric_shadowcasting(origin, &|pos| fov.sees(pos), &|pos| map.is_blocking(pos));

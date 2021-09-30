@@ -19,7 +19,43 @@ pub fn update_viewsheds(
         if viewshed.dirty {
             viewshed.dirty = false;
 
-            let fov = field_of_view::quadratic_fov(15, actor.facing.into(), 0.5, -1.5);
+            // let pattern = vec![
+            //     // GridPos::new(-1, 1),
+            //     // GridPos::new(0, 1),
+            //     // GridPos::new(1, 1),
+            //     // GridPos::new(-1, 0),
+            //     // GridPos::new(-2, 0),
+            //     // GridPos::new(0, 0),
+            //     // GridPos::new(1, 0),
+            //     // GridPos::new(2, 0),
+            //     //
+            //     GridPos::new(-1, -1),
+            //     // GridPos::new(-2, -1),
+            //     // GridPos::new(-3, -1),
+            //     GridPos::new(0, -1),
+            //     GridPos::new(1, -1),
+            //     // GridPos::new(2, -1),
+            //     // GridPos::new(3, -1),
+            //     //
+            //     GridPos::new(-1, -2),
+            //     GridPos::new(-2, -2),
+            //     GridPos::new(-3, -2),
+            //     GridPos::new(0, -2),
+            //     GridPos::new(1, -2),
+            //     GridPos::new(2, -2),
+            //     GridPos::new(3, -2),
+            //     //
+            //     // GridPos::new(-1, -3),
+            //     // GridPos::new(-2, -3),
+            //     // GridPos::new(-3, -3),
+            //     // GridPos::new(0, -3),
+            //     // GridPos::new(1, -3),
+            //     // GridPos::new(2, -3),
+            //     // GridPos::new(3, -3),
+            // ];
+
+            let fov = field_of_view::quadratic_fov(15, actor.facing, 0.5, -1.5);
+            // let fov = field_of_view::pattern_fov(pattern, actor.facing);
             // let fov = field_of_view::cone_fov(3, std::f32::consts::PI / 4.0, actor.facing.into());
             viewshed.visible_tiles =
                 symmetric_shadowcasting(pos.clone(), &|pos| fov.sees(pos), &|pos| {

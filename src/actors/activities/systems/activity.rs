@@ -10,7 +10,7 @@ use crate::{
     core::{types::Increment, TimeIncrementEvent},
     game_world::{AreaGrid, Viewshed},
     rendering::Renderable,
-    util::algorithms::transform::chessboard_rotate,
+    util::algorithms::transform::chessboard_rotate_vec,
 };
 
 pub fn progress_activities(
@@ -149,7 +149,7 @@ fn telegraph_attack(origin: GridPos, facing: Cardinal, commands: &mut Commands) 
         GridPos::new(-1, -4),
     ];
 
-    let positions = chessboard_rotate(pattern, facing.into())
+    let positions = chessboard_rotate_vec(pattern, facing.into())
         .iter()
         .map(|pos| origin + *pos)
         .collect();
@@ -176,7 +176,7 @@ fn do_attack(origin: GridPos, facing: Cardinal, commands: &mut Commands) {
         GridPos::new(-1, -4),
     ];
 
-    let positions = chessboard_rotate(pattern, facing.into())
+    let positions = chessboard_rotate_vec(pattern, facing.into())
         .iter()
         .map(|pos| origin + *pos)
         .collect();
@@ -293,35 +293,5 @@ mod tests {
             Cardinal::North,
             &|_pos| false,
         );
-    }
-
-    #[test]
-    fn attacking() {
-        let origin = GridPos::zero();
-        let facing: Facing = Cardinal::NorthEast.into();
-
-        let positions = vec![
-            // GridPos::new(-1, 1),
-            // GridPos::new(0, 1),
-            // GridPos::new(1, 1),
-            GridPos::new(0, 2),
-        ];
-
-        let expected_positions = vec![
-            // GridPos::new(0, 1),
-            // GridPos::new(1, 1),
-            // GridPos::new(1, 0),
-            GridPos::new(2, -2),
-        ];
-
-        let rotated_positions: Vec<GridPos> = positions
-            .iter()
-            .map(|pos| {
-                let real_pos: RealPos = pos.clone().into();
-                let rotated_pos = facing.reversed() * real_pos;
-                origin + rotated_pos.round()
-            })
-            .collect();
-        assert_eq!(expected_positions, rotated_positions);
     }
 }

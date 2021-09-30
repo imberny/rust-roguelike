@@ -7,9 +7,10 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct RotationTestCase {
+    pub name: String,
     pub shape: Vec<GridPos>,
     pub cardinal: Cardinal,
-    pub result: Vec<GridPos>,
+    pub expected: Vec<GridPos>,
 }
 
 pub fn get_cases(path: &str) -> impl Iterator<Item = RotationTestCase> {
@@ -24,9 +25,10 @@ struct RotationTestCases {
 
 #[derive(Debug, Clone, Deserialize)]
 struct RotationTestCaseInternal {
+    name: String,
     shape: String,
     cardinal: Cardinal,
-    result: String,
+    expected: String,
 }
 
 impl IntoIterator for RotationTestCases {
@@ -77,14 +79,16 @@ impl Iterator for RotationTestCasesIterator {
         if self.test_cases.len() <= self.index {
             return None;
         }
+        let name = self.test_cases[self.index].name.clone();
         let shape = self.extract_positions(&self.test_cases[self.index].shape);
-        let result = self.extract_positions(&self.test_cases[self.index].result);
+        let result = self.extract_positions(&self.test_cases[self.index].expected);
         let cardinal = self.test_cases[self.index].cardinal;
         self.index += 1;
         Some(RotationTestCase {
+            name,
             shape,
             cardinal,
-            result,
+            expected: result,
         })
     }
 }

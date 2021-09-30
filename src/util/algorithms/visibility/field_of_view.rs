@@ -3,9 +3,9 @@ use std::ops::Sub;
 use crate::{
     core::{
         constants::PI,
-        types::{Facing, GridPos, Int, IntoGridPos, Real, RealPos},
+        types::{Cardinal, Facing, GridPos, Int, IntoGridPos, Real, RealPos},
     },
-    util::algorithms::transform::chebyshev_distance,
+    util::algorithms::transform::{chebyshev_distance, chessboard_rotate_vec},
 };
 
 const ORIGIN: GridPos = GridPos { x: 0, y: 0 };
@@ -24,7 +24,7 @@ struct ConeFOV {
 #[derive(Debug, Clone, Copy)]
 struct QuadraticFOV {
     range: Int,
-    facing: Facing,
+    facing: Cardinal,
     a: Real,
     b: Real,
 }
@@ -54,7 +54,7 @@ pub fn cone_fov(range: Int, angle: Real, facing: Facing) -> impl FieldOfView {
 }
 
 #[allow(dead_code)]
-pub fn quadratic_fov_default(range: Int, facing: Facing) -> impl FieldOfView {
+pub fn quadratic_fov_default(range: Int, facing: Cardinal) -> impl FieldOfView {
     QuadraticFOV {
         range,
         facing,
@@ -63,7 +63,7 @@ pub fn quadratic_fov_default(range: Int, facing: Facing) -> impl FieldOfView {
     }
 }
 
-pub fn quadratic_fov(range: Int, facing: Facing, a: Real, b: Real) -> impl FieldOfView {
+pub fn quadratic_fov(range: Int, facing: Cardinal, a: Real, b: Real) -> impl FieldOfView {
     QuadraticFOV {
         range,
         facing,
@@ -74,54 +74,17 @@ pub fn quadratic_fov(range: Int, facing: Facing, a: Real, b: Real) -> impl Field
 
 struct PatternFOV {
     pattern: Vec<GridPos>,
-    facing: Facing,
-}
-
-fn project_angle(start: GridPos, radius: f32, angle_radians: f32) -> GridPos {
-    let degrees_radians = angle_radians + std::f32::consts::PI;
-    GridPos::new(
-        (0.0 - (start.x as f32 + radius * f32::sin(degrees_radians))) as i32,
-        (start.y as f32 + radius * f32::cos(degrees_radians)) as i32,
-    )
 }
 
 impl FieldOfView for PatternFOV {
     fn sees(&self, delta_position: GridPos) -> bool {
-        let dist = chebyshev_distance(&GridPos::zero(), &delta_position);
-
-        // let target = (self.facing * RealPos::from(delta_position));
-        // this approach doesn't work, many pos map to same pos
-        let dir: RealPos = delta_position.into();
-        let target = (self.facing * dir.normalized()).round() * dist;
-
-        // let mut target = delta_position.clone();
-
-        // let mut rot_target = GridPos::new(target.y, -target.x);
-
-        // let x_delta = (target.x - rot_target.x).abs();
-        // let y_delta = (target.y - rot_target.y).abs();
-
-        // let max = std::cmp::max(target.x.abs(), target.y.abs());
-        // let min = std::cmp::min(target.x.abs(), target.y.abs());
-
-        // if x_delta < y_delta {
-        //     target.y += ((x_delta + y_delta) as Real / 2.0) as Int;
-        // } else {
-        //     target.x += ((x_delta + y_delta) as Real / 2.0) as Int;
-        // }
-        // // target.x += (target.x.abs() + target.y.abs()) / 2;
-
-        // let radius = chebyshev_distance(&GridPos::zero(), &target) as Real;
-        // target = project_angle(target, 4.0, -PI / 4.0);
-
-        let result = self.pattern.contains(&target);
-        let result2 = result;
-        result2
+        self.pattern.contains(&delta_position)
     }
 }
 
-pub fn pattern_fov(pattern: Vec<GridPos>, facing: Facing) -> impl FieldOfView {
-    PatternFOV { pattern, facing }
+pub fn pattern_fov(pattern: Vec<GridPos>, facing: Cardinal) -> impl FieldOfView {
+    let pattern = chessboard_rotate_vec(pattern, facing.into());
+    PatternFOV { pattern }
 }
 
 impl FieldOfView for OmniFOV {
@@ -144,8 +107,13 @@ impl FieldOfView for ConeFOV {
 
 impl FieldOfView for QuadraticFOV {
     fn sees(&self, to: GridPos) -> bool {
+        // let pos = to * -1;
+        // let distance = chebyshev_distance(&ORIGIN, &pos);
+        // let octants: Int = self.facing.into();
+        // let target = chessboard_rotate(vec![pos], (8 - octants) % 8)[0];
+        let facing: Facing = self.facing.into();
+        let target = facing * RealPos::from(to);
         let distance = chebyshev_distance(&ORIGIN, &to);
-        let target = self.facing * RealPos::from(to);
         let fov_limit = (target.x * self.a).powi(2) + self.b;
 
         fov_limit <= target.y && distance <= self.range
@@ -167,31 +135,31 @@ mod tests {
     #[test]
     fn pattern() {
         let pattern: Vec<GridPos> = vec![
-            GridPos::new(0, 1),
-            GridPos::new(0, 2),
-            GridPos::new(0, 3),
-            GridPos::new(-1, 3),
-            GridPos::new(1, 3),
-            GridPos::new(0, 4),
-            GridPos::new(-1, 4),
-            GridPos::new(1, 4),
+            GridPos::new(0, -1),
+            GridPos::new(0, -2),
+            GridPos::new(0, -3),
+            GridPos::new(-1, -3),
+            GridPos::new(1, -3),
+            GridPos::new(0, -4),
+            GridPos::new(-1, -4),
+            GridPos::new(1, -4),
         ];
-        let fov = pattern_fov(pattern.clone(), Cardinal::North.into());
-        let fov_nw = pattern_fov(pattern.clone(), Cardinal::NorthWest.into());
+        let fov = pattern_fov(pattern.clone(), Cardinal::North);
+        let fov_nw = pattern_fov(pattern.clone(), Cardinal::NorthWest);
 
         for pos in pattern {
             assert!(fov.sees(pos));
         }
 
         let pattern_nw: Vec<GridPos> = vec![
-            GridPos::new(1, 1),
-            GridPos::new(2, 2),
-            GridPos::new(3, 3),
-            GridPos::new(2, 3),
-            GridPos::new(3, 2),
-            GridPos::new(4, 4),
-            GridPos::new(3, 4),
-            GridPos::new(4, 3),
+            GridPos::new(1, -1),
+            GridPos::new(2, -2),
+            GridPos::new(3, -3),
+            GridPos::new(2, -3),
+            GridPos::new(3, -2),
+            GridPos::new(4, -4),
+            GridPos::new(3, -4),
+            GridPos::new(4, -3),
         ];
 
         for pos in pattern_nw {
