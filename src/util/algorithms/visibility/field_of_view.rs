@@ -1,135 +1,68 @@
-use std::ops::Sub;
-
 use crate::{
-    core::{
-        constants::PI,
-        types::{Cardinal, Facing, GridPos, Int, IntoGridPos, Real, RealPos},
-    },
-    util::algorithms::transform::{chebyshev_distance, chessboard_rotate_vec},
+    core::types::{Cardinal, Facing, GridPos, Int, Real, RealPos},
+    util::algorithms::transform::{chebyshev_distance, chessboard_rotate},
 };
 
 const ORIGIN: GridPos = GridPos { x: 0, y: 0 };
 
-pub trait FieldOfView {
-    fn sees(&self, delta_position: GridPos) -> bool;
+pub enum FOV {
+    Infinite,
+    Omnidirectional(Int),
+    Cone(Int, Real),
+    Quadratic(Int, Real, Real),
+    Pattern(Vec<GridPos>),
 }
 
-#[derive(Debug, Clone, Copy)]
-struct ConeFOV {
-    range: Int,
-    angle: Real,
-    facing: Facing,
-}
-
-#[derive(Debug, Clone, Copy)]
-struct QuadraticFOV {
-    range: Int,
-    facing: Cardinal,
-    a: Real,
-    b: Real,
-}
-
-#[derive(Debug, Clone, Copy)]
-struct OmniFOV {
-    range: Int,
-}
-
-#[allow(dead_code)]
-pub fn infinite_fov() -> impl FieldOfView {
-    OmniFOV { range: Int::MAX }
-}
-
-#[allow(dead_code)]
-pub fn omnidirectional_fov(range: Int) -> impl FieldOfView {
-    OmniFOV { range: range.abs() }
-}
-
-#[allow(dead_code)]
-pub fn cone_fov(range: Int, angle: Real, facing: Facing) -> impl FieldOfView {
-    ConeFOV {
-        range,
-        angle,
-        facing,
-    }
-}
-
-#[allow(dead_code)]
-pub fn quadratic_fov_default(range: Int, facing: Cardinal) -> impl FieldOfView {
-    QuadraticFOV {
-        range,
-        facing,
-        a: 0.5,
-        b: -1.5,
-    }
-}
-
-pub fn quadratic_fov(range: Int, facing: Cardinal, a: Real, b: Real) -> impl FieldOfView {
-    QuadraticFOV {
-        range,
-        facing,
-        a,
-        b,
-    }
-}
-
-struct PatternFOV {
-    pattern: Vec<GridPos>,
-}
-
-impl FieldOfView for PatternFOV {
-    fn sees(&self, delta_position: GridPos) -> bool {
-        self.pattern.contains(&delta_position)
-    }
-}
-
-pub fn pattern_fov(pattern: Vec<GridPos>, facing: Cardinal) -> impl FieldOfView {
-    let pattern = chessboard_rotate_vec(pattern, facing.into());
-    PatternFOV { pattern }
-}
-
-impl FieldOfView for OmniFOV {
-    fn sees(&self, to: GridPos) -> bool {
-        chebyshev_distance(&ORIGIN, &to) <= self.range
-    }
-}
-
-impl FieldOfView for ConeFOV {
-    fn sees(&self, pos: GridPos) -> bool {
-        let distance = chebyshev_distance(&ORIGIN, &pos);
-        let target = self.facing * RealPos::from(pos);
-        let angle = target.normalized().dot(RealPos::unit_y()).acos();
-        if angle.is_nan() {
-            return true;
+impl FOV {
+    pub fn sees(&self, position: &GridPos, cardinal: Cardinal) -> bool {
+        match self {
+            FOV::Infinite => true,
+            FOV::Omnidirectional(range) => is_in_range(position, *range),
+            FOV::Cone(range, angle) => is_in_cone(position, cardinal, *range, *angle),
+            FOV::Quadratic(range, a, b) => is_above_curve(position, cardinal, *range, *a, *b),
+            FOV::Pattern(pattern) => is_in_pattern(pattern, position, cardinal),
         }
-        angle.abs() <= self.angle && distance <= self.range
     }
 }
 
-impl FieldOfView for QuadraticFOV {
-    fn sees(&self, to: GridPos) -> bool {
-        // let pos = to * -1;
-        // let distance = chebyshev_distance(&ORIGIN, &pos);
-        // let octants: Int = self.facing.into();
-        // let target = chessboard_rotate(vec![pos], (8 - octants) % 8)[0];
-        let facing: Facing = self.facing.into();
-        let target = facing * RealPos::from(to);
-        let distance = chebyshev_distance(&ORIGIN, &to);
-        let fov_limit = (target.x * self.a).powi(2) + self.b;
+fn is_in_range(position: &GridPos, range: Int) -> bool {
+    chebyshev_distance(&ORIGIN, position) <= range
+}
 
-        fov_limit <= target.y && distance <= self.range
+fn is_in_pattern(pattern: &Vec<GridPos>, position: &GridPos, cardinal: Cardinal) -> bool {
+    let pos = chessboard_rotate(position, cardinal.into());
+    pattern.contains(&pos)
+}
+
+fn is_in_cone(pos: &GridPos, cardinal: Cardinal, range: Int, angle: Real) -> bool {
+    let target = Facing::from(cardinal) * RealPos::from(*pos);
+    is_within_angle(&target, angle) && is_in_range(pos, range)
+}
+
+fn is_within_angle(target: &RealPos, angle: f32) -> bool {
+    let target_angle = target.normalized().dot(RealPos::unit_y()).acos();
+    if target_angle.is_nan() {
+        return true;
     }
+    target_angle.abs() <= angle
+}
+
+fn is_above_curve(pos: &GridPos, cardinal: Cardinal, range: Int, a: Real, b: Real) -> bool {
+    let target = Facing::from(cardinal) * RealPos::from(*pos);
+    let fov_limit = (target.x * a).powi(2) + b;
+
+    fov_limit <= target.y && is_in_range(pos, range)
 }
 
 #[cfg(test)]
 mod tests {
 
-    use crate::core::{
-        constants::*,
-        types::{Cardinal, GridPos},
-    };
-
-    use super::{
-        cone_fov, infinite_fov, omnidirectional_fov, pattern_fov, quadratic_fov, FieldOfView,
+    use crate::{
+        core::{
+            constants::*,
+            types::{Cardinal, GridPos},
+        },
+        util::algorithms::field_of_view::FOV,
     };
 
     #[test]
@@ -144,11 +77,10 @@ mod tests {
             GridPos::new(-1, -4),
             GridPos::new(1, -4),
         ];
-        let fov = pattern_fov(pattern.clone(), Cardinal::North);
-        let fov_nw = pattern_fov(pattern.clone(), Cardinal::NorthWest);
+        let fov = FOV::Pattern(pattern.clone());
 
         for pos in pattern {
-            assert!(fov.sees(pos));
+            assert!(fov.sees(&pos, Cardinal::North));
         }
 
         let pattern_nw: Vec<GridPos> = vec![
@@ -163,13 +95,13 @@ mod tests {
         ];
 
         for pos in pattern_nw {
-            assert!(fov_nw.sees(pos));
+            assert!(fov.sees(&pos, Cardinal::NorthWest));
         }
     }
 
     #[test]
     fn infinite() {
-        let fov = infinite_fov();
+        let fov = FOV::Infinite;
 
         let targets = vec![
             GridPos::new(0, -100_000),
@@ -181,14 +113,14 @@ mod tests {
         ];
 
         for target in targets {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::North);
             assert!(is_seen);
         }
     }
 
     #[test]
     fn tiny_fov() {
-        let fov = omnidirectional_fov(1);
+        let fov = FOV::Omnidirectional(1);
 
         let far_targets = vec![
             GridPos::new(0, -100_000),
@@ -201,82 +133,82 @@ mod tests {
         let near_targets = vec![GridPos::new(0, 0), GridPos::new(1, 1), GridPos::new(-1, -1)];
 
         for target in far_targets {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::North);
             assert!(!is_seen);
         }
 
         for target in near_targets {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::North);
             assert!(is_seen);
         }
     }
 
     #[test]
     fn directed_fov() {
-        let fov = cone_fov(5, PI / 2.0, Cardinal::North.into());
+        let fov = FOV::Cone(5, PI / 2.0);
 
         let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
         for target in north_targets {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::North);
             assert!(is_seen);
         }
 
         for target in targets_along_diagonal_nw() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::North);
             assert!(is_seen);
         }
 
-        let is_seen = fov.sees(GridPos::new(-6, -6));
+        let is_seen = fov.sees(&GridPos::new(-6, -6), Cardinal::North);
         assert!(!is_seen);
     }
 
     #[test]
     fn view_curve() {
-        let fov = quadratic_fov(5, Cardinal::North.into(), 0.5, -1.5);
+        let fov = FOV::Quadratic(5, 0.5, -1.5);
 
         let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
         for target in north_targets {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::North);
             assert!(is_seen);
         }
 
         for target in targets_along_diagonal_nw() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::North);
             assert!(is_seen);
         }
 
         for target in targets_behind_facing_north() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::North);
             assert!(is_seen);
         }
 
         for target in targets_side_facing_north() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::North);
             assert!(is_seen);
         }
     }
 
     #[test]
     fn view_curve_east() {
-        let fov = quadratic_fov(5, Cardinal::East.into(), 0.5, -1.5);
+        let fov = FOV::Quadratic(5, 0.5, -1.5);
 
         for target in targets_facing_east() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::East);
             assert!(is_seen);
         }
     }
 
     #[test]
     fn view_curve_west() {
-        let fov = quadratic_fov(5, Cardinal::West.into(), 0.5, -1.5);
+        let fov = FOV::Quadratic(5, 0.5, -1.5);
 
         for target in targets_facing_west() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::West);
             assert!(is_seen);
         }
 
         for target in targets_facing_west_hidden() {
-            let is_seen = fov.sees(target);
+            let is_seen = fov.sees(&target, Cardinal::West);
             assert!(!is_seen);
         }
     }

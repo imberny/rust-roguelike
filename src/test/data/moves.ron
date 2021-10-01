@@ -1,32 +1,33 @@
 MoveTestCases(
-    cases: [(
-            Back,
-            NorthWest,
-            0, 0,
-            true,
+    cases: [
+        MoveTestCase(
+            direction: Back,
+            cardinal: NorthWest,
+            expected: (0, 0),
+            is_blocked: true,
         ),
-        (
-            Back,
-            NorthWest,
-            0, 1,
-            false,
+        MoveTestCase(
+            direction: Back,
+            cardinal: NorthWest,
+            expected: (0, 1),
+            is_blocked: false,
         ),
-        (
-            Back,
-            NorthWest,
-            1, 0,
-            false,
+        MoveTestCase(
+            direction: Back,
+            cardinal: NorthWest,
+            expected: (1, 0),
+            is_blocked: false,
         ),
-        (
-            Left,
-            NorthWest,
-            -1, 0,
-            false,
+        MoveTestCase(
+            direction: Left,
+            cardinal: NorthWest,
+            expected: (-1, 0),
+            is_blocked: false,
         ),
-        (
-            Left,
-            NorthWest,
-            0, 1,
-            false,
+        MoveTestCase(
+            direction: Left,
+            cardinal: NorthWest,
+            expected: (0, 1),
+            is_blocked: false,
         )]
 )

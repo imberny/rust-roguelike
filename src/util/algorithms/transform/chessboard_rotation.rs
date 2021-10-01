@@ -1,6 +1,6 @@
 use crate::core::types::{GridPos, Int};
 
-fn chessboard_rotate(pos: &GridPos, octants: Int) -> GridPos {
+pub fn chessboard_rotate(pos: &GridPos, octants: Int) -> GridPos {
     let mut result = pos.clone();
 
     if 1 == octants % 2 {
@@ -43,7 +43,7 @@ mod tests {
 
     #[test]
     fn chessboard_rotations() {
-        for case in rotation::get_cases("src/test/data/rotations.ron") {
+        for case in rotation::test_cases() {
             let actual = chessboard_rotate_vec(case.shape, case.cardinal.into());
 
             actual.iter().for_each(|rotated_pos| {

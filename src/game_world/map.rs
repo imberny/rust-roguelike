@@ -36,11 +36,11 @@ impl AreaGrid {
         x >= 0 && x < self.width && y >= 0 && y < self.height
     }
 
-    pub fn is_point_in_bounds(&self, point: GridPos) -> bool {
+    pub fn is_point_in_bounds(&self, point: &GridPos) -> bool {
         self.is_in_bounds(point.x, point.y)
     }
 
-    pub fn at(&self, position: GridPos) -> TileType {
+    pub fn at(&self, position: &GridPos) -> TileType {
         let idx = self.xy_idx(position.x, position.y);
         self.tiles[idx]
     }
@@ -49,7 +49,7 @@ impl AreaGrid {
         GridPos::new(index as Int % self.width, index as Int / self.width)
     }
 
-    pub fn is_blocking(&self, position: GridPos) -> bool {
+    pub fn is_blocking(&self, position: &GridPos) -> bool {
         if !self.is_point_in_bounds(position) {
             return false;
         }

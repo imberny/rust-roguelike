@@ -16,7 +16,7 @@ pub fn symmetric_shadowcasting(
     is_blocking: &GridPosPredicate,
 ) -> Vec<GridPos> {
     let mut visible_positions: HashSet<GridPos> = HashSet::new();
-    if is_visible(GridPos::zero()) {
+    if is_visible(&GridPos::zero()) {
         visible_positions.insert(origin);
     }
 
@@ -121,13 +121,13 @@ impl QuadrantRow {
                     .scan(mark_visible, is_visible, is_blocking);
             }
 
-            if is_blocking(tile.position) || self.is_symmetric(tile.column as Int) {
+            if is_blocking(&tile.position) || self.is_symmetric(tile.column as Int) {
                 mark_visible(tile.position);
             }
 
             previous = tile.position;
         }
-        if previous != GridPos::zero() && !is_blocking(previous) {
+        if previous != GridPos::zero() && !is_blocking(&previous) {
             self.next().scan(mark_visible, is_visible, is_blocking);
         }
     }
@@ -166,7 +166,7 @@ impl QuadrantRow {
         previous_position: GridPos,
         is_blocking: &GridPosPredicate,
     ) {
-        if is_blocking(previous_position) && !is_blocking(tile.position) {
+        if is_blocking(&previous_position) && !is_blocking(&tile.position) {
             let slope: Fraction = tile.into();
             self.start_slope = slope;
         }
@@ -178,7 +178,7 @@ impl QuadrantRow {
         previous_position: GridPos,
         is_blocking: &GridPosPredicate,
     ) -> bool {
-        !is_blocking(previous_position) && is_blocking(position)
+        !is_blocking(&previous_position) && is_blocking(&position)
     }
 
     fn tiles(&self, is_visible: &GridPosPredicate) -> Vec<QuadrantTile> {
@@ -195,7 +195,7 @@ impl QuadrantRow {
             let local_quadrant_position = GridPos::new(self.depth as Int, column);
             let position = self.quadrant.transform(local_quadrant_position);
             let delta = GridPos::new(position.x - self.origin().x, position.y - self.origin().y);
-            if is_visible(delta) {
+            if is_visible(&delta) {
                 tiles.push(QuadrantTile {
                     row_depth: self.depth,
                     column: column as u32,
@@ -235,7 +235,7 @@ mod tests {
     use crate::{
         core::types::GridPos,
         test::helpers::visibility::{from_ascii_expected, from_ascii_layout, read_test_cases},
-        util::algorithms::field_of_view::{self, FieldOfView},
+        util::algorithms::field_of_view::{self, FOV},
     };
 
     use super::symmetric_shadowcasting;
@@ -253,10 +253,12 @@ mod tests {
             let (origin, map) = from_ascii_layout(&case.layout);
             let expected = from_ascii_expected(&case.expected_visible);
 
-            let fov = field_of_view::quadratic_fov(case.range, case.cardinal, case.a, case.b);
+            let fov = FOV::Quadratic(case.range, case.a, case.b);
 
             let mut visible_positions =
-                symmetric_shadowcasting(origin, &|pos| fov.sees(pos), &|pos| map.is_blocking(pos));
+                symmetric_shadowcasting(origin, &|pos| fov.sees(pos, case.cardinal), &|pos| {
+                    map.is_blocking(pos)
+                });
 
             visible_positions.sort_by(pos_sorter);
 

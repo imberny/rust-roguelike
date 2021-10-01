@@ -13,8 +13,8 @@ pub struct RotationTestCase {
     pub expected: Vec<GridPos>,
 }
 
-pub fn get_cases(path: &str) -> impl Iterator<Item = RotationTestCase> {
-    let test_cases: RotationTestCases = deserialize(path);
+pub fn test_cases() -> impl Iterator<Item = RotationTestCase> {
+    let test_cases: RotationTestCases = deserialize("src/test/data/rotations.ron");
     test_cases.into_iter()
 }
 

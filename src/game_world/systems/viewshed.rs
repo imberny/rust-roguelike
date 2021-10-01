@@ -4,10 +4,7 @@ use crate::{
     actors::{Actor, Player},
     core::types::GridPos,
     game_world::{AreaGrid, Viewshed},
-    util::algorithms::{
-        field_of_view::{self, FieldOfView},
-        symmetric_shadowcasting,
-    },
+    util::algorithms::{field_of_view::FOV, symmetric_shadowcasting},
 };
 
 pub fn update_viewsheds(
@@ -54,11 +51,11 @@ pub fn update_viewsheds(
             //     // GridPos::new(3, -3),
             // ];
 
-            let fov = field_of_view::quadratic_fov(15, actor.facing, 0.5, -1.5);
+            let fov = FOV::Quadratic(15, 0.5, -1.5);
             // let fov = field_of_view::pattern_fov(pattern, actor.facing);
             // let fov = field_of_view::cone_fov(3, std::f32::consts::PI / 4.0, actor.facing.into());
             viewshed.visible_tiles =
-                symmetric_shadowcasting(pos.clone(), &|pos| fov.sees(pos), &|pos| {
+                symmetric_shadowcasting(pos.clone(), &|pos| fov.sees(pos, actor.facing), &|pos| {
                     map_clone.is_blocking(pos)
                 });
         }

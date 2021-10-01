@@ -105,10 +105,10 @@ fn slide(
     let mut result_position: GridPos =
         (facing.reversed() * RealPos::from(delta) + RealPos::from(pos)).round();
 
-    if is_blocking(result_position) {
+    if is_blocking(&result_position) {
         let facing = compute_facing(counterclockwise_slide, cardinal);
         result_position = (facing.reversed() * RealPos::from(delta) + RealPos::from(pos)).round();
-        if is_blocking(result_position) {
+        if is_blocking(&result_position) {
             return pos;
         }
     }
@@ -127,7 +127,7 @@ fn do_move(
     let mut result_position: GridPos =
         (facing.reversed() * RealPos::from(delta) + RealPos::from(*pos)).round();
 
-    if is_blocking(result_position) {
+    if is_blocking(&result_position) {
         result_position = slide(*pos, direction, cardinal, is_blocking);
     }
     result_position.x = result_position.x.clamp(0, 79);
@@ -215,9 +215,9 @@ mod tests {
 
     use crate::{
         actors::{Action, Activity, ActorBundle},
-        core::types::{Cardinal, Direction, Facing, GridPos, IntoGridPos, RealPos},
+        core::types::{Cardinal, Direction, GridPos},
         game_world::{AreaGrid, TileType},
-        test::activity::MoveTestCases,
+        test,
         util::helpers::deserialize,
     };
 
@@ -273,12 +273,12 @@ mod tests {
     #[test]
     fn slide_test() {
         let from = GridPos::zero();
-        let test_cases: MoveTestCases = deserialize("src/test/data/moves.ron");
 
-        for (direction, cardinal, x, y, is_blocked) in test_cases.cases {
+        for case in test::activity::cases() {
+            let (x, y) = case.expected;
             let expected = GridPos::new(x, y);
-            let pos = slide(from, direction, cardinal, &|pos| {
-                pos != expected || is_blocked
+            let pos = slide(from, case.direction, case.cardinal, &|pos| {
+                *pos != expected || case.is_blocked
             });
 
             assert_eq!(expected, pos);
