@@ -29,7 +29,7 @@ fn is_in_range(position: &GridPos, range: Int) -> bool {
     chebyshev_distance(&ORIGIN, position) <= range
 }
 
-fn is_in_pattern(pattern: &Vec<GridPos>, position: &GridPos, cardinal: Cardinal) -> bool {
+fn is_in_pattern(pattern: &[GridPos], position: &GridPos, cardinal: Cardinal) -> bool {
     let pos = chessboard_rotate(position, cardinal.into());
     pattern.contains(&pos)
 }

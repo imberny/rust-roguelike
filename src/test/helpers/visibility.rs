@@ -1,12 +1,29 @@
+use serde::Deserialize;
+
 use crate::{
-    core::types::{GridPos, Index, Int},
+    core::types::{Cardinal, GridPos, Index, Int, Real},
     game_world::{AreaGrid, TileType},
-    test::visibility::TestMapCases,
     util::helpers::deserialize,
 };
 
-pub fn read_test_cases() -> TestMapCases {
-    deserialize("src/test/data/maps.ron")
+pub fn cases() -> impl Iterator<Item = TestMap> {
+    let cases: TestMapCases = deserialize("src/test/data/maps.ron");
+    cases.cases.into_iter()
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TestMap {
+    pub range: Int,
+    pub a: Real,
+    pub b: Real,
+    pub cardinal: Cardinal,
+    pub layout: String,
+    pub expected_visible: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct TestMapCases {
+    pub cases: Vec<TestMap>,
 }
 
 pub fn from_ascii_layout(ascii_map: &str) -> (GridPos, AreaGrid) {

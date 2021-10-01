@@ -37,13 +37,13 @@ pub fn chessboard_rotate_vec(positions: Vec<GridPos>, octants: Int) -> Vec<GridP
 
 #[cfg(test)]
 mod tests {
-    use crate::test::rotation;
+    use crate::test;
 
     use super::chessboard_rotate_vec;
 
     #[test]
     fn chessboard_rotations() {
-        for case in rotation::test_cases() {
+        for case in test::rotation::cases() {
             let actual = chessboard_rotate_vec(case.shape, case.cardinal.into());
 
             actual.iter().for_each(|rotated_pos| {

@@ -234,22 +234,24 @@ mod tests {
 
     use crate::{
         core::types::GridPos,
-        test::helpers::visibility::{from_ascii_expected, from_ascii_layout, read_test_cases},
-        util::algorithms::field_of_view::{self, FOV},
+        test::{
+            self,
+            helpers::visibility::{from_ascii_expected, from_ascii_layout},
+        },
+        util::algorithms::field_of_view::FOV,
     };
 
     use super::symmetric_shadowcasting;
 
     #[test]
     fn symmetric_shadowcasting_tests() {
-        let test_cases = read_test_cases();
         let pos_sorter = |first: &GridPos, second: &GridPos| match first.y.cmp(&second.y) {
             Ordering::Less => Ordering::Less,
             Ordering::Greater => Ordering::Greater,
             Ordering::Equal => first.x.cmp(&second.x),
         };
 
-        for case in test_cases.cases {
+        for case in test::visibility::cases() {
             let (origin, map) = from_ascii_layout(&case.layout);
             let expected = from_ascii_expected(&case.expected_visible);
 
