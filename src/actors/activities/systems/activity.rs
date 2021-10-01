@@ -218,7 +218,6 @@ mod tests {
         core::types::{Cardinal, Direction, GridPos},
         game_world::{AreaGrid, TileType},
         test,
-        util::helpers::deserialize,
     };
 
     use super::{do_activities, do_move, slide};

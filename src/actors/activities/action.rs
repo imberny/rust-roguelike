@@ -1,7 +1,5 @@
 use crate::core::types::{Cardinal, Direction};
 
-use super::Message;
-
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Action {
     None,
@@ -9,7 +7,6 @@ pub enum Action {
     Move(Direction),
     Face(Cardinal),
     Turn(Direction),
-    Say(Message),
     InitiateAttack,
     Attack,
 }
