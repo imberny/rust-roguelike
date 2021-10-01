@@ -3,8 +3,6 @@ use crate::{
     util::algorithms::transform::{chebyshev_distance, chessboard_rotate},
 };
 
-const ORIGIN: GridPos = GridPos { x: 0, y: 0 };
-
 pub enum FOV {
     Infinite,
     Omnidirectional(Int),
@@ -26,12 +24,7 @@ impl FOV {
 }
 
 fn is_in_range(position: &GridPos, range: Int) -> bool {
-    chebyshev_distance(&ORIGIN, position) <= range
-}
-
-fn is_in_pattern(pattern: &[GridPos], position: &GridPos, cardinal: Cardinal) -> bool {
-    let pos = chessboard_rotate(position, cardinal.into());
-    pattern.contains(&pos)
+    chebyshev_distance(&GridPos::zero(), position) <= range
 }
 
 fn is_in_cone(pos: &GridPos, cardinal: Cardinal, range: Int, angle: Real) -> bool {
@@ -52,6 +45,11 @@ fn is_above_curve(pos: &GridPos, cardinal: Cardinal, range: Int, a: Real, b: Rea
     let fov_limit = (target.x * a).powi(2) + b;
 
     fov_limit <= target.y && is_in_range(pos, range)
+}
+
+fn is_in_pattern(pattern: &[GridPos], position: &GridPos, cardinal: Cardinal) -> bool {
+    let pos = chessboard_rotate(position, cardinal.into());
+    pattern.contains(&pos)
 }
 
 #[cfg(test)]
