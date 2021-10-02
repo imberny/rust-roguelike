@@ -1,6 +1,6 @@
 use std::cmp::{max, min};
 
-use bevy_ecs::prelude::World;
+use bevy::prelude::*;
 use rltk::{RandomNumberGenerator, RGB};
 
 use crate::{
@@ -39,11 +39,12 @@ impl MapGenerator {
         }
     }
 
-    pub fn new_map_rooms_and_corridors(&self, world: &mut World) {
+    pub fn generate_new_map(&self) -> (AreaGrid, Vec<Room>) {
         let mut map = AreaGrid {
             tiles: vec![TileType::Wall; 80 * 50],
             width: 80,
             height: 50,
+            renderables: vec![Renderable::default(); 80 * 50],
             revealed: vec![false; 80 * 50],
             visible: vec![false; 80 * 50],
         };
@@ -82,6 +83,11 @@ impl MapGenerator {
                 rooms.push(new_room);
             }
         }
+        (map, rooms)
+    }
+
+    pub fn new_map_rooms_and_corridors(&self, world: &mut World) {
+        let (map, rooms) = self.generate_new_map();
 
         add_monsters_to_rooms(world, &rooms);
         let (x, y) = rooms[0].center();
@@ -129,6 +135,71 @@ fn add_monsters_to_rooms(world: &mut World, rooms: &[Room]) {
 
 fn create_player_at_pos(world: &mut World, player_x: Int, player_y: Int) {
     world
+        .spawn()
+        .insert(Player)
+        .insert(Activity {
+            action: Action::Wait,
+            time_to_complete: 5,
+        })
+        .insert_bundle(ActorBundle {
+            name: "Player".to_string(),
+            position: GridPos {
+                x: player_x,
+                y: player_y,
+            },
+            viewshed: Viewshed::with_range(1),
+            ..Default::default()
+        })
+        .insert(Renderable {
+            glyph: rltk::to_cp437('@'),
+            fg: RGB::named(rltk::YELLOW),
+            bg: RGB::named(rltk::BLACK),
+        });
+}
+
+pub fn generate_map_system(mut commands: Commands, mut map: ResMut<AreaGrid>) {
+    // let mut map = map_query.single_mut().unwrap();
+    let (new_map, rooms) = MapGenerator {}.generate_new_map();
+    map.tiles = new_map.tiles;
+    map.width = new_map.width;
+    map.height = new_map.height;
+
+    let mut rng = rltk::RandomNumberGenerator::new();
+    for (i, room) in rooms.iter().skip(1).enumerate() {
+        let (x, y) = room.center();
+
+        let name: String;
+        let glyph: rltk::FontCharType;
+        let roll = rng.roll_dice(1, 2);
+        match roll {
+            1 => {
+                name = "Goblin".to_string();
+                glyph = rltk::to_cp437('g');
+            }
+            _ => {
+                name = "Orc".to_string();
+                glyph = rltk::to_cp437('o')
+            }
+        }
+
+        commands
+            .spawn()
+            .insert(Monster {})
+            .insert_bundle(ActorBundle {
+                name: format!("{} #{}", &name, i),
+                position: GridPos { x, y },
+                viewshed: Viewshed::with_range(8),
+                ..Default::default()
+            })
+            .insert(Renderable {
+                glyph,
+                fg: RGB::named(rltk::RED),
+                bg: RGB::named(rltk::BLACK),
+            });
+    }
+
+    let (player_x, player_y) = rooms[0].center();
+    commands
         .spawn()
         .insert(Player)
         .insert(Activity {

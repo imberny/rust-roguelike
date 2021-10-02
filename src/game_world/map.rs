@@ -1,6 +1,9 @@
 use rltk::{Algorithm2D, BaseMap, Point};
 
-use crate::core::types::{GridPos, Index, Int};
+use crate::{
+    core::types::{GridPos, Index, Int},
+    rendering::Renderable,
+};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum TileType {
@@ -16,11 +19,24 @@ pub enum TileType {
 #[derive(Debug, Clone)]
 pub struct AreaGrid {
     pub tiles: Vec<TileType>,
-    // pub contents: Vec<Vec>, // items, actors, ...
+    pub renderables: Vec<Renderable>, // items, actors, ...
     pub width: Int,
     pub height: Int,
     pub revealed: Vec<bool>,
     pub visible: Vec<bool>,
+}
+
+impl Default for AreaGrid {
+    fn default() -> Self {
+        Self {
+            tiles: Default::default(),
+            width: Default::default(),
+            height: Default::default(),
+            renderables: vec![Renderable::default(); 80 * 50],
+            revealed: vec![false; 80 * 50],
+            visible: vec![false; 80 * 50],
+        }
+    }
 }
 
 impl AreaGrid {

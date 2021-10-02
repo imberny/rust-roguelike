@@ -1,4 +1,4 @@
-use bevy_ecs::prelude::*;
+use bevy::prelude::*;
 use rltk::RGB;
 use std::convert::*;
 
@@ -10,7 +10,7 @@ use crate::{
     core::{types::Increment, TimeIncrementEvent},
     game_world::{AreaGrid, Viewshed},
     rendering::Renderable,
-    util::algorithms::transform::chessboard_rotate_vec,
+    util::algorithms::geometry::chessboard_rotate_and_place,
 };
 
 pub fn progress_activities(
@@ -149,10 +149,7 @@ fn telegraph_attack(origin: GridPos, facing: Cardinal, commands: &mut Commands) 
         GridPos::new(-1, -4),
     ];
 
-    let positions = chessboard_rotate_vec(pattern, facing.into())
-        .iter()
-        .map(|pos| origin + *pos)
-        .collect();
+    let positions: Vec<GridPos> = chessboard_rotate_and_place(&origin, &pattern, facing.into());
     let marker = Marker {
         time_left: 60,
         renderable: Renderable {
@@ -161,10 +158,10 @@ fn telegraph_attack(origin: GridPos, facing: Cardinal, commands: &mut Commands) 
             bg: RGB::named(rltk::ANTIQUE_WHITE),
         },
     };
-    place_markers(positions, marker, commands);
+    place_markers(&positions, marker, commands);
 }
 
-fn do_attack(origin: GridPos, facing: Cardinal, commands: &mut Commands) {
+fn do_attack(origin: GridPos, cardinal: Cardinal, commands: &mut Commands) {
     let pattern: Vec<GridPos> = vec![
         GridPos::new(0, -1),
         GridPos::new(0, -2),
@@ -176,10 +173,7 @@ fn do_attack(origin: GridPos, facing: Cardinal, commands: &mut Commands) {
         GridPos::new(-1, -4),
     ];
 
-    let positions = chessboard_rotate_vec(pattern, facing.into())
-        .iter()
-        .map(|pos| origin + *pos)
-        .collect();
+    let positions: Vec<GridPos> = chessboard_rotate_and_place(&origin, &pattern, cardinal.into());
     let marker = Marker {
         time_left: 30,
         renderable: Renderable {
@@ -188,7 +182,7 @@ fn do_attack(origin: GridPos, facing: Cardinal, commands: &mut Commands) {
             bg: RGB::named(rltk::RED),
         },
     };
-    place_markers(positions, marker, commands);
+    place_markers(&positions, marker, commands);
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -197,7 +191,7 @@ struct Marker {
     renderable: Renderable,
 }
 
-fn place_markers(positions: Vec<GridPos>, marker: Marker, commands: &mut Commands) {
+fn place_markers(positions: &[GridPos], marker: Marker, commands: &mut Commands) {
     positions.iter().for_each(|pos| {
         commands
             .spawn()
@@ -211,12 +205,13 @@ fn place_markers(positions: Vec<GridPos>, marker: Marker, commands: &mut Command
 
 #[cfg(test)]
 mod tests {
-    use bevy_ecs::prelude::*;
+    use bevy::prelude::*;
 
     use crate::{
         actors::{Action, Activity, ActorBundle},
         core::types::{Cardinal, Direction, GridPos},
         game_world::{AreaGrid, TileType},
+        rendering::Renderable,
         test,
     };
 
@@ -227,6 +222,7 @@ mod tests {
             tiles: vec![TileType::Floor; 80 * 50],
             width: 80,
             height: 50,
+            renderables: vec![Renderable::default(); 80 * 50],
             revealed: vec![false; 80 * 50],
             visible: vec![false; 80 * 50],
         }

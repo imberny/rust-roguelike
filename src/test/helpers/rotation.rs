@@ -1,16 +1,15 @@
 use serde::Deserialize;
 
 use crate::{
-    core::types::{Cardinal, GridPos, Int},
+    core::types::{GridPos, Int},
     util::helpers::deserialize,
 };
 
 #[derive(Debug, Clone)]
 pub struct RotationTestCase {
-    pub name: String,
-    pub shape: Vec<GridPos>,
-    pub cardinal: Cardinal,
-    pub expected: Vec<GridPos>,
+    pub shape: String,
+    pub pattern: Vec<GridPos>,
+    pub expected: [Vec<GridPos>; 8],
 }
 
 pub fn cases() -> impl Iterator<Item = RotationTestCase> {
@@ -25,10 +24,8 @@ struct RotationTestCases {
 
 #[derive(Debug, Clone, Deserialize)]
 struct RotationTestCaseInternal {
-    name: String,
     shape: String,
-    cardinal: Cardinal,
-    expected: String,
+    expected: [String; 8],
 }
 
 impl IntoIterator for RotationTestCases {
@@ -72,6 +69,12 @@ impl RotationTestCasesIterator {
     }
 }
 
+const fn grid_pos_vec() -> Vec<GridPos> {
+    Vec::new()
+}
+
+const NEW_GRID_POS_VEC: Vec<GridPos> = grid_pos_vec();
+
 impl Iterator for RotationTestCasesIterator {
     type Item = RotationTestCase;
 
@@ -79,16 +82,17 @@ impl Iterator for RotationTestCasesIterator {
         if self.test_cases.len() <= self.index {
             return None;
         }
-        let name = self.test_cases[self.index].name.clone();
-        let shape = self.extract_positions(&self.test_cases[self.index].shape);
-        let result = self.extract_positions(&self.test_cases[self.index].expected);
-        let cardinal = self.test_cases[self.index].cardinal;
+        let shape = self.test_cases[self.index].shape.clone();
+        let pattern = self.extract_positions(&self.test_cases[self.index].shape);
+        let mut expected: [Vec<GridPos>; 8] = [NEW_GRID_POS_VEC; 8];
+        for (index, shape) in self.test_cases[self.index].expected.iter().enumerate() {
+            expected[index] = self.extract_positions(shape);
+        }
         self.index += 1;
         Some(RotationTestCase {
-            name,
             shape,
-            cardinal,
-            expected: result,
+            pattern,
+            expected,
         })
     }
 }

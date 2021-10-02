@@ -31,7 +31,7 @@ impl From<Direction> for Cardinal {
 
 impl From<Int> for Cardinal {
     fn from(val: Int) -> Self {
-        match val {
+        match val % 8 {
             0 => Cardinal::North,
             1 => Cardinal::NorthEast,
             2 => Cardinal::East,

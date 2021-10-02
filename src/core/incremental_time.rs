@@ -1,5 +1,5 @@
 use crate::actors::Activity;
-use bevy_ecs::prelude::*;
+use bevy::prelude::*;
 use std::cmp::Ordering;
 
 use super::types::Increment;

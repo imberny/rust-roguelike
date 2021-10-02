@@ -1,19 +1,22 @@
+use bevy::{ecs::schedule::ShouldRun, prelude::*};
+
 use crate::actors::{input::PlayerInput, Action, Activity, Actor, Player};
-use bevy_ecs::{prelude::*, schedule::ShouldRun};
 
 pub fn handle_player_input(
     mut commands: Commands,
-    input: Res<PlayerInput>,
+    // input: Res<PlayerInput>,
+    keyboard_input: Res<Input<KeyCode>>,
     mut player_query: Query<(Entity, &mut Actor), With<Player>>,
 ) {
     if let Ok((player, mut actor)) = player_query.single_mut() {
-        let action = convert_to_valid_action(input, &mut actor);
-        if Action::None != action {
-            commands.entity(player).insert(Activity {
-                time_to_complete: 30,
-                action,
-            });
-        }
+        // let action =
+        // convert_to_valid_action(input, &mut actor);
+        // if Action::None != action {
+        //     commands.entity(player).insert(Activity {
+        //         time_to_complete: 30,
+        //         action,
+        //     });
+        // }
     }
 }
 
@@ -56,7 +59,7 @@ pub fn is_player_waiting_for_input(player: Query<&Player, With<Activity>>) -> Sh
 
 #[cfg(test)]
 mod tests {
-    use bevy_ecs::prelude::*;
+    use bevy::prelude::*;
 
     use crate::{
         actors::{input::PlayerInput, Action, Activity, ActorBundle, Player},

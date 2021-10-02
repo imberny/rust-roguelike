@@ -1,4 +1,4 @@
-use bevy_ecs::prelude::*;
+use bevy::prelude::*;
 use rltk::{Rltk, RGB};
 
 use crate::{
@@ -8,6 +8,27 @@ use crate::{
 };
 
 use super::Renderable;
+
+pub fn render_sys(
+    mut ctx: ResMut<Rltk>,
+    map: Res<AreaGrid>,
+    // map_query: Query<&AreaGrid, Changed<AreaGrid>>
+) {
+    // let map = map_query.single().unwrap();
+    for (idx, tile) in map.tiles.iter().enumerate() {
+        if !map.revealed[idx] {
+            continue;
+        }
+        let renderable = map.renderables[idx];
+        let mut fg = renderable.fg;
+        if !map.visible[idx] {
+            fg = fg.to_greyscale();
+        }
+
+        let (x, y) = map.idx_xy(idx);
+        ctx.set(x, y, fg, renderable.bg, renderable.glyph);
+    }
+}
 
 pub fn render(world: &mut World, ctx: &mut Rltk) {
     ctx.cls();

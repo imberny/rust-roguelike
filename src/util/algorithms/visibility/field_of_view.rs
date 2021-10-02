@@ -1,6 +1,6 @@
 use crate::{
     core::types::{Cardinal, Facing, GridPos, Int, Real, RealPos},
-    util::algorithms::transform::{chebyshev_distance, chessboard_rotate},
+    util::algorithms::geometry::{chebyshev_distance, chessboard_rotate_one},
 };
 
 pub enum FOV {
@@ -48,7 +48,7 @@ fn is_above_curve(pos: &GridPos, cardinal: Cardinal, range: Int, a: Real, b: Rea
 }
 
 fn is_in_pattern(pattern: &[GridPos], position: &GridPos, cardinal: Cardinal) -> bool {
-    let pos = chessboard_rotate(position, cardinal.into());
+    let pos = chessboard_rotate_one(position, cardinal.into());
     pattern.contains(&pos)
 }
 

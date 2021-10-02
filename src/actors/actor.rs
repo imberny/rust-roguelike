@@ -2,7 +2,7 @@ use crate::{
     core::types::{Cardinal, GridPos, Int, Percentage},
     game_world::Viewshed,
 };
-use bevy_ecs::bundle::Bundle;
+use bevy::prelude::*;
 
 const BASE_HEALTH: Int = 100;
 const BASE_SPEED: Int = 100;

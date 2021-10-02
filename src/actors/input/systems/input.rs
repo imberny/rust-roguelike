@@ -1,4 +1,4 @@
-use bevy_ecs::prelude::*;
+use bevy::prelude::*;
 use rltk::{Rltk, VirtualKeyCode};
 use std::collections::HashMap;
 
@@ -61,7 +61,7 @@ fn update_player_input(input: &mut PlayerInput, ctx: &Rltk) {
 // Q W E       7 8 9       Ctrl+Left   Up    Ctrl-Up
 // S X D       4 5 6          Left     .      Right
 // Z S C       1 2 3       Ctrl+Down  Down  Ctrl+Right
-fn input_to_action(key: VirtualKeyCode, _is_strafing: bool, _skew_move: bool) -> Action {
+pub fn input_to_action(key: VirtualKeyCode, _is_strafing: bool, _skew_move: bool) -> Action {
     let player_settings = PlayerSettings::new();
 
     if player_settings.input_map.contains_key(&key) {

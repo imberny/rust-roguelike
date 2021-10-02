@@ -1,3 +1,5 @@
+use bevy::{app::Events, prelude::*};
+
 use crate::{
     actors::{
         self,
@@ -5,24 +7,23 @@ use crate::{
     },
     ai,
     core::*,
-    game::GameRunner,
+    // game::GameRunner,
     game_world,
     generator::MapGenerator,
 };
-use bevy_ecs::{event::Events, prelude::*};
 
-pub fn init_game() -> GameRunner {
-    let mut ecs = GameRunner {
-        world: create_world(),
-        input: create_input_schedule(),
-        game_logic: create_game_schedule(),
-        rendering: create_render_schedule(),
-    };
+// pub fn init_game() -> GameRunner {
+//     let mut ecs = GameRunner {
+//         world: create_world(),
+//         input: create_input_schedule(),
+//         game_logic: create_game_schedule(),
+//         rendering: create_render_schedule(),
+//     };
 
-    register_modules(&mut ecs);
+//     register_modules(&mut ecs);
 
-    ecs
-}
+//     ecs
+// }
 
 fn create_world() -> World {
     let mut world = World::new();
@@ -89,8 +90,8 @@ fn create_render_schedule() -> Schedule {
     rendering
 }
 
-fn register_modules(ecs: &mut GameRunner) {
-    actors::register(ecs);
-    ai::register(ecs);
-    game_world::register(ecs);
-}
+// fn register_modules(ecs: &mut GameRunner) {
+//     actors::register(ecs);
+//     ai::register(ecs);
+//     game_world::register(ecs);
+// }
