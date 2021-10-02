@@ -1,22 +1,65 @@
+use std::collections::HashMap;
+
 use bevy::{ecs::schedule::ShouldRun, prelude::*};
 
-use crate::actors::{input::PlayerInput, Action, Activity, Actor, Player};
+use crate::{
+    actors::{input::PlayerInput, Action, Activity, Actor, Player},
+    core::types::Direction,
+    AppState,
+};
 
 pub fn handle_player_input(
     mut commands: Commands,
     // input: Res<PlayerInput>,
+    mut app_state: ResMut<State<AppState>>,
     keyboard_input: Res<Input<KeyCode>>,
     mut player_query: Query<(Entity, &mut Actor), With<Player>>,
 ) {
     if let Ok((player, mut actor)) = player_query.single_mut() {
-        // let action =
-        // convert_to_valid_action(input, &mut actor);
-        // if Action::None != action {
-        //     commands.entity(player).insert(Activity {
-        //         time_to_complete: 30,
-        //         action,
-        //     });
-        // }
+        if let Some(action) = try_into_action(keyboard_input.into_inner()) {
+            app_state.set(AppState::Running).unwrap();
+            commands.entity(player).insert(Activity {
+                time_to_complete: 30,
+                action,
+            });
+        }
+    }
+}
+
+fn try_into_action(keyboard_input: &Input<KeyCode>) -> Option<Action> {
+    let player_settings = PlayerSettings::new();
+    if let Some(key) = player_settings
+        .input_map
+        .keys()
+        .find(|key_code| keyboard_input.just_pressed(**key_code))
+    {
+        Some(player_settings.input_map[key])
+    } else {
+        None
+    }
+}
+
+struct PlayerSettings {
+    input_map: HashMap<KeyCode, Action>,
+}
+
+impl PlayerSettings {
+    pub fn new() -> Self {
+        Self {
+            input_map: HashMap::from([
+                (KeyCode::Q, Action::Turn(Direction::ForwardLeft)),
+                (KeyCode::W, Action::Move(Direction::Forward)),
+                (KeyCode::E, Action::Turn(Direction::ForwardRight)),
+                (KeyCode::D, Action::Move(Direction::Right)),
+                (KeyCode::C, Action::Move(Direction::BackRight)),
+                (KeyCode::S, Action::Move(Direction::Back)),
+                (KeyCode::Z, Action::Move(Direction::BackLeft)),
+                (KeyCode::A, Action::Move(Direction::Left)),
+                (KeyCode::X, Action::Wait),
+                (KeyCode::Return, Action::InitiateAttack),
+                (KeyCode::J, Action::InitiateAttack),
+            ]),
+        }
     }
 }
 
@@ -70,10 +113,10 @@ mod tests {
 
     fn test_world() -> World {
         let mut world = World::new();
-        world.insert_resource(PlayerInput {
-            action: Action::None,
-            ..Default::default()
-        });
+        // world.insert_resource(PlayerInput {
+        //     action: Action::None,
+        //     ..Default::default()
+        // });
         world
     }
 

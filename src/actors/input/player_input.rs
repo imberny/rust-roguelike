@@ -12,6 +12,7 @@ pub struct PlayerInput {
 
 impl PlayerInput {
     pub fn is_valid(&self) -> bool {
-        !matches!(self.action, Action::None)
+        // !matches!(self.action, Action::None)
+        false
     }
 }

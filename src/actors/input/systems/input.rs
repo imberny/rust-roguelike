@@ -49,10 +49,8 @@ fn update_player_input(input: &mut PlayerInput, ctx: &Rltk) {
         || rltk_input.is_key_pressed(VirtualKeyCode::RAlt);
 
     input.cursor_pos = ctx.mouse_pos;
-    input.action = if let Some(key) = ctx.key {
-        input_to_action(key, input.is_strafing, input.skew_move)
-    } else {
-        Action::None
+    if let Some(key) = ctx.key {
+        input.action = input_to_action(key, input.is_strafing, input.skew_move)
     };
 }
 
@@ -148,6 +146,7 @@ pub fn input_to_action(key: VirtualKeyCode, _is_strafing: bool, _skew_move: bool
         //     }
         VirtualKeyCode::Numpad5 => Action::Wait,
 
-        _ => Action::None,
+        // TODO: Remove
+        _ => Action::Wait,
     }
 }

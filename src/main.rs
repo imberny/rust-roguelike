@@ -1,6 +1,6 @@
 use crate::actors::systems::is_player_busy;
 use crate::core::types::{Int, Real};
-use crate::core::{advance_time, IncrementalClock, TurnGameStage};
+use crate::core::{advance_time, IncrementalClock, TimeIncrementEvent, TurnGameStage};
 use crate::game_world::AreaGrid;
 use crate::generator::{generate_map_system, MapGenerator};
 
@@ -55,14 +55,15 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .init_resource::<AreaGrid>()
+        .add_event::<TimeIncrementEvent>()
         // .insert_resource(context)
         .add_startup_system(generate_map_system.label(SystemLabels::Generation))
         .add_startup_system(load_char_tiles.after(SystemLabels::Generation))
         .add_system(draw.system())
         .insert_resource(IncrementalClock::default())
         .add_state(AppState::Paused)
-        // .add_system(advance_time.system())
-        // .add_plugin(actors::ActorPlugin)
+        .add_system_set(SystemSet::on_update(AppState::Running).with_system(advance_time))
+        .add_plugin(actors::ActorPlugin)
         // .add_plugin(ai::AIPlugin)
         .add_plugin(game_world::GameWorldPlugin)
         // .add_system(render_sys.system())

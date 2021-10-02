@@ -2,7 +2,6 @@ use crate::core::types::{Cardinal, Direction};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Action {
-    None,
     Wait,
     Move(Direction),
     Face(Cardinal),
