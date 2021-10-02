@@ -20,12 +20,13 @@ pub struct GameWorldPlugin;
 impl Plugin for GameWorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
-            SystemSet::new()
+            SystemSet::on_exit(AppState::Running)
                 .label(MapSystems::Viewshed)
-                .with_system(update_viewsheds.system()),
+                .with_system(update_viewsheds),
         )
         .add_system_set(
-            SystemSet::on_exit(AppState::Paused).with_system(apply_player_viewsheds.system()),
+            SystemSet::on_exit(AppState::Running)
+                .with_system(apply_player_viewsheds.after(MapSystems::Viewshed)),
         );
     }
 }

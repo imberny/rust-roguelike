@@ -69,7 +69,7 @@ fn main() {
         .add_startup_system(load_char_tiles.after(SystemLabels::Generation))
         .add_system_set(SystemSet::on_enter(AppState::Rendering).with_system(draw.system()))
         .insert_resource(IncrementalClock::default())
-        .add_system_set(SystemSet::on_enter(AppState::Running).with_system(advance_time))
+        .add_system_set(SystemSet::on_exit(AppState::Paused).with_system(advance_time))
         .add_system(pause_if_player_idle.after(ActorSystems::Action))
         .add_plugin(actors::ActorPlugin)
         // .add_plugin(ai::AIPlugin)
