@@ -4,6 +4,7 @@ use crate::core::{advance_time, IncrementalClock, TimeIncrementEvent, TurnGameSt
 use crate::game_world::AreaGrid;
 use crate::generator::{generate_map_system, MapGenerator};
 
+use actors::{Activity, Player};
 use bevy::prelude::*;
 use rendering::render_sys;
 // use game::run_game;
@@ -63,11 +64,21 @@ fn main() {
         .insert_resource(IncrementalClock::default())
         .add_state(AppState::Paused)
         .add_system_set(SystemSet::on_update(AppState::Running).with_system(advance_time))
+        .add_system_to_stage(CoreStage::PostUpdate, pause_if_player_idle)
         .add_plugin(actors::ActorPlugin)
         // .add_plugin(ai::AIPlugin)
         .add_plugin(game_world::GameWorldPlugin)
         // .add_system(render_sys.system())
         .run();
+}
+
+fn pause_if_player_idle(
+    mut app_state: ResMut<State<AppState>>,
+    player_query: Query<&Player, Without<Activity>>,
+) {
+    if *app_state.current() == AppState::Running {
+        app_state.set(AppState::Paused).unwrap()
+    }
 }
 
 fn draw(
