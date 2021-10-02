@@ -108,6 +108,7 @@ fn load_char_tiles(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     map: Res<AreaGrid>,
+    window: Res<WindowDescriptor>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     let texture_handle = asset_server.load("16x16-RogueYun-AgmEdit.png");
@@ -129,8 +130,8 @@ fn load_char_tiles(
                     texture_atlas: texture_atlas_handle.clone(),
                     transform: Transform {
                         translation: Vec3::new(
-                            (-WIDTH / 2 + x * 16 + 8) as f32,
-                            (-HEIGHT / 2 + y * 16 + 8) as f32,
+                            -window.width / 2.0 + ((x * 16 + 8) as f32),
+                            window.height / 2.0 - ((y * 16 + 8) as f32),
                             0.,
                         ),
                         scale: Vec3::new(1.0, 1.0, 1.0),
