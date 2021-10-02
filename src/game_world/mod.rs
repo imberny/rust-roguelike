@@ -8,7 +8,10 @@ pub mod systems;
 
 use bevy::prelude::*;
 
-use crate::core::{RenderingStage, TurnGameStage};
+use crate::{
+    core::{RenderingStage, TurnGameStage},
+    AppState,
+};
 
 use self::systems::{apply_player_viewsheds, update_viewsheds};
 
@@ -21,7 +24,9 @@ impl Plugin for GameWorldPlugin {
                 .label(MapSystems::Viewshed)
                 .with_system(update_viewsheds.system()),
         )
-        .add_system_set(SystemSet::new().with_system(apply_player_viewsheds.system()));
+        .add_system_set(
+            SystemSet::on_exit(AppState::Paused).with_system(apply_player_viewsheds.system()),
+        );
     }
 }
 

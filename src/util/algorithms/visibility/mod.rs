@@ -15,6 +15,7 @@ pub fn symmetric_shadowcasting(
     is_visible: &GridPosPredicate,
     is_blocking: &GridPosPredicate,
 ) -> Vec<GridPos> {
+    println!("Shadowcasting");
     let mut visible_positions: HashSet<GridPos> = HashSet::new();
     if is_visible(&GridPos::zero()) {
         visible_positions.insert(origin);

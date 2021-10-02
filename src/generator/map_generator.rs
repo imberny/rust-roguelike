@@ -204,7 +204,7 @@ pub fn generate_map_system(mut commands: Commands, mut map: ResMut<AreaGrid>) {
         .insert(Player)
         .insert(Activity {
             action: Action::Wait,
-            time_to_complete: 5,
+            time_to_complete: 0,
         })
         .insert_bundle(ActorBundle {
             name: "Player".to_string(),

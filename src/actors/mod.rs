@@ -55,7 +55,7 @@ impl Plugin for ActorPlugin {
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
-enum ActorSystems {
+pub enum ActorSystems {
     Action,
 }
 

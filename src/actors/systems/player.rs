@@ -1,6 +1,10 @@
 use std::collections::HashMap;
 
-use bevy::{ecs::schedule::ShouldRun, prelude::*};
+use bevy::{
+    ecs::schedule::ShouldRun,
+    input::{keyboard::KeyboardInput, ElementState},
+    prelude::*,
+};
 
 use crate::{
     actors::{input::PlayerInput, Action, Activity, Actor, Player},
@@ -12,32 +16,56 @@ pub fn handle_player_input(
     mut commands: Commands,
     // input: Res<PlayerInput>,
     mut app_state: ResMut<State<AppState>>,
-    keyboard_input: Res<Input<KeyCode>>,
+    mut keyboard_input_events: EventReader<KeyboardInput>,
+    // keyboard_input: Res<Input<KeyCode>>,
     mut player_query: Query<(Entity, &mut Actor), With<Player>>,
 ) {
-    if let Ok((player, mut actor)) = player_query.single_mut() {
-        if let Some(action) = try_into_action(keyboard_input.into_inner()) {
-            app_state.set(AppState::Running).unwrap();
+    let (player, mut actor) = player_query.single_mut().unwrap();
+
+    let mut success = false;
+    keyboard_input_events.iter().for_each(|input| {
+        if let Some(action) = try_into_action(input) {
+            success = true;
+            println!("Input: {:?}", input);
+
             commands.entity(player).insert(Activity {
                 time_to_complete: 30,
                 action,
             });
         }
+    });
+
+    if success {
+        app_state.set(AppState::Running).unwrap();
     }
 }
 
-fn try_into_action(keyboard_input: &Input<KeyCode>) -> Option<Action> {
+fn try_into_action(keyboard_input: &KeyboardInput) -> Option<Action> {
     let player_settings = PlayerSettings::new();
-    if let Some(key) = player_settings
-        .input_map
-        .keys()
-        .find(|key_code| keyboard_input.just_pressed(**key_code))
+
+    if keyboard_input.state == ElementState::Pressed
+        && player_settings
+            .input_map
+            .contains_key(&keyboard_input.key_code.unwrap())
     {
-        Some(player_settings.input_map[key])
+        Some(player_settings.input_map[&keyboard_input.key_code.unwrap()])
     } else {
         None
     }
 }
+
+// fn try_into_action(keyboard_input: &Input<KeyCode>) -> Option<Action> {
+//     let player_settings = PlayerSettings::new();
+//     if let Some(key) = player_settings
+//         .input_map
+//         .keys()
+//         .find(|key_code| keyboard_input.pressed(**key_code))
+//     {
+//         Some(player_settings.input_map[key])
+//     } else {
+//         None
+//     }
+// }
 
 struct PlayerSettings {
     input_map: HashMap<KeyCode, Action>,
