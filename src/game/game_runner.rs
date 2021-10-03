@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rltk::{GameState, Rltk};
 
-use crate::{actors::input::systems::poll_input, rendering::render};
+use crate::actors::input::systems::poll_input;
 
 // pub struct GameRunner {
 //     pub world: World,

@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use rltk::{Algorithm2D, BaseMap, Point};
 
 use crate::{
-    core::types::{GridPos, Index, Int},
+    core::types::{FontChar, GridPos, Index, Int},
     rendering::Renderable,
 };
 
@@ -9,6 +11,12 @@ use crate::{
 pub enum TileType {
     Wall,
     Floor,
+}
+
+impl Default for TileType {
+    fn default() -> Self {
+        Self::Wall
+    }
 }
 
 // pub struct Tile {
@@ -19,7 +27,7 @@ pub enum TileType {
 #[derive(Debug, Clone)]
 pub struct AreaGrid {
     pub tiles: Vec<TileType>,
-    pub renderables: Vec<Renderable>, // items, actors, ...
+    pub renderables: HashMap<GridPos, Renderable>,
     pub width: Int,
     pub height: Int,
     pub revealed: Vec<bool>,
@@ -32,9 +40,9 @@ impl Default for AreaGrid {
             tiles: Default::default(),
             width: Default::default(),
             height: Default::default(),
-            renderables: vec![Renderable::default(); 80 * 50],
             revealed: vec![false; 80 * 50],
             visible: vec![false; 80 * 50],
+            renderables: HashMap::default(),
         }
     }
 }

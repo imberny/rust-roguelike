@@ -57,9 +57,9 @@ pub fn from_ascii_layout(ascii_map: &str) -> (GridPos, AreaGrid) {
         tiles,
         width,
         height,
-        renderables: vec![Renderable::default(); 80 * 50],
         revealed: vec![false; (width * height) as Index],
         visible: vec![false; (width * height) as Index],
+        ..Default::default()
     };
     (origin, map)
 }

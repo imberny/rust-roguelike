@@ -18,3 +18,6 @@ pub use pos::{GridPos, GridPosPredicate, IntoGridPos, RealPos};
 
 mod increment;
 pub use increment::Increment;
+
+mod font_tile;
+pub use font_tile::FontChar;

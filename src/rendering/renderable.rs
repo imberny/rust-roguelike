@@ -1,8 +1,10 @@
-use rltk::{FontCharType, RGB};
+use bevy::prelude::Color;
+
+use crate::core::types::FontChar;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Renderable {
-    pub glyph: FontCharType,
-    pub fg: RGB,
-    pub bg: RGB,
+    pub glyph: FontChar,
+    pub fg: Color,
+    pub bg: Color,
 }

@@ -2,12 +2,13 @@ use crate::actors::systems::is_player_busy;
 use crate::actors::ActorSystems;
 use crate::core::types::{Int, Real};
 use crate::core::{advance_time, IncrementalClock, TimeIncrementEvent, TurnGameStage};
-use crate::game_world::AreaGrid;
+use crate::game_world::{AreaGrid, TileType};
 use crate::generator::{generate_map_system, MapGenerator};
 
 use actors::{Activity, Player};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 // use game::run_game;
 
 mod actors;
@@ -56,13 +57,8 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        // // Adds frame time diagnostics
-        // .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        // // Adds a system that prints diagnostics to the console
-        // .add_plugin(LogDiagnosticsPlugin::default())
-        .init_resource::<AreaGrid>()
+        .add_startup_system_to_stage(StartupStage::PreStartup, set_up_map)
         .add_event::<TimeIncrementEvent>()
-        // .insert_resource(context)
         .add_state(AppState::Running)
         .add_startup_system(generate_map_system.label(SystemLabels::Generation))
         .insert_resource(IncrementalClock::default())
@@ -72,8 +68,18 @@ fn main() {
         .add_plugin(ai::AIPlugin)
         .add_plugin(game_world::GameWorldPlugin)
         .add_plugin(rendering::TileRendererPlugin)
-        // .add_system(render_sys.system())
         .run();
+}
+
+fn set_up_map(mut commands: Commands) {
+    commands.spawn().insert(AreaGrid {
+        revealed: vec![false; 80 * 50],
+        visible: vec![false; 80 * 50],
+        tiles: vec![TileType::Wall; 80 * 50],
+        width: 80,
+        height: 50,
+        ..Default::default()
+    });
 }
 
 fn pause_if_player_idle(

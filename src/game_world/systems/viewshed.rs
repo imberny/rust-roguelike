@@ -8,10 +8,11 @@ use crate::{
 };
 
 pub fn update_viewsheds(
-    map: ResMut<AreaGrid>,
+    // map: ResMut<AreaGrid>,
+    map_query: Query<&AreaGrid>,
     mut query: Query<(&mut Viewshed, &GridPos, &Actor)>,
 ) {
-    let map_clone = map.clone();
+    let map = map_query.single();
     for (mut viewshed, pos, actor) in query.iter_mut() {
         if viewshed.dirty {
             viewshed.dirty = false;
@@ -56,16 +57,18 @@ pub fn update_viewsheds(
             // let fov = field_of_view::cone_fov(3, std::f32::consts::PI / 4.0, actor.facing.into());
             viewshed.visible_tiles =
                 symmetric_shadowcasting(pos.clone(), &|pos| fov.sees(pos, actor.facing), &|pos| {
-                    map_clone.is_blocking(pos)
+                    map.is_blocking(pos)
                 });
         }
     }
 }
 
 pub fn apply_player_viewsheds(
-    mut map: ResMut<AreaGrid>,
+    // mut map: ResMut<AreaGrid>,
+    mut map_query: Query<&mut AreaGrid>,
     mut query: Query<&mut Viewshed, With<Player>>,
 ) {
+    let mut map = map_query.single_mut();
     for t in map.visible.iter_mut() {
         *t = false
     }

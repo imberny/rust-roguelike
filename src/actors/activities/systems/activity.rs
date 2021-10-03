@@ -9,7 +9,7 @@ use crate::{
     },
     core::{types::Increment, TimeIncrementEvent},
     game_world::{AreaGrid, Viewshed},
-    rendering::Renderable,
+    rendering::{cp437, Renderable},
     util::algorithms::geometry::chessboard_rotate_and_place,
 };
 
@@ -30,9 +30,11 @@ pub fn progress_activities(
 
 pub fn do_activities(
     mut commands: Commands,
-    map: Res<AreaGrid>,
+    // map: Res<AreaGrid>,
+    map_query: Query<&AreaGrid>,
     mut actors: Query<(Entity, &mut Actor, &mut GridPos, &mut Viewshed, &Activity)>,
 ) {
+    let map = map_query.single();
     for (entity, mut actor, mut pos, mut viewshed, activity) in actors.iter_mut() {
         if activity.time_to_complete == 0 {
             // console::log("Doing something");
@@ -153,9 +155,9 @@ fn telegraph_attack(origin: GridPos, facing: Cardinal, commands: &mut Commands) 
     let marker = Marker {
         time_left: 60,
         renderable: Renderable {
-            glyph: rltk::to_cp437('!'),
-            fg: RGB::named(rltk::RED),
-            bg: RGB::named(rltk::ANTIQUE_WHITE),
+            glyph: cp437('!'),
+            fg: Color::RED,
+            bg: Color::ANTIQUE_WHITE,
         },
     };
     place_markers(&positions, marker, commands);
@@ -177,9 +179,9 @@ fn do_attack(origin: GridPos, cardinal: Cardinal, commands: &mut Commands) {
     let marker = Marker {
         time_left: 30,
         renderable: Renderable {
-            glyph: rltk::to_cp437('*'),
-            fg: RGB::named(rltk::ROYAL_BLUE),
-            bg: RGB::named(rltk::RED),
+            glyph: cp437('*'),
+            fg: Color::NAVY,
+            bg: Color::RED,
         },
     };
     place_markers(&positions, marker, commands);
@@ -222,9 +224,9 @@ mod tests {
             tiles: vec![TileType::Floor; 80 * 50],
             width: 80,
             height: 50,
-            renderables: vec![Renderable::default(); 80 * 50],
             revealed: vec![false; 80 * 50],
             visible: vec![false; 80 * 50],
+            ..Default::default()
         }
     }
 

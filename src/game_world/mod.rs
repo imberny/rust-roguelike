@@ -9,7 +9,11 @@ pub mod systems;
 use bevy::prelude::*;
 
 use crate::{
-    core::{RenderingStage, TurnGameStage},
+    core::{
+        types::{FontChar, GridPos},
+        RenderingStage, TurnGameStage,
+    },
+    rendering::Renderable,
     AppState,
 };
 
@@ -27,7 +31,8 @@ impl Plugin for GameWorldPlugin {
         .add_system_set(
             SystemSet::on_exit(AppState::Running)
                 .with_system(apply_player_viewsheds.after(MapSystems::Viewshed)),
-        );
+        )
+        .add_system_set(SystemSet::on_exit(AppState::Running).with_system(update_renderables));
     }
 }
 
@@ -36,15 +41,14 @@ enum MapSystems {
     Viewshed,
 }
 
-// pub fn register(ecs: &mut GameRunner) {
-//     ecs.game_logic.add_system_set_to_stage(
-//         TurnGameStage::PostUpdate,
-//         SystemSet::new()
-//             .label(MapSystems::Viewshed)
-//             .with_system(update_viewsheds.system()),
-//     );
-//     ecs.rendering.add_system_set_to_stage(
-//         RenderingStage::Draw,
-//         SystemSet::new().with_system(apply_player_viewsheds.system()),
-//     );
-// }
+fn update_renderables(
+    // mut map: ResMut<AreaGrid>,
+    mut map_query: Query<&mut AreaGrid>,
+    query: Query<(&GridPos, &Renderable)>,
+) {
+    let mut map = map_query.single_mut();
+    map.renderables.drain();
+    query.iter().for_each(|(pos, renderable)| {
+        map.renderables.insert(pos.clone(), renderable.clone());
+    });
+}

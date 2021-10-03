@@ -1,14 +1,14 @@
 use std::cmp::{max, min};
 
 use bevy::prelude::*;
-use rltk::{RandomNumberGenerator, RGB};
+use rltk::RandomNumberGenerator;
 
 use crate::{
     actors::{Action, Activity, ActorBundle, Player},
     ai::Monster,
-    core::types::{GridPos, Int},
+    core::types::{FontChar, GridPos, Int},
     game_world::{AreaGrid, TileType, Viewshed},
-    rendering::Renderable,
+    rendering::{cp437, Renderable},
 };
 
 use super::types::Room;
@@ -44,9 +44,9 @@ impl MapGenerator {
             tiles: vec![TileType::Wall; 80 * 50],
             width: 80,
             height: 50,
-            renderables: vec![Renderable::default(); 80 * 50],
             revealed: vec![false; 80 * 50],
             visible: vec![false; 80 * 50],
+            ..Default::default()
         };
         let mut rooms: Vec<Room> = Vec::new();
 
@@ -103,16 +103,16 @@ fn add_monsters_to_rooms(world: &mut World, rooms: &[Room]) {
         let (x, y) = room.center();
 
         let name: String;
-        let glyph: rltk::FontCharType;
+        let glyph: FontChar;
         let roll = rng.roll_dice(1, 2);
         match roll {
             1 => {
                 name = "Goblin".to_string();
-                glyph = rltk::to_cp437('g');
+                glyph = cp437('g');
             }
             _ => {
                 name = "Orc".to_string();
-                glyph = rltk::to_cp437('o')
+                glyph = cp437('o')
             }
         }
 
@@ -127,8 +127,8 @@ fn add_monsters_to_rooms(world: &mut World, rooms: &[Room]) {
             })
             .insert(Renderable {
                 glyph,
-                fg: RGB::named(rltk::RED),
-                bg: RGB::named(rltk::BLACK),
+                fg: Color::RED,
+                bg: Color::BLACK,
             });
     }
 }
@@ -151,14 +151,19 @@ fn create_player_at_pos(world: &mut World, player_x: Int, player_y: Int) {
             ..Default::default()
         })
         .insert(Renderable {
-            glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::YELLOW),
-            bg: RGB::named(rltk::BLACK),
+            glyph: cp437('@'),
+            fg: Color::YELLOW,
+            bg: Color::BLACK,
         });
 }
 
-pub fn generate_map_system(mut commands: Commands, mut map: ResMut<AreaGrid>) {
-    // let mut map = map_query.single_mut().unwrap();
+pub fn generate_map_system(
+    mut commands: Commands,
+    // mut map: ResMut<AreaGrid>,
+    mut map_query: Query<&mut AreaGrid>,
+) {
+    let mut map = map_query.single_mut();
+
     let (new_map, rooms) = MapGenerator {}.generate_new_map();
     map.tiles = new_map.tiles;
     map.width = new_map.width;
@@ -169,16 +174,16 @@ pub fn generate_map_system(mut commands: Commands, mut map: ResMut<AreaGrid>) {
         let (x, y) = room.center();
 
         let name: String;
-        let glyph: rltk::FontCharType;
+        let glyph: FontChar;
         let roll = rng.roll_dice(1, 2);
         match roll {
             1 => {
                 name = "Goblin".to_string();
-                glyph = rltk::to_cp437('g');
+                glyph = cp437('g');
             }
             _ => {
                 name = "Orc".to_string();
-                glyph = rltk::to_cp437('o')
+                glyph = cp437('o')
             }
         }
 
@@ -193,8 +198,8 @@ pub fn generate_map_system(mut commands: Commands, mut map: ResMut<AreaGrid>) {
             })
             .insert(Renderable {
                 glyph,
-                fg: RGB::named(rltk::RED),
-                bg: RGB::named(rltk::BLACK),
+                fg: Color::RED,
+                bg: Color::BLACK,
             });
     }
 
@@ -216,8 +221,8 @@ pub fn generate_map_system(mut commands: Commands, mut map: ResMut<AreaGrid>) {
             ..Default::default()
         })
         .insert(Renderable {
-            glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::YELLOW),
-            bg: RGB::named(rltk::BLACK),
+            glyph: cp437('@'),
+            fg: Color::YELLOW,
+            bg: Color::BLACK,
         });
 }
