@@ -329,7 +329,6 @@ dependencies = [
  "downcast-rs",
  "fixedbitset 0.4.0",
  "fxhash",
- "rand",
  "serde",
  "thiserror",
 ]
@@ -444,7 +443,7 @@ name = "bevy_math"
 version = "0.5.0"
 dependencies = [
  "bevy_reflect",
- "glam 0.17.3",
+ "glam",
 ]
 
 [[package]]
@@ -470,7 +469,7 @@ dependencies = [
  "bevy_utils",
  "downcast-rs",
  "erased-serde",
- "glam 0.17.3",
+ "glam",
  "parking_lot",
  "serde",
  "smallvec",
@@ -608,7 +607,6 @@ dependencies = [
  "bevy_app",
  "bevy_asset",
  "bevy_core",
- "bevy_derive",
  "bevy_ecs",
  "bevy_input",
  "bevy_log",
@@ -662,7 +660,6 @@ name = "bevy_window"
 version = "0.5.0"
 dependencies = [
  "bevy_app",
- "bevy_ecs",
  "bevy_math",
  "bevy_utils",
  "web-sys",
@@ -672,6 +669,7 @@ dependencies = [
 name = "bevy_winit"
 version = "0.5.0"
 dependencies = [
+ "approx",
  "bevy_app",
  "bevy_ecs",
  "bevy_input",
@@ -1839,19 +1837,13 @@ dependencies = [
 
 [[package]]
 name = "glam"
-version = "0.17.3"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e01732b97afd8508eee3333a541b9f7610f454bb818669e66e90f5f57c93a776"
+checksum = "525a3e490ba77b8e326fb67d4b44b4bd2f920f44d4cc73ccec50adc68e3bee34"
 dependencies = [
  "bytemuck",
  "serde",
 ]
-
-[[package]]
-name = "glam"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "525a3e490ba77b8e326fb67d4b44b4bd2f920f44d4cc73ccec50adc68e3bee34"
 
 [[package]]
 name = "glob"
@@ -2082,11 +2074,11 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hexasphere"
-version = "4.1.1"
+version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b69824ef63443efe6187c621d24ef1a3c6a0381881cc024ff47be38a8bfc1127"
+checksum = "569262de9149ffd26673422a5ea27240eca79ebe0144ed9e42f265f45ed9ecc2"
 dependencies = [
- "glam 0.18.0",
+ "glam",
  "lazy_static",
 ]
 

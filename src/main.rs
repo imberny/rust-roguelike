@@ -72,7 +72,7 @@ fn main() {
         .add_system_set(SystemSet::on_exit(AppState::Paused).with_system(advance_time))
         .add_system(pause_if_player_idle.after(ActorSystems::Action))
         .add_plugin(actors::ActorPlugin)
-        // .add_plugin(ai::AIPlugin)
+        .add_plugin(ai::AIPlugin)
         .add_plugin(game_world::GameWorldPlugin)
         // .add_system(render_sys.system())
         .run();
@@ -100,7 +100,7 @@ fn draw(
 
     println!("Drawing");
 
-    let children = query.single_mut().unwrap();
+    let children = query.single_mut();
 
     assert!(map.tiles.len() > 0);
     for (idx, tile) in map.tiles.iter().enumerate() {

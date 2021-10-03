@@ -20,7 +20,7 @@ pub fn handle_player_input(
     // keyboard_input: Res<Input<KeyCode>>,
     mut player_query: Query<(Entity, &mut Actor), With<Player>>,
 ) {
-    let (player, mut actor) = player_query.single_mut().unwrap();
+    let (player, mut actor) = player_query.single_mut();
 
     let mut success = false;
     keyboard_input_events.iter().for_each(|input| {
@@ -115,14 +115,14 @@ pub fn is_input_valid(input: Res<PlayerInput>) -> ShouldRun {
 }
 
 pub fn is_player_busy(player: Query<&Player, With<Activity>>) -> ShouldRun {
-    match player.single() {
+    match player.get_single() {
         Ok(_) => ShouldRun::YesAndCheckAgain,
         Err(_) => ShouldRun::No,
     }
 }
 
 pub fn is_player_waiting_for_input(player: Query<&Player, With<Activity>>) -> ShouldRun {
-    match player.single() {
+    match player.get_single() {
         Ok(_) => ShouldRun::No,
         Err(_) => ShouldRun::Yes,
     }
