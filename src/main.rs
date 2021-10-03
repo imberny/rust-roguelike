@@ -51,6 +51,7 @@ fn main() {
             title: "The Possession of Barbe Halle".to_string(),
             width: WIDTH as Real,
             height: HEIGHT as Real,
+            resizable: false,
             vsync: true,
             ..Default::default()
         })
