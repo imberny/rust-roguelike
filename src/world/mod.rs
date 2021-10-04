@@ -1,3 +1,5 @@
+pub mod generator;
+
 mod map;
 pub use map::{AreaGrid, TileType};
 

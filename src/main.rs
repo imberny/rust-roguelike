@@ -1,7 +1,6 @@
 use crate::actors::ActorSystems;
 use crate::core::types::{Int, Real};
 use crate::core::{advance_time, IncrementalClock, TimeIncrementEvent};
-use crate::generator::{generate_map_system, MapGenerator};
 use crate::world::{AreaGrid, TileType};
 
 use actors::{Activity, Player};
@@ -13,7 +12,6 @@ use settings::PlayerSettings;
 mod actors;
 mod ai;
 mod core;
-mod generator;
 mod rendering;
 mod settings;
 mod util;
@@ -54,7 +52,6 @@ fn main() {
         .add_startup_system_to_stage(StartupStage::PreStartup, set_up_map)
         .add_event::<TimeIncrementEvent>()
         .add_state(AppState::Running)
-        .add_startup_system(generate_map_system.label(SystemLabels::Generation))
         .add_system_set(
             SystemSet::on_update(AppState::Running)
                 .with_system(advance_time)
