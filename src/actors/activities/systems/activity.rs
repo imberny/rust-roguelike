@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use rltk::RGB;
 use std::convert::*;
 
 use crate::{
@@ -8,9 +7,8 @@ use crate::{
         Cardinal, Direction, Facing, GridPos, GridPosPredicate, Int, IntoGridPos, RealPos,
     },
     core::{types::Increment, TimeIncrementEvent},
-    rendering::{cp437, Renderable},
-    util::algorithms::geometry::chessboard_rotate_and_place,
-    world::{AreaGrid, Viewshed},
+    util::{algorithms::geometry::chessboard_rotate_and_place, helpers::cp437},
+    world::{AreaGrid, Renderable, Viewshed},
 };
 
 pub fn progress_activities(

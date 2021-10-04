@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::{core::types::GridPos, rendering::Renderable, world::AreaGrid};
+use crate::{
+    core::types::GridPos,
+    world::{AreaGrid, Renderable},
+};
 
 pub fn update_renderables(
     mut map_query: Query<&mut AreaGrid>,

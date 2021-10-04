@@ -237,7 +237,6 @@ mod tests {
         test::{
             self,
             helpers::visibility::{from_ascii_expected, from_ascii_layout},
-            visibility::from_ascii_positions,
         },
         util::algorithms::field_of_view::FOV,
     };

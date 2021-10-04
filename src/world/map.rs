@@ -2,10 +2,9 @@ use std::collections::HashMap;
 
 use rltk::{Algorithm2D, BaseMap, Point};
 
-use crate::{
-    core::types::{FontChar, GridPos, Index, Int},
-    rendering::Renderable,
-};
+use crate::core::types::{GridPos, Index, Int};
+
+use super::Renderable;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum TileType {

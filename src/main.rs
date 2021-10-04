@@ -4,10 +4,9 @@ use crate::core::{advance_time, IncrementalClock, TimeIncrementEvent};
 use crate::world::{AreaGrid, TileType};
 
 use actors::{Activity, Player};
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+// use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use settings::PlayerSettings;
-// use game::run_game;
 
 mod actors;
 mod ai;
