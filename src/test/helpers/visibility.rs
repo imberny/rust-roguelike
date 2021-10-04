@@ -34,7 +34,6 @@ pub fn from_ascii_layout(ascii_map: &str) -> (GridPos, AreaGrid) {
     let row_count = ascii_map.split('\n').count();
 
     let rows = ascii_map.split('\n');
-    // let mut y = -(row_count as Int / 2);
     let mut y = 0;
     for row in rows {
         assert_eq!(width, row.trim_start().len() as Int);
@@ -70,11 +69,8 @@ pub fn from_ascii_layout(ascii_map: &str) -> (GridPos, AreaGrid) {
 pub fn from_ascii_expected(ascii_map: &str) -> Vec<GridPos> {
     let mut visible_positions: Vec<GridPos> = vec![];
 
-    let row_count = ascii_map.split('\n').count();
-
     let width = ascii_map.find('\n').unwrap() as Int;
     let rows = ascii_map.split('\n');
-    // let mut y = row_count;
     let mut y = 0;
     for row in rows {
         assert_eq!(width, row.trim_start().len() as Int);
@@ -89,7 +85,7 @@ pub fn from_ascii_expected(ascii_map: &str) -> Vec<GridPos> {
     visible_positions
 }
 
-pub fn from_ascii_positions(ascii: &str) -> Vec<GridPos> {
+pub fn from_ascii_axis_positions(ascii: &str) -> Vec<GridPos> {
     let mut positions: Vec<GridPos> = vec![];
 
     let row_count = ascii.split('\n').count();

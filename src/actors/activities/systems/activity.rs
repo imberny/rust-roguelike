@@ -46,10 +46,6 @@ pub fn do_activities(
                     // TODO: replace with event writer
                     viewshed.dirty = true;
                 }
-                Action::Face(cardinal) => {
-                    actor.facing = cardinal;
-                    viewshed.dirty = true;
-                }
                 Action::Turn(direction) => {
                     actor.facing = rotate_facing(actor.facing, direction.into());
                     viewshed.dirty = true;
@@ -64,11 +60,6 @@ pub fn do_activities(
                 Action::Attack => {
                     do_attack(*pos, actor.facing, &mut commands);
                 }
-                // Action::Say(message) => match message.kind {
-                //     MessageType::Insult => console::log("*!!$%$#&^%@"),
-                //     MessageType::Threaten => console::log("Shouldn't have come here"),
-                //     MessageType::Compliment => console::log("Lookin' good today!"),
-                // },
                 _ => (),
             }
             commands.entity(entity).remove::<Activity>();

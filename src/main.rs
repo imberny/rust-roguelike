@@ -4,7 +4,6 @@ use crate::core::{advance_time, IncrementalClock, TimeIncrementEvent};
 use crate::world::{AreaGrid, TileType};
 
 use actors::{Activity, Player};
-// use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use settings::PlayerSettings;
 
@@ -32,7 +31,6 @@ const HEIGHT: Int = 800;
 #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
 enum SystemLabels {
     Generation,
-    Clock,
 }
 
 fn main() {

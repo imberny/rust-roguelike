@@ -1,11 +1,8 @@
 use serde::Deserialize;
 
-use crate::{
-    core::types::{GridPos, Int},
-    util::helpers::deserialize,
-};
+use crate::{core::types::GridPos, util::helpers::deserialize};
 
-use super::visibility::from_ascii_positions;
+use super::visibility::from_ascii_axis_positions;
 
 #[derive(Debug, Clone)]
 pub struct RotationTestCase {
@@ -48,29 +45,6 @@ pub struct RotationTestCasesIterator {
     index: usize,
 }
 
-impl RotationTestCasesIterator {
-    fn extract_positions(&self, ascii: &str) -> Vec<GridPos> {
-        let mut positions: Vec<GridPos> = vec![];
-
-        let row_count = ascii.split('\n').count();
-
-        let width = ascii.trim_start().find('\n').unwrap() as Int;
-        let rows = ascii.split('\n');
-        let mut y = -(row_count as Int / 2);
-        for row in rows {
-            assert_eq!(width, row.trim_start().len() as Int);
-            for (index, char) in row.trim_start().char_indices() {
-                if char == '0' {
-                    let x = (index as Int) - (width / 2);
-                    positions.push(GridPos::new(x, y))
-                }
-            }
-            y += 1;
-        }
-        positions
-    }
-}
-
 const fn grid_pos_vec() -> Vec<GridPos> {
     Vec::new()
 }
@@ -85,10 +59,10 @@ impl Iterator for RotationTestCasesIterator {
             return None;
         }
         let shape = self.test_cases[self.index].shape.clone();
-        let pattern = from_ascii_positions(&self.test_cases[self.index].shape);
+        let pattern = from_ascii_axis_positions(&self.test_cases[self.index].shape);
         let mut expected: [Vec<GridPos>; 8] = [NEW_GRID_POS_VEC; 8];
         for (index, shape) in self.test_cases[self.index].expected.iter().enumerate() {
-            expected[index] = from_ascii_positions(shape);
+            expected[index] = from_ascii_axis_positions(shape);
         }
         self.index += 1;
         Some(RotationTestCase {
