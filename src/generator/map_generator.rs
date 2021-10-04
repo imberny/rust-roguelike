@@ -85,83 +85,9 @@ impl MapGenerator {
         }
         (map, rooms)
     }
-
-    pub fn new_map_rooms_and_corridors(&self, world: &mut World) {
-        let (map, rooms) = self.generate_new_map();
-
-        add_monsters_to_rooms(world, &rooms);
-        let (x, y) = rooms[0].center();
-        create_player_at_pos(world, x, y);
-
-        world.insert_resource(map);
-    }
 }
 
-fn add_monsters_to_rooms(world: &mut World, rooms: &[Room]) {
-    let mut rng = rltk::RandomNumberGenerator::new();
-    for (i, room) in rooms.iter().skip(1).enumerate() {
-        let (x, y) = room.center();
-
-        let name: String;
-        let glyph: FontChar;
-        let roll = rng.roll_dice(1, 2);
-        match roll {
-            1 => {
-                name = "Goblin".to_string();
-                glyph = cp437('g');
-            }
-            _ => {
-                name = "Orc".to_string();
-                glyph = cp437('o')
-            }
-        }
-
-        world
-            .spawn()
-            .insert(Monster {})
-            .insert_bundle(ActorBundle {
-                name: format!("{} #{}", &name, i),
-                position: GridPos { x, y },
-                viewshed: Viewshed::with_range(8),
-                ..Default::default()
-            })
-            .insert(Renderable {
-                glyph,
-                fg: Color::RED,
-                bg: Color::BLACK,
-            });
-    }
-}
-
-fn create_player_at_pos(world: &mut World, player_x: Int, player_y: Int) {
-    world
-        .spawn()
-        .insert(Player)
-        .insert(Activity {
-            action: Action::Wait,
-            time_to_complete: 5,
-        })
-        .insert_bundle(ActorBundle {
-            name: "Player".to_string(),
-            position: GridPos {
-                x: player_x,
-                y: player_y,
-            },
-            viewshed: Viewshed::with_range(1),
-            ..Default::default()
-        })
-        .insert(Renderable {
-            glyph: cp437('@'),
-            fg: Color::YELLOW,
-            bg: Color::BLACK,
-        });
-}
-
-pub fn generate_map_system(
-    mut commands: Commands,
-    // mut map: ResMut<AreaGrid>,
-    mut map_query: Query<&mut AreaGrid>,
-) {
+pub fn generate_map_system(mut commands: Commands, mut map_query: Query<&mut AreaGrid>) {
     let mut map = map_query.single_mut();
 
     let (new_map, rooms) = MapGenerator {}.generate_new_map();

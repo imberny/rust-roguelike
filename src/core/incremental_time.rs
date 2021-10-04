@@ -27,6 +27,6 @@ pub fn advance_time(
         time_event_writer.send(TimeIncrementEvent {
             delta_time: shortest_activity.time_to_complete,
         });
-        // println!("Progressing time by {}", shortest_activity.time_to_complete);
+        println!("Advancing time");
     }
 }

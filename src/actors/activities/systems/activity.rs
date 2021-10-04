@@ -213,7 +213,6 @@ mod tests {
         actors::{Action, Activity, ActorBundle},
         core::types::{Cardinal, Direction, GridPos},
         game_world::{AreaGrid, TileType},
-        rendering::Renderable,
         test,
     };
 
@@ -233,7 +232,7 @@ mod tests {
     #[test]
     fn consume_activity_upon_completion() {
         let mut world = World::new();
-        world.insert_resource(test_map());
+        world.spawn().insert(test_map());
         let entity = world
             .spawn()
             .insert_bundle(ActorBundle::default())
@@ -249,7 +248,7 @@ mod tests {
     #[test]
     fn move_action() {
         let mut world = World::new();
-        world.insert_resource(test_map());
+        world.spawn().insert(test_map());
         let entity = world
             .spawn()
             .insert_bundle(ActorBundle::default())

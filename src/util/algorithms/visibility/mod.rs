@@ -15,7 +15,6 @@ pub fn symmetric_shadowcasting(
     is_visible: &GridPosPredicate,
     is_blocking: &GridPosPredicate,
 ) -> Vec<GridPos> {
-    println!("Shadowcasting");
     let mut visible_positions: HashSet<GridPos> = HashSet::new();
     if is_visible(&GridPos::zero()) {
         visible_positions.insert(origin);
@@ -238,6 +237,7 @@ mod tests {
         test::{
             self,
             helpers::visibility::{from_ascii_expected, from_ascii_layout},
+            visibility::from_ascii_positions,
         },
         util::algorithms::field_of_view::FOV,
     };
@@ -254,7 +254,7 @@ mod tests {
 
         for case in test::visibility::cases() {
             let (origin, map) = from_ascii_layout(&case.layout);
-            let expected = from_ascii_expected(&case.expected_visible);
+            let mut expected = from_ascii_expected(&case.expected_visible);
 
             let fov = FOV::Quadratic(case.range, case.a, case.b);
 
@@ -264,8 +264,13 @@ mod tests {
                 });
 
             visible_positions.sort_by(pos_sorter);
+            expected.sort_by(pos_sorter);
 
-            assert_eq!(expected, visible_positions);
+            assert_eq!(
+                expected, visible_positions,
+                "Error in case: {:?}, range: {}, \n {}",
+                case.cardinal, case.range, case.layout
+            );
         }
     }
 }

@@ -5,6 +5,8 @@ use crate::{
     util::helpers::deserialize,
 };
 
+use super::visibility::from_ascii_positions;
+
 #[derive(Debug, Clone)]
 pub struct RotationTestCase {
     pub shape: String,
@@ -83,10 +85,10 @@ impl Iterator for RotationTestCasesIterator {
             return None;
         }
         let shape = self.test_cases[self.index].shape.clone();
-        let pattern = self.extract_positions(&self.test_cases[self.index].shape);
+        let pattern = from_ascii_positions(&self.test_cases[self.index].shape);
         let mut expected: [Vec<GridPos>; 8] = [NEW_GRID_POS_VEC; 8];
         for (index, shape) in self.test_cases[self.index].expected.iter().enumerate() {
-            expected[index] = self.extract_positions(shape);
+            expected[index] = from_ascii_positions(shape);
         }
         self.index += 1;
         Some(RotationTestCase {

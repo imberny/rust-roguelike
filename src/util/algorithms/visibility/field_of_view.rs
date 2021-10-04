@@ -28,12 +28,13 @@ fn is_in_range(position: &GridPos, range: Int) -> bool {
 }
 
 fn is_in_cone(pos: &GridPos, cardinal: Cardinal, range: Int, angle: Real) -> bool {
-    let target = Facing::from(cardinal) * RealPos::from(*pos);
+    let octants = (8 - Int::from(cardinal)) % 8;
+    let target = RealPos::from(chessboard_rotate_one(pos, octants));
     is_within_angle(&target, angle) && is_in_range(pos, range)
 }
 
 fn is_within_angle(target: &RealPos, angle: f32) -> bool {
-    let target_angle = target.normalized().dot(RealPos::unit_y()).acos();
+    let target_angle = target.normalized().dot(-RealPos::unit_y()).acos();
     if target_angle.is_nan() {
         return true;
     }
@@ -112,7 +113,7 @@ mod tests {
 
         for target in targets {
             let is_seen = fov.sees(&target, Cardinal::North);
-            assert!(is_seen);
+            assert!(is_seen, "Could not see {:?}", target);
         }
     }
 
@@ -137,7 +138,7 @@ mod tests {
 
         for target in near_targets {
             let is_seen = fov.sees(&target, Cardinal::North);
-            assert!(is_seen);
+            assert!(is_seen, "Could not see {:?}", target);
         }
     }
 
@@ -148,12 +149,12 @@ mod tests {
         let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
         for target in north_targets {
             let is_seen = fov.sees(&target, Cardinal::North);
-            assert!(is_seen);
+            assert!(is_seen, "Could not see {:?}", target);
         }
 
         for target in targets_along_diagonal_nw() {
             let is_seen = fov.sees(&target, Cardinal::North);
-            assert!(is_seen);
+            assert!(is_seen, "Could not see {:?}", target);
         }
 
         let is_seen = fov.sees(&GridPos::new(-6, -6), Cardinal::North);
@@ -167,22 +168,22 @@ mod tests {
         let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
         for target in north_targets {
             let is_seen = fov.sees(&target, Cardinal::North);
-            assert!(is_seen);
+            assert!(is_seen, "Could not see {:?}", target);
         }
 
         for target in targets_along_diagonal_nw() {
             let is_seen = fov.sees(&target, Cardinal::North);
-            assert!(is_seen);
+            assert!(is_seen, "Could not see {:?}", target);
         }
 
         for target in targets_behind_facing_north() {
             let is_seen = fov.sees(&target, Cardinal::North);
-            assert!(is_seen);
+            assert!(is_seen, "Could not see {:?}", target);
         }
 
         for target in targets_side_facing_north() {
             let is_seen = fov.sees(&target, Cardinal::North);
-            assert!(is_seen);
+            assert!(is_seen, "Could not see {:?}", target);
         }
     }
 
@@ -192,7 +193,7 @@ mod tests {
 
         for target in targets_facing_east() {
             let is_seen = fov.sees(&target, Cardinal::East);
-            assert!(is_seen);
+            assert!(is_seen, "Could not see {:?}", target);
         }
     }
 
@@ -202,7 +203,7 @@ mod tests {
 
         for target in targets_facing_west() {
             let is_seen = fov.sees(&target, Cardinal::West);
-            assert!(is_seen);
+            assert!(is_seen, "Could not see {:?}", target);
         }
 
         for target in targets_facing_west_hidden() {

@@ -3,9 +3,6 @@ pub use bevy::prelude::*;
 use crate::{
     core::types::{GridPos, Int, Real},
     game_world::{self, AreaGrid},
-    rendering::cp437,
-    util::helpers::colors::greyscale,
-    AppState,
 };
 
 const TILE_SIZE: Int = 16;
@@ -13,17 +10,14 @@ const TILE_SIZE: Int = 16;
 pub struct Grid;
 
 pub fn draw(
-    mut commands: Commands,
-    mut app_state: ResMut<State<AppState>>,
-    // map: Res<AreaGrid>,
-    map_query: Query<&AreaGrid>,
+    map_query: Query<&AreaGrid, Changed<AreaGrid>>,
     mut query: Query<&Children, With<Grid>>,
     mut tile_query: Query<&mut TextureAtlasSprite>,
-    // map_query: Query<&AreaGrid, Changed<AreaGrid>>
 ) {
+    if map_query.is_empty() {
+        return;
+    }
     let map = map_query.single();
-
-    println!("Drawing");
 
     let children = query.single_mut();
 
@@ -57,7 +51,6 @@ pub fn draw(
             sprite.color = Color::WHITE;
         }
     }
-    app_state.set(AppState::Paused).unwrap();
     println!("Done drawing");
 }
 

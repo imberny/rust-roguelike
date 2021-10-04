@@ -1,209 +1,50 @@
-use std::collections::HashMap;
-
 use bevy::{
-    ecs::schedule::ShouldRun,
     input::{keyboard::KeyboardInput, ElementState},
     prelude::*,
 };
 
 use crate::{
-    actors::{input::PlayerInput, Action, Activity, Actor, Player},
-    core::types::Direction,
+    actors::{Action, Activity, Player},
+    settings::PlayerSettings,
     AppState,
 };
 
 pub fn handle_player_input(
     mut commands: Commands,
-    // input: Res<PlayerInput>,
-    mut app_state: ResMut<State<AppState>>,
     mut keyboard_input_events: EventReader<KeyboardInput>,
-    // keyboard_input: Res<Input<KeyCode>>,
-    mut player_query: Query<(Entity, &mut Actor), With<Player>>,
+    settings: Res<PlayerSettings>,
+    mut app_state: ResMut<State<AppState>>,
+    player_query: Query<Entity, (With<Player>, Without<Activity>)>,
 ) {
-    let (player, mut actor) = player_query.single_mut();
-
     let mut success = false;
     keyboard_input_events.iter().for_each(|input| {
-        if let Some(action) = try_into_action(input) {
-            success = true;
-            println!("Input: {:?}", input);
+        player_query.iter().for_each(|player_ent| {
+            if let Some(action) = try_into_action(input, &settings) {
+                success = true;
 
-            commands.entity(player).insert(Activity {
-                time_to_complete: 30,
-                action,
-            });
-        }
+                commands.entity(player_ent).insert(Activity {
+                    time_to_complete: 30,
+                    action,
+                });
+            }
+        });
     });
 
+    //TODO: replace with system checking if player is idle
     if success {
+        println!("Running");
         app_state.set(AppState::Running).unwrap();
     }
 }
 
-fn try_into_action(keyboard_input: &KeyboardInput) -> Option<Action> {
-    let player_settings = PlayerSettings::new();
-
+fn try_into_action(keyboard_input: &KeyboardInput, settings: &PlayerSettings) -> Option<Action> {
     if keyboard_input.state == ElementState::Pressed
-        && player_settings
+        && settings
             .input_map
             .contains_key(&keyboard_input.key_code.unwrap())
     {
-        Some(player_settings.input_map[&keyboard_input.key_code.unwrap()])
+        Some(settings.input_map[&keyboard_input.key_code.unwrap()])
     } else {
         None
-    }
-}
-
-// fn try_into_action(keyboard_input: &Input<KeyCode>) -> Option<Action> {
-//     let player_settings = PlayerSettings::new();
-//     if let Some(key) = player_settings
-//         .input_map
-//         .keys()
-//         .find(|key_code| keyboard_input.pressed(**key_code))
-//     {
-//         Some(player_settings.input_map[key])
-//     } else {
-//         None
-//     }
-// }
-
-struct PlayerSettings {
-    input_map: HashMap<KeyCode, Action>,
-}
-
-impl PlayerSettings {
-    pub fn new() -> Self {
-        Self {
-            input_map: HashMap::from([
-                (KeyCode::Q, Action::Turn(Direction::ForwardLeft)),
-                (KeyCode::W, Action::Move(Direction::Forward)),
-                (KeyCode::E, Action::Turn(Direction::ForwardRight)),
-                (KeyCode::D, Action::Move(Direction::Right)),
-                (KeyCode::C, Action::Move(Direction::BackRight)),
-                (KeyCode::S, Action::Move(Direction::Back)),
-                (KeyCode::Z, Action::Move(Direction::BackLeft)),
-                (KeyCode::A, Action::Move(Direction::Left)),
-                (KeyCode::X, Action::Wait),
-                (KeyCode::Return, Action::InitiateAttack),
-                (KeyCode::J, Action::InitiateAttack),
-            ]),
-        }
-    }
-}
-
-fn convert_to_valid_action(input: Res<PlayerInput>, _actor: &mut Actor) -> Action {
-    match input.action {
-        Action::Move(direction) => {
-            // if direction != actor.facing && !input.is_strafing {
-            //     Action::Face(direction)
-            // } else {
-            // console::log(format!("Player is moving: {:?}", direction));
-            Action::Move(direction)
-            // }
-        }
-        Action::Face(direction) => Action::Face(direction),
-        _ => input.action,
-    }
-}
-
-pub fn is_input_valid(input: Res<PlayerInput>) -> ShouldRun {
-    if input.is_valid() {
-        ShouldRun::Yes
-    } else {
-        ShouldRun::No
-    }
-}
-
-pub fn is_player_busy(player: Query<&Player, With<Activity>>) -> ShouldRun {
-    match player.get_single() {
-        Ok(_) => ShouldRun::YesAndCheckAgain,
-        Err(_) => ShouldRun::No,
-    }
-}
-
-pub fn is_player_waiting_for_input(player: Query<&Player, With<Activity>>) -> ShouldRun {
-    match player.get_single() {
-        Ok(_) => ShouldRun::No,
-        Err(_) => ShouldRun::Yes,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use bevy::prelude::*;
-
-    use crate::{
-        actors::{input::PlayerInput, Action, Activity, ActorBundle, Player},
-        core::types::Direction,
-    };
-
-    use super::{handle_player_input, is_input_valid};
-
-    fn test_world() -> World {
-        let mut world = World::new();
-        // world.insert_resource(PlayerInput {
-        //     action: Action::None,
-        //     ..Default::default()
-        // });
-        world
-    }
-
-    fn player_stage() -> SystemStage {
-        SystemStage::single(
-            handle_player_input
-                .system()
-                .with_run_criteria(is_input_valid.system()),
-        )
-    }
-
-    fn player(world: &mut World) -> Entity {
-        world
-            .spawn()
-            .insert(Player)
-            .insert_bundle(ActorBundle::default())
-            .id()
-    }
-
-    // fn run_system(world: &mut World, system: impl Into<SystemDescriptor>) {
-    //     let mut schedule = Schedule::default();
-    //     let mut update = SystemStage::parallel();
-    //     update.add_system(system);
-    //     schedule.add_stage("update", update);
-    //     schedule.run(world);
-    // }
-
-    #[test]
-    fn no_action() {
-        let mut world = test_world();
-        let player = player(&mut world);
-
-        player_stage().run(&mut world);
-
-        assert!(world.get::<Activity>(player).is_none());
-    }
-
-    #[test]
-    fn input_inserts_activity() {
-        let mut world = test_world();
-        let player = player(&mut world);
-        world.get_resource_mut::<PlayerInput>().unwrap().action = Action::Move(Direction::Back);
-
-        player_stage().run(&mut world);
-
-        let activity = world.get::<Activity>(player).unwrap();
-        assert_eq!(Action::Move(Direction::Back), activity.action);
-    }
-
-    #[test]
-    fn change_facing_action() {
-        let mut world = test_world();
-        let player = player(&mut world);
-        world.get_resource_mut::<PlayerInput>().unwrap().action =
-            Action::Turn(Direction::ForwardRight);
-
-        player_stage().run(&mut world);
-
-        let activity = world.get::<Activity>(player).unwrap();
-        assert_eq!(Action::Turn(Direction::ForwardRight), activity.action);
     }
 }

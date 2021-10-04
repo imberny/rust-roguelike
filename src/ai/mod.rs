@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
 use self::systems::monster_ai;
-use crate::core::TurnGameStage;
 
 pub mod systems;
 
@@ -22,12 +21,3 @@ impl Plugin for AIPlugin {
 
 #[derive(Clone, Hash, Debug, PartialEq, Eq, SystemLabel)]
 struct AISystems;
-
-// pub fn register(ecs: &mut GameRunner) {
-//     ecs.game_logic.add_system_set_to_stage(
-//         TurnGameStage::Decision,
-//         SystemSet::new()
-//             .label(AISystems)
-//             .with_system(monster_ai.system()),
-//     );
-// }

@@ -1,23 +1,22 @@
-use crate::actors::systems::is_player_busy;
 use crate::actors::ActorSystems;
 use crate::core::types::{Int, Real};
-use crate::core::{advance_time, IncrementalClock, TimeIncrementEvent, TurnGameStage};
+use crate::core::{advance_time, IncrementalClock, TimeIncrementEvent};
 use crate::game_world::{AreaGrid, TileType};
 use crate::generator::{generate_map_system, MapGenerator};
 
 use actors::{Activity, Player};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
-use bevy::utils::HashMap;
+use settings::PlayerSettings;
 // use game::run_game;
 
 mod actors;
 mod ai;
 mod core;
-mod game;
 mod game_world;
 mod generator;
 mod rendering;
+mod settings;
 mod util;
 
 #[cfg(test)]
@@ -39,14 +38,6 @@ enum SystemLabels {
 }
 
 fn main() {
-    // let context = RltkBuilder::simple80x50()
-    //     .with_dimensions(160, 100)
-    //     .with_title("The Possession of Barbe Halle")
-    //     .build()
-    //     .unwrap();
-
-    // let (map, _rooms) = MapGenerator {}.generate_new_map();
-
     App::new()
         .insert_resource(WindowDescriptor {
             title: "The Possession of Barbe Halle".to_string(),
@@ -56,14 +47,18 @@ fn main() {
             vsync: true,
             ..Default::default()
         })
+        .init_resource::<IncrementalClock>()
+        .init_resource::<PlayerSettings>()
         .add_plugins(DefaultPlugins)
         .add_startup_system_to_stage(StartupStage::PreStartup, set_up_map)
         .add_event::<TimeIncrementEvent>()
         .add_state(AppState::Running)
         .add_startup_system(generate_map_system.label(SystemLabels::Generation))
-        .insert_resource(IncrementalClock::default())
         .add_system_set(SystemSet::on_exit(AppState::Paused).with_system(advance_time))
-        .add_system(pause_if_player_idle.after(ActorSystems::Action))
+        .add_system_set(
+            SystemSet::on_update(AppState::Running)
+                .with_system(pause_if_player_idle.after(ActorSystems::Action)),
+        )
         .add_plugin(actors::ActorPlugin)
         .add_plugin(ai::AIPlugin)
         .add_plugin(game_world::GameWorldPlugin)
@@ -84,9 +79,13 @@ fn set_up_map(mut commands: Commands) {
 
 fn pause_if_player_idle(
     mut app_state: ResMut<State<AppState>>,
-    player_query: Query<&Player, Without<Activity>>,
+    player_query: Query<(), (With<Player>, Without<Activity>)>,
 ) {
+    if player_query.is_empty() {
+        return;
+    }
+    println!("Player idle");
     if *app_state.current() == AppState::Running {
-        app_state.set(AppState::Rendering).unwrap()
+        app_state.set(AppState::Paused).unwrap()
     }
 }
