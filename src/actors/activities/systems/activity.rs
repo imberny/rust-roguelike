@@ -3,11 +3,12 @@ use std::convert::*;
 
 use crate::{
     actors::{effects::Effect, Action, Activity, Actor},
-    core::types::{
-        Cardinal, Direction, Facing, GridPos, GridPosPredicate, Int, IntoGridPos, RealPos,
-    },
+    core::types::{Cardinal, Direction, Facing, GridPos, GridPosPredicate, Int},
     core::{types::Increment, TimeIncrementEvent},
-    util::{algorithms::geometry::chessboard_rotate_and_place, helpers::cp437},
+    util::{
+        algorithms::geometry::chessboard_rotate_and_place,
+        helpers::{cp437, GridPosRotator},
+    },
     world::{AreaGrid, Renderable, Viewshed},
 };
 
@@ -93,12 +94,11 @@ fn slide(
     let counterclockwise_slide: Direction = rotate_facing(direction.into(), -1).into();
 
     let facing = compute_facing(clockwise_slide, cardinal);
-    let mut result_position: GridPos =
-        (facing.reversed() * RealPos::from(delta) + RealPos::from(pos)).round();
+    let mut result_position: GridPos = facing.inverse().rot_grid(&delta) + pos;
 
     if is_blocking(&result_position) {
         let facing = compute_facing(counterclockwise_slide, cardinal);
-        result_position = (facing.reversed() * RealPos::from(delta) + RealPos::from(pos)).round();
+        result_position = facing.inverse().rot_grid(&delta) + pos;
         if is_blocking(&result_position) {
             return pos;
         }
@@ -115,8 +115,7 @@ fn do_move(
     let delta = GridPos::new(0, -1);
 
     let facing = compute_facing(direction, cardinal);
-    let mut result_position: GridPos =
-        (facing.reversed() * RealPos::from(delta) + RealPos::from(*pos)).round();
+    let mut result_position: GridPos = facing.inverse().rot_grid(&delta) + *pos;
 
     if is_blocking(&result_position) {
         result_position = slide(*pos, direction, cardinal, is_blocking);
@@ -257,7 +256,7 @@ mod tests {
 
     #[test]
     fn slide_test() {
-        let from = GridPos::zero();
+        let from = GridPos::ZERO;
 
         for case in test::activity::cases() {
             let (x, y) = case.expected;
@@ -273,7 +272,7 @@ mod tests {
     #[test]
     fn move_zero() {
         do_move(
-            &mut GridPos::zero(),
+            &mut GridPos::ZERO,
             Direction::Forward,
             Cardinal::North,
             &|_pos| false,

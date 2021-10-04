@@ -4,8 +4,8 @@ use fraction::Fraction;
 use std::collections::HashSet;
 
 use crate::{
-    core::types::{Cardinal, Facing, GridPos, GridPosPredicate, Int, IntoGridPos, RealPos},
-    util::math::RealToInt,
+    core::types::{Cardinal, Facing, GridPos, GridPosPredicate, Int},
+    util::{helpers::GridPosRotator, math::RealToInt},
 };
 
 type MarkPosition<'a> = dyn FnMut(GridPos) -> bool + 'a;
@@ -16,7 +16,7 @@ pub fn symmetric_shadowcasting(
     is_blocking: &GridPosPredicate,
 ) -> Vec<GridPos> {
     let mut visible_positions: HashSet<GridPos> = HashSet::new();
-    if is_visible(&GridPos::zero()) {
+    if is_visible(&GridPos::ZERO) {
         visible_positions.insert(origin);
     }
 
@@ -61,8 +61,7 @@ impl Quadrant {
     }
 
     pub fn transform(&self, point: GridPos) -> GridPos {
-        let real_position: RealPos = point.into();
-        self.origin + (self.facing * real_position).round()
+        self.origin + self.facing.rot_grid(&point)
     }
 }
 
@@ -110,9 +109,9 @@ impl QuadrantRow {
         is_visible: &GridPosPredicate,
         is_blocking: &GridPosPredicate,
     ) {
-        let mut previous = GridPos::zero();
+        let mut previous = GridPos::ZERO;
         for tile in self.tiles(is_visible) {
-            if previous != GridPos::zero() {
+            if previous != GridPos::ZERO {
                 self.try_update_slope(tile, previous, is_blocking);
             }
 
@@ -127,7 +126,7 @@ impl QuadrantRow {
 
             previous = tile.position;
         }
-        if previous != GridPos::zero() && !is_blocking(&previous) {
+        if previous != GridPos::ZERO && !is_blocking(&previous) {
             self.next().scan(mark_visible, is_visible, is_blocking);
         }
     }

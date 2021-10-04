@@ -27,7 +27,7 @@ struct TestMapCases {
 }
 
 pub fn from_ascii_layout(ascii_map: &str) -> (GridPos, AreaGrid) {
-    let mut origin = GridPos::zero();
+    let mut origin = GridPos::ZERO;
     let mut tiles: Vec<TileType> = vec![];
     let width = ascii_map.trim_start().find('\n').unwrap() as Int;
 

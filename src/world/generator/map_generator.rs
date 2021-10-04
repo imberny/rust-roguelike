@@ -118,7 +118,7 @@ pub fn generate_map_system(mut commands: Commands, mut map_query: Query<&mut Are
             .insert(Monster {})
             .insert_bundle(ActorBundle {
                 name: format!("{} #{}", &name, i),
-                position: GridPos { x, y },
+                position: GridPos::new(x, y),
                 viewshed: Viewshed::with_range(8),
                 ..Default::default()
             })
@@ -139,10 +139,7 @@ pub fn generate_map_system(mut commands: Commands, mut map_query: Query<&mut Are
         })
         .insert_bundle(ActorBundle {
             name: "Player".to_string(),
-            position: GridPos {
-                x: player_x,
-                y: player_y,
-            },
+            position: GridPos::new(player_x, player_y),
             viewshed: Viewshed::with_range(1),
             ..Default::default()
         })

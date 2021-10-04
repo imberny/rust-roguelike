@@ -1,6 +1,9 @@
 use crate::{
     core::types::{Cardinal, Facing, GridPos, Int, Real, RealPos},
-    util::algorithms::geometry::{chebyshev_distance, chessboard_rotate_one},
+    util::{
+        algorithms::geometry::{chebyshev_distance, chessboard_rotate_one},
+        helpers::GridPosRotator,
+    },
 };
 
 pub enum FOV {
@@ -24,17 +27,17 @@ impl FOV {
 }
 
 fn is_in_range(position: &GridPos, range: Int) -> bool {
-    chebyshev_distance(&GridPos::zero(), position) <= range
+    chebyshev_distance(&GridPos::ZERO, position) <= range
 }
 
 fn is_in_cone(pos: &GridPos, cardinal: Cardinal, range: Int, angle: Real) -> bool {
     let octants = (8 - Int::from(cardinal)) % 8;
-    let target = RealPos::from(chessboard_rotate_one(pos, octants));
+    let target = chessboard_rotate_one(pos, octants).as_vec2();
     is_within_angle(&target, angle) && is_in_range(pos, range)
 }
 
 fn is_within_angle(target: &RealPos, angle: f32) -> bool {
-    let target_angle = target.normalized().dot(-RealPos::unit_y()).acos();
+    let target_angle = target.normalize().dot(-RealPos::Y).acos();
     if target_angle.is_nan() {
         return true;
     }
@@ -42,7 +45,7 @@ fn is_within_angle(target: &RealPos, angle: f32) -> bool {
 }
 
 fn is_above_curve(pos: &GridPos, cardinal: Cardinal, range: Int, a: Real, b: Real) -> bool {
-    let target = Facing::from(cardinal) * RealPos::from(*pos);
+    let target = Facing::from(cardinal).rot_real(&pos.as_vec2());
     let fov_limit = (target.x * a).powi(2) + b;
 
     fov_limit <= target.y && is_in_range(pos, range)

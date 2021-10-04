@@ -1,35 +1,22 @@
-use ultraviolet as uv;
+use bevy::math::Quat;
+
+use crate::core::constants::PI;
 
 use super::{Cardinal, Direction, Real};
 
-const COS_PI: Real = 0.0;
-const SIN_PI: Real = 1.0;
-const COS_PI_OVER_4: Real = std::f32::consts::FRAC_1_SQRT_2;
-const COS_PI_OVER_8: Real = 0.923_879_5;
-const SIN_PI_OVER_8: Real = 0.382_683_4;
-
-const NORTH: Facing = uv::Rotor2::new(COS_PI, uv::Bivec2::new(SIN_PI));
-const NORTH_EAST: Facing = uv::Rotor2::new(SIN_PI_OVER_8, uv::Bivec2::new(-COS_PI_OVER_8));
-const EAST: Facing = uv::Rotor2::new(COS_PI_OVER_4, uv::Bivec2::new(-COS_PI_OVER_4));
-const SOUTH_EAST: Facing = uv::Rotor2::new(COS_PI_OVER_8, uv::Bivec2::new(-SIN_PI_OVER_8));
-const SOUTH: Facing = uv::Rotor2::new(SIN_PI, uv::Bivec2::new(COS_PI));
-const SOUTH_WEST: Facing = uv::Rotor2::new(-COS_PI_OVER_8, uv::Bivec2::new(-SIN_PI_OVER_8));
-const WEST: Facing = uv::Rotor2::new(-COS_PI_OVER_4, uv::Bivec2::new(-COS_PI_OVER_4));
-const NORTH_WEST: Facing = uv::Rotor2::new(-SIN_PI_OVER_8, uv::Bivec2::new(-COS_PI_OVER_8));
-
-pub type Facing = uv::Rotor2;
+pub type Facing = Quat;
 
 impl From<Cardinal> for Facing {
     fn from(val: Cardinal) -> Self {
         match val {
-            Cardinal::North => NORTH,
-            Cardinal::East => EAST,
-            Cardinal::South => SOUTH,
-            Cardinal::West => WEST,
-            Cardinal::NorthWest => NORTH_WEST,
-            Cardinal::NorthEast => NORTH_EAST,
-            Cardinal::SouthWest => SOUTH_WEST,
-            Cardinal::SouthEast => SOUTH_EAST,
+            Cardinal::North => Quat::from_rotation_z(4.0 * PI / 4.0),
+            Cardinal::NorthEast => Quat::from_rotation_z(3.0 * PI / 4.0),
+            Cardinal::East => Quat::from_rotation_z(2.0 * PI / 4.0),
+            Cardinal::SouthEast => Quat::from_rotation_z(1.0 * PI / 4.0),
+            Cardinal::South => Quat::from_rotation_z(0.0 * PI / 4.0),
+            Cardinal::SouthWest => Quat::from_rotation_z(7.0 * PI / 4.0),
+            Cardinal::West => Quat::from_rotation_z(6.0 * PI / 4.0),
+            Cardinal::NorthWest => Quat::from_rotation_z(5.0 * PI / 4.0),
         }
     }
 }
