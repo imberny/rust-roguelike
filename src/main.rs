@@ -35,6 +35,7 @@ const HEIGHT: Int = 800;
 #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
 enum SystemLabels {
     Generation,
+    Clock,
 }
 
 fn main() {
@@ -54,7 +55,11 @@ fn main() {
         .add_event::<TimeIncrementEvent>()
         .add_state(AppState::Running)
         .add_startup_system(generate_map_system.label(SystemLabels::Generation))
-        .add_system_set(SystemSet::on_exit(AppState::Paused).with_system(advance_time))
+        .add_system_set(
+            SystemSet::on_update(AppState::Running)
+                .with_system(advance_time)
+                .before(ActorSystems::Action),
+        )
         .add_system_set(
             SystemSet::on_update(AppState::Running)
                 .with_system(pause_if_player_idle.after(ActorSystems::Action)),
