@@ -4,7 +4,7 @@ use crate::{
     actors::{Action, Activity, Player},
     ai::Monster,
     core::types::GridPos,
-    game_world::Viewshed,
+    world::Viewshed,
 };
 
 pub fn monster_ai(

@@ -7,8 +7,8 @@ use crate::{
     actors::{Action, Activity, ActorBundle, Player},
     ai::Monster,
     core::types::{FontChar, GridPos, Int},
-    game_world::{AreaGrid, TileType, Viewshed},
     rendering::{cp437, Renderable},
+    world::{AreaGrid, TileType, Viewshed},
 };
 
 use super::types::Room;

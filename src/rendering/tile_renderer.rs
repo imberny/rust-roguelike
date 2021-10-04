@@ -2,7 +2,7 @@ pub use bevy::prelude::*;
 
 use crate::{
     core::types::{GridPos, Int, Real},
-    game_world::{self, AreaGrid},
+    world::{self, AreaGrid},
 };
 
 const TILE_SIZE: Int = 16;
@@ -33,8 +33,8 @@ pub fn draw(
             sprite.index = renderable.glyph;
         } else {
             sprite.index = match tile {
-                game_world::TileType::Wall => 35,
-                game_world::TileType::Floor => 46,
+                world::TileType::Wall => 35,
+                world::TileType::Floor => 46,
             };
         }
 

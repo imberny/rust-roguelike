@@ -1,8 +1,8 @@
 use crate::actors::ActorSystems;
 use crate::core::types::{Int, Real};
 use crate::core::{advance_time, IncrementalClock, TimeIncrementEvent};
-use crate::game_world::{AreaGrid, TileType};
 use crate::generator::{generate_map_system, MapGenerator};
+use crate::world::{AreaGrid, TileType};
 
 use actors::{Activity, Player};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
@@ -13,11 +13,11 @@ use settings::PlayerSettings;
 mod actors;
 mod ai;
 mod core;
-mod game_world;
 mod generator;
 mod rendering;
 mod settings;
 mod util;
+mod world;
 
 #[cfg(test)]
 mod test;
@@ -66,7 +66,7 @@ fn main() {
         )
         .add_plugin(actors::ActorPlugin)
         .add_plugin(ai::AIPlugin)
-        .add_plugin(game_world::GameWorldPlugin)
+        .add_plugin(world::GameWorldPlugin)
         .add_plugin(rendering::TileRendererPlugin)
         .run();
 }

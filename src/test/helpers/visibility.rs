@@ -2,8 +2,8 @@ use serde::Deserialize;
 
 use crate::{
     core::types::{Cardinal, GridPos, Index, Int, Real},
-    game_world::{AreaGrid, TileType},
     util::helpers::deserialize,
+    world::{AreaGrid, TileType},
 };
 
 pub fn cases() -> impl Iterator<Item = TestMap> {

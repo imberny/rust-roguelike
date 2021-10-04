@@ -3,8 +3,8 @@ use bevy::prelude::*;
 use crate::{
     actors::{Actor, Player},
     core::types::GridPos,
-    game_world::{AreaGrid, Viewshed},
     util::algorithms::{field_of_view::FOV, symmetric_shadowcasting},
+    world::{AreaGrid, Viewshed},
 };
 
 pub fn update_viewsheds(

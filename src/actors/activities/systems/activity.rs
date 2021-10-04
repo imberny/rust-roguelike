@@ -8,9 +8,9 @@ use crate::{
         Cardinal, Direction, Facing, GridPos, GridPosPredicate, Int, IntoGridPos, RealPos,
     },
     core::{types::Increment, TimeIncrementEvent},
-    game_world::{AreaGrid, Viewshed},
     rendering::{cp437, Renderable},
     util::algorithms::geometry::chessboard_rotate_and_place,
+    world::{AreaGrid, Viewshed},
 };
 
 pub fn progress_activities(
@@ -212,8 +212,8 @@ mod tests {
     use crate::{
         actors::{Action, Activity, ActorBundle},
         core::types::{Cardinal, Direction, GridPos},
-        game_world::{AreaGrid, TileType},
         test,
+        world::{AreaGrid, TileType},
     };
 
     use super::{do_activities, do_move, slide};

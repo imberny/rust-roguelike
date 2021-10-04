@@ -1,6 +1,6 @@
 use crate::{
     core::types::{Cardinal, GridPos, Int, Percentage},
-    game_world::Viewshed,
+    world::Viewshed,
 };
 use bevy::prelude::*;
 
