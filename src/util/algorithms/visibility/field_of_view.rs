@@ -1,7 +1,7 @@
 use crate::{
     core::types::{Cardinal, Facing, GridPos, Int, Real, RealPos},
     util::{
-        algorithms::geometry::{chebyshev_distance, chessboard_rotate_one},
+        algorithms::geometry::{chessboard_distance, chessboard_rotate_one},
         helpers::GridPosRotator,
     },
 };
@@ -27,7 +27,7 @@ impl FOV {
 }
 
 fn is_in_range(position: &GridPos, range: Int) -> bool {
-    chebyshev_distance(&GridPos::ZERO, position) <= range
+    chessboard_distance(&GridPos::ZERO, position) <= range
 }
 
 fn is_in_cone(pos: &GridPos, cardinal: Cardinal, range: Int, angle: Real) -> bool {

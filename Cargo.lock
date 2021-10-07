@@ -1461,7 +1461,6 @@ dependencies = [
  "rltk",
  "ron",
  "serde",
- "ultraviolet",
 ]
 
 [[package]]

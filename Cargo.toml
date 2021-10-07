@@ -11,6 +11,5 @@ rltk = { version ="0.8.1", default-features = false, features = ["opengl"] }
 # bevy_ecs 0.5 doesn't expose event module
 bevy = { path = "../../bevy/", features = ["dynamic"] }
 fraction = "0.8.0"
-ultraviolet =  { version = "0.8.1", features = [ "int" ] }
 ron = "0.6.5"
 serde = "1.0.130"

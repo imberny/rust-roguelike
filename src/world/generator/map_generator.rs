@@ -145,7 +145,7 @@ pub fn generate_map_system(mut commands: Commands, mut map_query: Query<&mut Are
         })
         .insert(Renderable {
             glyph: cp437('@'),
-            fg: Color::YELLOW,
+            fg: Color::CYAN,
             bg: Color::BLACK,
         });
 }

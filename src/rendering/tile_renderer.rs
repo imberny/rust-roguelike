@@ -1,11 +1,15 @@
 pub use bevy::prelude::*;
+use bevy::reflect::TypeUuid;
+use bevy::render::render_graph::{base, AssetRenderResourcesNode};
 use bevy::render::{
     mesh::VertexAttributeValues,
     pipeline::{PipelineDescriptor, RenderPipeline},
     render_graph::{RenderGraph, RenderResourcesNode},
+    renderer::RenderResources,
     shader::{ShaderStage, ShaderStages},
 };
 
+use crate::util::helpers::colors::greyscale;
 use crate::{
     core::types::{GridPos, Int, Real, RealPos},
     world::{self, AreaGrid},
@@ -21,7 +25,7 @@ pub fn draw(
     mut meshes: ResMut<Assets<Mesh>>,
     map_query: Query<&AreaGrid, Changed<AreaGrid>>,
     mut query: Query<&Children, With<Grid>>,
-    mut tile_query: Query<(&mut Handle<Mesh>, &mut TextureAtlasSprite)>,
+    mut tile_query: Query<(&mut Handle<Mesh>, &mut Sprite)>,
 ) {
     if map_query.is_empty() {
         return;
@@ -38,67 +42,134 @@ pub fn draw(
         let (x, y) = map.idx_xy(idx);
         let pos = GridPos::new(x, y);
 
-        if let Some(renderable) = map.renderables.get(&pos) {
-            sprite.index = renderable.glyph;
-        } else {
-            sprite.index = match tile {
-                world::TileType::Wall => 35,
-                world::TileType::Floor => 46,
-            };
-        }
-
-        // let mut fg = renderable.fg;
-        // if !map.visible[idx] {
-        //     fg = greyscale(&fg);
-        // }
-
-        if let Some(mesh) = meshes.get_mut(mesh_handle.id) {
-            mesh.set_attribute(
-                "Vertex_Color_FG",
-                VertexAttributeValues::from(vec![
-                    // top
-                    [x as Real / 80.0, y as Real / 50.0, 0.0],
-                    [x as Real / 80.0, y as Real / 50.0, 0.0],
-                    [x as Real / 80.0, y as Real / 50.0, 0.0],
-                    [x as Real / 80.0, y as Real / 50.0, 0.0],
-                ]),
-            );
+        let mut index = match tile {
+            world::TileType::Wall => 35_u32,
+            world::TileType::Floor => 46_u32,
+        };
+        let mut fg = Color::ORANGE;
+        let mut bg = Color::SEA_GREEN;
+        if map.visible[idx] {
+            if let Some(renderable) = map.renderables.get(&pos) {
+                index = renderable.glyph;
+                fg = renderable.fg;
+                bg += renderable.bg;
+            }
         }
 
         if !map.revealed[idx] {
-            sprite.color = Color::BLACK;
+            fg = Color::BLACK;
+            bg = Color::BLACK;
         } else if !map.visible[idx] {
-            sprite.color = Color::GRAY;
-        } else {
-            sprite.color = Color::WHITE;
+            fg = greyscale(&fg);
+            bg = greyscale(&bg);
         }
+
+        if let Some(mesh) = meshes.get_mut(mesh_handle.id) {
+            mesh.set_attribute(
+                "Vertex_Color_Foreground",
+                VertexAttributeValues::from(vec![
+                    fg.as_linear_rgba_f32(),
+                    fg.as_linear_rgba_f32(),
+                    fg.as_linear_rgba_f32(),
+                    fg.as_linear_rgba_f32(),
+                    // [x as Real / 80.0, y as Real / 50.0, 0.0],
+                    // [x as Real / 80.0, y as Real / 50.0, 0.0],
+                    // [x as Real / 80.0, y as Real / 50.0, 0.0],
+                    // [x as Real / 80.0, y as Real / 50.0, 0.0],
+                ]),
+            );
+            mesh.set_attribute(
+                "Vertex_Color_Background",
+                VertexAttributeValues::from(vec![
+                    bg.as_linear_rgba_f32(),
+                    bg.as_linear_rgba_f32(),
+                    bg.as_linear_rgba_f32(),
+                    bg.as_linear_rgba_f32(),
+                    // [0.0, 0.0, 0.1 + x as Real / 360.0, 1.0],
+                    // [0.0, 0.0, 0.1 + x as Real / 360.0, 1.0],
+                    // [0.0, 0.0, 0.1 + x as Real / 360.0, 1.0],
+                    // [0.0, 0.0, 0.1 + x as Real / 360.0, 1.0],
+                ]),
+            );
+            mesh.set_attribute(
+                "Vertex_CP437_Index",
+                VertexAttributeValues::Uint32(vec![index, index, index, index]),
+            );
+        }
+
+        // if !map.revealed[idx] {
+        //     sprite.color = Color::BLACK;
+        // } else if !map.visible[idx] {
+        //     sprite.color = Color::GRAY;
+        // } else {
+        //     sprite.color = Color::WHITE;
+        // }
     }
     println!("Done drawing");
 }
+
+#[derive(RenderResources, Default, TypeUuid)]
+#[uuid = "93fb26fc-6c05-489b-9029-601edf703b6b"]
+pub struct CP437TilesetTexture {
+    pub texture: Handle<Texture>,
+}
+
+struct LoadingTexture(Option<Handle<Texture>>);
+
+struct CP437Pipeline(Handle<PipelineDescriptor>);
 
 pub fn load_char_tiles(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     map_query: Query<&AreaGrid>,
     window: Res<WindowDescriptor>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     mut meshes: ResMut<Assets<Mesh>>,
 
     mut pipelines: ResMut<Assets<PipelineDescriptor>>,
     mut shaders: ResMut<Assets<Shader>>,
+    mut render_graph: ResMut<RenderGraph>,
+
+    mut cp437_assets: ResMut<Assets<CP437TilesetTexture>>,
 ) {
     let map = map_query.single();
 
     // TODO: load as a uniform sampler 2d
     // derive tile from cp437 index
-    let texture_handle = asset_server.load("16x16-RogueYun-AgmEdit.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 16, 16);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    // let texture_handle = asset_server.load("16x16-RogueYun-AgmEdit.png");
+    // let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 16, 16);
+    // let texture_atlas_handle = texture_atlases.add(texture_atlas);
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
     let mut children: Vec<Entity> = vec![];
 
-    let pipeline = tile_shader_pipeline(pipelines, shaders);
+    // Create a new shader pipeline.
+    let pipeline = pipelines.add(PipelineDescriptor::default_config(ShaderStages {
+        vertex: shaders.add(Shader::from_glsl(ShaderStage::Vertex, VERTEX_SHADER)),
+        fragment: Some(shaders.add(Shader::from_glsl(ShaderStage::Fragment, FRAGMENT_SHADER))),
+    }));
+
+    // commands.insert_resource(CP437Pipeline(pipeline));
+
+    // Start loading the texture.
+    // commands.insert_resource(LoadingTexture(Some(
+    // let cp_tileset: Handle<Texture> = asset_server.load("16x16-RogueYun-AgmEdit.png");
+    // )));
+
+    let cp437_handle = cp437_assets.add(CP437TilesetTexture {
+        texture: asset_server.load("16x16-RogueYun-AgmEdit.png"),
+    });
+
+    // Add an AssetRenderResourcesNode to our Render Graph. This will bind CP437TilesetTexture resources
+    // to our shader.
+    render_graph.add_system_node(
+        "cp437_tileset_texture",
+        AssetRenderResourcesNode::<CP437TilesetTexture>::new(false),
+    );
+    // Add a Render Graph edge connecting our new "my_array_texture" node to the main pass node.
+    // This ensures "cp437_tileset_texture" runs before the main pass.
+    render_graph
+        .add_node_edge("cp437_tileset_texture", base::node::MAIN_PASS)
+        .unwrap();
 
     for index in 0..map.tiles.len() {
         let mut quad_mesh = Mesh::from(shape::Quad::new(RealPos::new(
@@ -106,18 +177,28 @@ pub fn load_char_tiles(
             TILE_SIZE as Real,
         )));
         quad_mesh.set_attribute(
-            // name of the attribute
-            "Vertex_Color_FG",
-            // the vertex attributes, represented by `VertexAttributeValues`
-            // NOTE: the attribute count has to be consistent across all attributes, otherwise bevy
-            // will panic.
+            "Vertex_Color_Foreground",
             VertexAttributeValues::from(vec![
                 // top
-                [0.79, 0.73, 0.07],
-                [0.74, 0.14, 0.29],
-                [0.08, 0.55, 0.74],
-                [0.20, 0.27, 0.29],
+                [0.0, 0.0, 1.0],
+                [0.0, 0.0, 1.0],
+                [0.0, 0.0, 1.0],
+                [0.0, 0.0, 1.0],
             ]),
+        );
+        quad_mesh.set_attribute(
+            "Vertex_Color_Background",
+            VertexAttributeValues::from(vec![
+                // top
+                [0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0],
+            ]),
+        );
+        quad_mesh.set_attribute(
+            "Vertex_CP437_Index",
+            VertexAttributeValues::Uint32(vec![3, 3, 3, 3]),
         );
         let quad_handle = meshes.add(quad_mesh);
 
@@ -129,9 +210,9 @@ pub fn load_char_tiles(
         children.push(spawn_sprite_tile(
             &mut commands,
             pos,
-            texture_atlas_handle.clone(),
             quad_handle.clone(),
             pipeline.clone(),
+            cp437_handle.clone(),
         ));
     }
 
@@ -143,27 +224,15 @@ pub fn load_char_tiles(
         .insert_children(0, &children);
 }
 
-fn tile_shader_pipeline(
-    mut pipelines: ResMut<Assets<PipelineDescriptor>>,
-    mut shaders: ResMut<Assets<Shader>>,
-) -> Handle<PipelineDescriptor> {
-    // Create a new shader pipeline.
-    pipelines.add(PipelineDescriptor::default_config(ShaderStages {
-        vertex: shaders.add(Shader::from_glsl(ShaderStage::Vertex, VERTEX_SHADER)),
-        fragment: Some(shaders.add(Shader::from_glsl(ShaderStage::Fragment, FRAGMENT_SHADER))),
-    }))
-}
-
 fn spawn_sprite_tile(
     commands: &mut Commands,
     pos: RealPos,
-    texture_atlas_handle: Handle<TextureAtlas>,
     mesh: Handle<Mesh>,
     pipeline: Handle<PipelineDescriptor>,
+    cp437: Handle<CP437TilesetTexture>,
 ) -> Entity {
     commands
-        .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: texture_atlas_handle,
+        .spawn_bundle(SpriteBundle {
             transform: Transform {
                 translation: pos.extend(0.0),
                 ..Default::default()
@@ -172,5 +241,6 @@ fn spawn_sprite_tile(
             render_pipelines: RenderPipelines::from_pipelines(vec![RenderPipeline::new(pipeline)]),
             ..Default::default()
         })
+        .insert(cp437)
         .id()
 }

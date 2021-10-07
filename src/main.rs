@@ -1,11 +1,15 @@
-use crate::actors::ActorSystems;
-use crate::core::types::{Int, Real};
-use crate::core::{advance_time, IncrementalClock, TimeIncrementEvent};
-use crate::world::{AreaGrid, TileType};
-
-use actors::{Activity, Player};
 use bevy::prelude::*;
-use settings::PlayerSettings;
+
+use crate::{
+    actors::{Activity, ActorSystems, Player},
+    core::{
+        advance_time,
+        types::{Int, Real},
+        IncrementalClock, TimeIncrementEvent,
+    },
+    settings::PlayerSettings,
+    world::{AreaGrid, TileType},
+};
 
 mod actors;
 mod ai;
