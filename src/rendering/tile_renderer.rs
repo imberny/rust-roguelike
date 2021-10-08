@@ -15,17 +15,15 @@ use crate::{
     world::{self, AreaGrid},
 };
 
-use super::{FRAGMENT_SHADER, VERTEX_SHADER};
-
 const TILE_SIZE: Int = 16;
 
 pub struct Grid;
 
 pub fn draw(
-    mut meshes: ResMut<Assets<Mesh>>,
     map_query: Query<&AreaGrid, Changed<AreaGrid>>,
     mut query: Query<&Children, With<Grid>>,
-    mut tile_query: Query<(&mut Handle<Mesh>, &mut Sprite)>,
+    mut tile_query: Query<(&mut Handle<Mesh>, &mut TextureAtlasSprite, &Handle<MyTile>)>,
+    mut cp437_assets: ResMut<Assets<MyTile>>,
 ) {
     if map_query.is_empty() {
         return;
@@ -37,7 +35,7 @@ pub fn draw(
     assert!(!map.tiles.is_empty());
     for (idx, tile) in map.tiles.iter().enumerate() {
         let tile_entity = children[idx];
-        let (mut mesh_handle, mut sprite) = tile_query.get_mut(tile_entity).unwrap();
+        let (mut mesh_handle, mut sprite, handle) = tile_query.get_mut(tile_entity).unwrap();
 
         let (x, y) = map.idx_xy(idx);
         let pos = GridPos::new(x, y);
@@ -55,6 +53,7 @@ pub fn draw(
                 bg += renderable.bg;
             }
         }
+        sprite.index = index;
 
         if !map.revealed[idx] {
             fg = Color::BLACK;
@@ -64,37 +63,9 @@ pub fn draw(
             bg = greyscale(&bg);
         }
 
-        if let Some(mesh) = meshes.get_mut(mesh_handle.id) {
-            mesh.set_attribute(
-                "Vertex_Color_Foreground",
-                VertexAttributeValues::from(vec![
-                    fg.as_linear_rgba_f32(),
-                    fg.as_linear_rgba_f32(),
-                    fg.as_linear_rgba_f32(),
-                    fg.as_linear_rgba_f32(),
-                    // [x as Real / 80.0, y as Real / 50.0, 0.0],
-                    // [x as Real / 80.0, y as Real / 50.0, 0.0],
-                    // [x as Real / 80.0, y as Real / 50.0, 0.0],
-                    // [x as Real / 80.0, y as Real / 50.0, 0.0],
-                ]),
-            );
-            mesh.set_attribute(
-                "Vertex_Color_Background",
-                VertexAttributeValues::from(vec![
-                    bg.as_linear_rgba_f32(),
-                    bg.as_linear_rgba_f32(),
-                    bg.as_linear_rgba_f32(),
-                    bg.as_linear_rgba_f32(),
-                    // [0.0, 0.0, 0.1 + x as Real / 360.0, 1.0],
-                    // [0.0, 0.0, 0.1 + x as Real / 360.0, 1.0],
-                    // [0.0, 0.0, 0.1 + x as Real / 360.0, 1.0],
-                    // [0.0, 0.0, 0.1 + x as Real / 360.0, 1.0],
-                ]),
-            );
-            mesh.set_attribute(
-                "Vertex_CP437_Index",
-                VertexAttributeValues::Uint32(vec![index, index, index, index]),
-            );
+        if let Some(mut cp_tile) = cp437_assets.get_mut(handle) {
+            cp_tile.fg = fg;
+            cp_tile.bg = bg;
         }
 
         // if !map.revealed[idx] {
@@ -114,6 +85,13 @@ pub struct CP437TilesetTexture {
     pub texture: Handle<Texture>,
 }
 
+#[derive(RenderResources, Default, TypeUuid)]
+#[uuid = "620f651b-adbe-464b-b740-ba0e547282ba"]
+pub struct MyTile {
+    pub fg: Color,
+    pub bg: Color,
+}
+
 struct LoadingTexture(Option<Handle<Texture>>);
 
 struct CP437Pipeline(Handle<PipelineDescriptor>);
@@ -123,29 +101,35 @@ pub fn load_char_tiles(
     asset_server: Res<AssetServer>,
     map_query: Query<&AreaGrid>,
     window: Res<WindowDescriptor>,
-    mut meshes: ResMut<Assets<Mesh>>,
 
     mut pipelines: ResMut<Assets<PipelineDescriptor>>,
     mut shaders: ResMut<Assets<Shader>>,
     mut render_graph: ResMut<RenderGraph>,
 
-    mut cp437_assets: ResMut<Assets<CP437TilesetTexture>>,
+    mut cp437_assets: ResMut<Assets<MyTile>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     let map = map_query.single();
 
     // TODO: load as a uniform sampler 2d
     // derive tile from cp437 index
-    // let texture_handle = asset_server.load("16x16-RogueYun-AgmEdit.png");
-    // let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 16, 16);
-    // let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    let texture_handle = asset_server.load("16x16-RogueYun-AgmEdit.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 16, 16);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
     let mut children: Vec<Entity> = vec![];
 
     // Create a new shader pipeline.
     let pipeline = pipelines.add(PipelineDescriptor::default_config(ShaderStages {
-        vertex: shaders.add(Shader::from_glsl(ShaderStage::Vertex, VERTEX_SHADER)),
-        fragment: Some(shaders.add(Shader::from_glsl(ShaderStage::Fragment, FRAGMENT_SHADER))),
+        vertex: shaders.add(Shader::from_glsl(
+            ShaderStage::Vertex,
+            crate::rendering::sprite_sheet_shaders::VERTEX_SHADER,
+        )),
+        fragment: Some(shaders.add(Shader::from_glsl(
+            ShaderStage::Fragment,
+            crate::rendering::sprite_sheet_shaders::FRAGMENT_SHADER,
+        ))),
     }));
 
     // commands.insert_resource(CP437Pipeline(pipeline));
@@ -155,64 +139,31 @@ pub fn load_char_tiles(
     // let cp_tileset: Handle<Texture> = asset_server.load("16x16-RogueYun-AgmEdit.png");
     // )));
 
-    let cp437_handle = cp437_assets.add(CP437TilesetTexture {
-        texture: asset_server.load("16x16-RogueYun-AgmEdit.png"),
-    });
-
-    // Add an AssetRenderResourcesNode to our Render Graph. This will bind CP437TilesetTexture resources
-    // to our shader.
-    render_graph.add_system_node(
-        "cp437_tileset_texture",
-        AssetRenderResourcesNode::<CP437TilesetTexture>::new(false),
-    );
+    // // Add an AssetRenderResourcesNode to our Render Graph. This will bind CP437TilesetTexture resources
+    // // to our shader.
+    render_graph.add_system_node("my_tile", AssetRenderResourcesNode::<MyTile>::new(true));
     // Add a Render Graph edge connecting our new "my_array_texture" node to the main pass node.
     // This ensures "cp437_tileset_texture" runs before the main pass.
     render_graph
-        .add_node_edge("cp437_tileset_texture", base::node::MAIN_PASS)
+        .add_node_edge("my_tile", base::node::MAIN_PASS)
         .unwrap();
 
     for index in 0..map.tiles.len() {
-        let mut quad_mesh = Mesh::from(shape::Quad::new(RealPos::new(
-            TILE_SIZE as Real,
-            TILE_SIZE as Real,
-        )));
-        quad_mesh.set_attribute(
-            "Vertex_Color_Foreground",
-            VertexAttributeValues::from(vec![
-                // top
-                [0.0, 0.0, 1.0],
-                [0.0, 0.0, 1.0],
-                [0.0, 0.0, 1.0],
-                [0.0, 0.0, 1.0],
-            ]),
-        );
-        quad_mesh.set_attribute(
-            "Vertex_Color_Background",
-            VertexAttributeValues::from(vec![
-                // top
-                [0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0],
-            ]),
-        );
-        quad_mesh.set_attribute(
-            "Vertex_CP437_Index",
-            VertexAttributeValues::Uint32(vec![3, 3, 3, 3]),
-        );
-        let quad_handle = meshes.add(quad_mesh);
-
         let (x, y) = map.idx_xy(index);
         let pos = RealPos::new(
             -window.width / 2.0 + (x * TILE_SIZE + TILE_SIZE / 2) as Real,
             window.height / 2.0 - (y * TILE_SIZE + TILE_SIZE / 2) as Real,
         );
+        let cp_tile_handle = cp437_assets.add(MyTile {
+            fg: Color::GOLD,
+            bg: Color::DARK_GRAY,
+        });
         children.push(spawn_sprite_tile(
             &mut commands,
             pos,
-            quad_handle.clone(),
             pipeline.clone(),
-            cp437_handle.clone(),
+            texture_atlas_handle.clone(),
+            cp_tile_handle,
         ));
     }
 
@@ -227,20 +178,20 @@ pub fn load_char_tiles(
 fn spawn_sprite_tile(
     commands: &mut Commands,
     pos: RealPos,
-    mesh: Handle<Mesh>,
     pipeline: Handle<PipelineDescriptor>,
-    cp437: Handle<CP437TilesetTexture>,
+    texture_atlas_handle: Handle<TextureAtlas>,
+    cp_437: Handle<MyTile>,
 ) -> Entity {
     commands
-        .spawn_bundle(SpriteBundle {
+        .spawn_bundle(SpriteSheetBundle {
             transform: Transform {
                 translation: pos.extend(0.0),
                 ..Default::default()
             },
-            mesh,
             render_pipelines: RenderPipelines::from_pipelines(vec![RenderPipeline::new(pipeline)]),
+            texture_atlas: texture_atlas_handle,
             ..Default::default()
         })
-        .insert(cp437)
+        .insert(cp_437)
         .id()
 }
