@@ -14,7 +14,7 @@ mod percentage;
 pub use percentage::Percentage;
 
 mod pos;
-pub use pos::{GridPos, GridPosPredicate, RealPos};
+pub use pos::{GridPos, Predicate, RealPos};
 
 mod increment;
 pub use increment::Increment;

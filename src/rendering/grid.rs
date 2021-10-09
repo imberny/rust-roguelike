@@ -1,4 +1,4 @@
 use bevy::prelude::Component;
 
 #[derive(Debug, Component)]
-pub struct Monster {}
+pub struct Grid;

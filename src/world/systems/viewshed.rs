@@ -56,7 +56,7 @@ pub fn update_viewsheds(
             // let fov = field_of_view::pattern_fov(pattern, actor.facing);
             // let fov = field_of_view::cone_fov(3, std::f32::consts::PI / 4.0, actor.facing.into());
             viewshed.visible_tiles =
-                symmetric_shadowcasting(pos.clone(), &|pos| fov.sees(pos, actor.facing), &|pos| {
+                symmetric_shadowcasting(&pos.0, &|pos| fov.sees(pos, actor.facing), &|pos| {
                     map.is_blocking(pos)
                 });
         }

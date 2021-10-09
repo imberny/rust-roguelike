@@ -6,8 +6,7 @@ use rltk::RandomNumberGenerator;
 use crate::{
     actors::{Action, Activity, ActorBundle, Player, WeaponBundle},
     ai::Monster,
-    core::types::{FontChar, GridPos, Int},
-    util::helpers::cp437,
+    core::types::{GridPos, Int},
     world::{AreaGrid, Renderable, TileType, Viewshed},
 };
 
@@ -117,8 +116,7 @@ pub fn generate_map_system(mut commands: Commands, mut map_query: Query<&mut Are
             .spawn()
             .insert(Monster {})
             .insert_bundle(ActorBundle {
-                name: format!("{} #{}", &name, i),
-                position: GridPos::new(x, y),
+                position: GridPos(IVec2::new(x, y)),
                 viewshed: Viewshed::with_range(8),
                 renderable: Renderable {
                     glyph,
@@ -129,7 +127,7 @@ pub fn generate_map_system(mut commands: Commands, mut map_query: Query<&mut Are
             })
             .with_children(|actor| {
                 actor.spawn_bundle(WeaponBundle {
-                    position: GridPos::new(x, y - 1),
+                    position: GridPos(IVec2::new(x, y - 1)),
                     ..Default::default()
                 });
             });
@@ -144,8 +142,7 @@ pub fn generate_map_system(mut commands: Commands, mut map_query: Query<&mut Are
             time_to_complete: 0,
         })
         .insert_bundle(ActorBundle {
-            name: "Player".to_string(),
-            position: GridPos::new(player_x, player_y),
+            position: GridPos(IVec2::new(player_x, player_y)),
             viewshed: Viewshed::with_range(1),
             renderable: Renderable {
                 glyph: '@',
@@ -156,7 +153,7 @@ pub fn generate_map_system(mut commands: Commands, mut map_query: Query<&mut Are
         })
         .with_children(|actor| {
             actor.spawn_bundle(WeaponBundle {
-                position: GridPos::new(player_x, player_y - 1),
+                position: GridPos(IVec2::new(player_x, player_y - 1)),
                 ..Default::default()
             });
         });

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{AppState, SystemLabels};
 
-use super::tile_renderer::{draw, load_char_tiles};
+use super::systems::{draw, load_char_tiles};
 
 pub struct TileRendererPlugin;
 

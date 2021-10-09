@@ -12,6 +12,6 @@ pub fn update_renderables(
     let mut map = map_query.single_mut();
     map.renderables.drain();
     query.iter().for_each(|(pos, renderable)| {
-        map.renderables.insert(pos.clone(), renderable.clone());
+        map.renderables.insert(pos.0.clone(), renderable.clone());
     });
 }

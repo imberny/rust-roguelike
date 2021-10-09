@@ -1,8 +1,10 @@
+use bevy::{math::IVec2, prelude::Component};
+
 use std::collections::HashMap;
 
 use rltk::{Algorithm2D, BaseMap, Point};
 
-use crate::core::types::{GridPos, Index, Int};
+use crate::core::types::{Index, Int};
 
 use super::Renderable;
 
@@ -23,10 +25,10 @@ impl Default for TileType {
 //     pub content: Vec<Entity>,
 // }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Component)]
 pub struct AreaGrid {
     pub tiles: Vec<TileType>,
-    pub renderables: HashMap<GridPos, Renderable>,
+    pub renderables: HashMap<IVec2, Renderable>,
     pub width: Int,
     pub height: Int,
     pub revealed: Vec<bool>,
@@ -59,20 +61,20 @@ impl AreaGrid {
         x >= 0 && x < self.width && y >= 0 && y < self.height
     }
 
-    pub fn is_point_in_bounds(&self, point: &GridPos) -> bool {
+    pub fn is_point_in_bounds(&self, point: &IVec2) -> bool {
         self.is_in_bounds(point.x, point.y)
     }
 
-    pub fn at(&self, position: &GridPos) -> TileType {
+    pub fn at(&self, position: &IVec2) -> TileType {
         let idx = self.xy_idx(position.x, position.y);
         self.tiles[idx]
     }
 
-    pub fn index_to_point(&self, index: Index) -> GridPos {
-        GridPos::new(index as Int % self.width, index as Int / self.width)
+    pub fn index_to_point(&self, index: Index) -> IVec2 {
+        IVec2::new(index as Int % self.width, index as Int / self.width)
     }
 
-    pub fn is_blocking(&self, position: &GridPos) -> bool {
+    pub fn is_blocking(&self, position: &IVec2) -> bool {
         if !self.is_point_in_bounds(position) {
             return false;
         }
@@ -84,7 +86,7 @@ impl AreaGrid {
 }
 
 impl IntoIterator for AreaGrid {
-    type Item = (GridPos, TileType);
+    type Item = (IVec2, TileType);
 
     type IntoIter = MapIterator;
 
@@ -102,7 +104,7 @@ pub struct MapIterator {
 }
 
 impl Iterator for MapIterator {
-    type Item = (GridPos, TileType);
+    type Item = (IVec2, TileType);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.map.tiles.len() == self.index {

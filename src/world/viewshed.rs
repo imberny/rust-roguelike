@@ -1,8 +1,10 @@
-use crate::core::types::{GridPos, Int};
+use bevy::{math::IVec2, prelude::Component};
 
-#[derive(Debug, Default)]
+use crate::core::types::Int;
+
+#[derive(Debug, Default, Component)]
 pub struct Viewshed {
-    pub visible_tiles: Vec<GridPos>,
+    pub visible_tiles: Vec<IVec2>,
     pub range: Int,
     pub dirty: bool,
 }

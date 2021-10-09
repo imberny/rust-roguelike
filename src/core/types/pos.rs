@@ -1,6 +1,12 @@
-use bevy::math::{IVec2, Vec2};
+use bevy::{
+    math::{IVec2, Vec2},
+    prelude::Component,
+};
 
-pub type GridPos = IVec2;
-pub type RealPos = Vec2;
+#[derive(Debug, Clone, Copy, Component)]
+pub struct GridPos(pub IVec2);
 
-pub type GridPosPredicate<'a> = dyn Fn(&GridPos) -> bool + 'a;
+#[derive(Debug, Clone, Copy, Component)]
+pub struct RealPos(pub Vec2);
+
+pub type Predicate<'a, T> = dyn Fn(&T) -> bool + 'a;

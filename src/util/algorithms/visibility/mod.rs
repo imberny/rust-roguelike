@@ -1,23 +1,24 @@
 pub mod field_of_view;
 
+use bevy::math::IVec2;
 use fraction::Fraction;
 use std::collections::HashSet;
 
 use crate::{
-    core::types::{Cardinal, Facing, GridPos, GridPosPredicate, Int},
-    util::{helpers::GridPosRotator, math::RealToInt},
+    core::types::{Cardinal, Facing, Int, Predicate},
+    util::{helpers::GridRotator, math::RealToInt},
 };
 
-type MarkPosition<'a> = dyn FnMut(GridPos) -> bool + 'a;
+type MarkPosition<'a> = dyn FnMut(&IVec2) -> bool + 'a;
 
 pub fn symmetric_shadowcasting(
-    origin: GridPos,
-    is_visible: &GridPosPredicate,
-    is_blocking: &GridPosPredicate,
-) -> Vec<GridPos> {
-    let mut visible_positions: HashSet<GridPos> = HashSet::new();
-    if is_visible(&GridPos::ZERO) {
-        visible_positions.insert(origin);
+    origin: &IVec2,
+    is_visible: &Predicate<IVec2>,
+    is_blocking: &Predicate<IVec2>,
+) -> Vec<IVec2> {
+    let mut visible_positions: HashSet<IVec2> = HashSet::new();
+    if is_visible(&IVec2::ZERO) {
+        visible_positions.insert(*origin);
     }
 
     let cardinals = [
@@ -31,7 +32,7 @@ pub fn symmetric_shadowcasting(
         scan(
             origin,
             cardinal,
-            &mut |pos| visible_positions.insert(pos),
+            &mut |pos| visible_positions.insert(*pos),
             is_visible,
             is_blocking,
         )
@@ -41,27 +42,27 @@ pub fn symmetric_shadowcasting(
 }
 
 fn scan(
-    origin: GridPos,
+    origin: &IVec2,
     cardinal: Cardinal,
     mark: &mut MarkPosition,
-    is_visible: &GridPosPredicate,
-    is_blocking: &GridPosPredicate,
+    is_visible: &Predicate<IVec2>,
+    is_blocking: &Predicate<IVec2>,
 ) {
-    QuadrantRow::new(origin, cardinal).scan(mark, is_visible, is_blocking);
+    QuadrantRow::new(*origin, cardinal).scan(mark, is_visible, is_blocking);
 }
 #[derive(Debug, Clone, Copy)]
 struct Quadrant {
     facing: Facing,
-    origin: GridPos,
+    origin: IVec2,
 }
 
 impl Quadrant {
-    pub fn new(facing: Facing, origin: GridPos) -> Self {
+    pub fn new(facing: Facing, origin: IVec2) -> Self {
         Self { facing, origin }
     }
 
-    pub fn transform(&self, point: GridPos) -> GridPos {
-        self.origin + self.facing.rot_grid(&point)
+    pub fn transform(&self, point: IVec2) -> IVec2 {
+        self.origin + self.facing.rot_i(&point)
     }
 }
 
@@ -69,7 +70,7 @@ impl Quadrant {
 struct QuadrantTile {
     row_depth: u16,
     column: u32,
-    position: GridPos,
+    position: IVec2,
 }
 
 impl From<QuadrantTile> for Fraction {
@@ -94,7 +95,7 @@ pub struct QuadrantRow {
 }
 
 impl QuadrantRow {
-    pub fn new(origin: GridPos, cardinal: Cardinal) -> Self {
+    pub fn new(origin: IVec2, cardinal: Cardinal) -> Self {
         Self {
             quadrant: Quadrant::new(cardinal.into(), origin),
             depth: 1,
@@ -106,12 +107,12 @@ impl QuadrantRow {
     pub fn scan(
         &mut self,
         mark_visible: &mut MarkPosition,
-        is_visible: &GridPosPredicate,
-        is_blocking: &GridPosPredicate,
+        is_visible: &Predicate<IVec2>,
+        is_blocking: &Predicate<IVec2>,
     ) {
-        let mut previous = GridPos::ZERO;
+        let mut previous = IVec2::ZERO;
         for tile in self.tiles(is_visible) {
-            if previous != GridPos::ZERO {
+            if previous != IVec2::ZERO {
                 self.try_update_slope(tile, previous, is_blocking);
             }
 
@@ -121,17 +122,17 @@ impl QuadrantRow {
             }
 
             if is_blocking(&tile.position) || self.is_symmetric(tile.column as Int) {
-                mark_visible(tile.position);
+                mark_visible(&tile.position);
             }
 
             previous = tile.position;
         }
-        if previous != GridPos::ZERO && !is_blocking(&previous) {
+        if previous != IVec2::ZERO && !is_blocking(&previous) {
             self.next().scan(mark_visible, is_visible, is_blocking);
         }
     }
 
-    fn origin(&self) -> GridPos {
+    fn origin(&self) -> IVec2 {
         self.quadrant.origin
     }
 
@@ -162,8 +163,8 @@ impl QuadrantRow {
     fn try_update_slope(
         &mut self,
         tile: QuadrantTile,
-        previous_position: GridPos,
-        is_blocking: &GridPosPredicate,
+        previous_position: IVec2,
+        is_blocking: &Predicate<IVec2>,
     ) {
         if is_blocking(&previous_position) && !is_blocking(&tile.position) {
             let slope: Fraction = tile.into();
@@ -173,14 +174,14 @@ impl QuadrantRow {
 
     fn check_next_row(
         &self,
-        position: GridPos,
-        previous_position: GridPos,
-        is_blocking: &GridPosPredicate,
+        position: IVec2,
+        previous_position: IVec2,
+        is_blocking: &Predicate<IVec2>,
     ) -> bool {
         !is_blocking(&previous_position) && is_blocking(&position)
     }
 
-    fn tiles(&self, is_visible: &GridPosPredicate) -> Vec<QuadrantTile> {
+    fn tiles(&self, is_visible: &Predicate<IVec2>) -> Vec<QuadrantTile> {
         let min_col = self
             .round_ties_up(Fraction::new(self.depth, 1u32))
             .round()
@@ -191,9 +192,9 @@ impl QuadrantRow {
             .int();
         let mut tiles: Vec<QuadrantTile> = Vec::new();
         for column in min_col..=max_col {
-            let local_quadrant_position = GridPos::new(self.depth as Int, column);
+            let local_quadrant_position = IVec2::new(self.depth as Int, column);
             let position = self.quadrant.transform(local_quadrant_position);
-            let delta = GridPos::new(position.x - self.origin().x, position.y - self.origin().y);
+            let delta = IVec2::new(position.x - self.origin().x, position.y - self.origin().y);
             if is_visible(&delta) {
                 tiles.push(QuadrantTile {
                     row_depth: self.depth,
@@ -231,8 +232,9 @@ mod tests {
 
     use std::cmp::Ordering;
 
+    use bevy::math::IVec2;
+
     use crate::{
-        core::types::GridPos,
         test::{
             self,
             helpers::visibility::{from_ascii_expected, from_ascii_layout},
@@ -244,7 +246,7 @@ mod tests {
 
     #[test]
     fn symmetric_shadowcasting_tests() {
-        let pos_sorter = |first: &GridPos, second: &GridPos| match first.y.cmp(&second.y) {
+        let pos_sorter = |first: &IVec2, second: &IVec2| match first.y.cmp(&second.y) {
             Ordering::Less => Ordering::Less,
             Ordering::Greater => Ordering::Greater,
             Ordering::Equal => first.x.cmp(&second.x),
@@ -257,7 +259,7 @@ mod tests {
             let fov = FOV::Quadratic(case.range, case.a, case.b);
 
             let mut visible_positions =
-                symmetric_shadowcasting(origin, &|pos| fov.sees(pos, case.cardinal), &|pos| {
+                symmetric_shadowcasting(&origin, &|pos| fov.sees(pos, case.cardinal), &|pos| {
                     map.is_blocking(pos)
                 });
 

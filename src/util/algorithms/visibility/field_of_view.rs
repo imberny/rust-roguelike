@@ -1,8 +1,10 @@
+use bevy::math::{IVec2, Vec2};
+
 use crate::{
-    core::types::{Cardinal, Facing, GridPos, Int, Real, RealPos},
+    core::types::{Cardinal, Facing, Int, Real},
     util::{
         algorithms::geometry::{chessboard_distance, chessboard_rotate_one},
-        helpers::GridPosRotator,
+        helpers::GridRotator,
     },
 };
 
@@ -11,11 +13,11 @@ pub enum FOV {
     Omnidirectional(Int),
     Cone(Int, Real),
     Quadratic(Int, Real, Real),
-    Pattern(Vec<GridPos>),
+    Pattern(Vec<IVec2>),
 }
 
 impl FOV {
-    pub fn sees(&self, position: &GridPos, cardinal: Cardinal) -> bool {
+    pub fn sees(&self, position: &IVec2, cardinal: Cardinal) -> bool {
         match self {
             FOV::Infinite => true,
             FOV::Omnidirectional(range) => is_in_range(position, *range),
@@ -26,32 +28,32 @@ impl FOV {
     }
 }
 
-fn is_in_range(position: &GridPos, range: Int) -> bool {
-    chessboard_distance(&GridPos::ZERO, position) <= range
+fn is_in_range(position: &IVec2, range: Int) -> bool {
+    chessboard_distance(&IVec2::ZERO, position) <= range
 }
 
-fn is_in_cone(pos: &GridPos, cardinal: Cardinal, range: Int, angle: Real) -> bool {
+fn is_in_cone(pos: &IVec2, cardinal: Cardinal, range: Int, angle: Real) -> bool {
     let octants = (8 - Int::from(cardinal)) % 8;
     let target = chessboard_rotate_one(pos, octants).as_vec2();
     is_within_angle(&target, angle) && is_in_range(pos, range)
 }
 
-fn is_within_angle(target: &RealPos, angle: f32) -> bool {
-    let target_angle = target.normalize().dot(-RealPos::Y).acos();
+fn is_within_angle(target: &Vec2, angle: f32) -> bool {
+    let target_angle = target.normalize().dot(-Vec2::Y).acos();
     if target_angle.is_nan() {
         return true;
     }
     target_angle.abs() <= angle
 }
 
-fn is_above_curve(pos: &GridPos, cardinal: Cardinal, range: Int, a: Real, b: Real) -> bool {
-    let target = Facing::from(cardinal).rot_real(&pos.as_vec2());
+fn is_above_curve(pos: &IVec2, cardinal: Cardinal, range: Int, a: Real, b: Real) -> bool {
+    let target = Facing::from(cardinal).rot_f(&pos.as_vec2());
     let fov_limit = (target.x * a).powi(2) + b;
 
     fov_limit <= target.y && is_in_range(pos, range)
 }
 
-fn is_in_pattern(pattern: &[GridPos], position: &GridPos, cardinal: Cardinal) -> bool {
+fn is_in_pattern(pattern: &[IVec2], position: &IVec2, cardinal: Cardinal) -> bool {
     let pos = chessboard_rotate_one(position, cardinal.into());
     pattern.contains(&pos)
 }
@@ -59,25 +61,24 @@ fn is_in_pattern(pattern: &[GridPos], position: &GridPos, cardinal: Cardinal) ->
 #[cfg(test)]
 mod tests {
 
+    use bevy::math::IVec2;
+
     use crate::{
-        core::{
-            constants::*,
-            types::{Cardinal, GridPos},
-        },
+        core::{constants::*, types::Cardinal},
         util::algorithms::field_of_view::FOV,
     };
 
     #[test]
     fn pattern() {
-        let pattern: Vec<GridPos> = vec![
-            GridPos::new(0, -1),
-            GridPos::new(0, -2),
-            GridPos::new(0, -3),
-            GridPos::new(-1, -3),
-            GridPos::new(1, -3),
-            GridPos::new(0, -4),
-            GridPos::new(-1, -4),
-            GridPos::new(1, -4),
+        let pattern: Vec<IVec2> = vec![
+            IVec2::new(0, -1),
+            IVec2::new(0, -2),
+            IVec2::new(0, -3),
+            IVec2::new(-1, -3),
+            IVec2::new(1, -3),
+            IVec2::new(0, -4),
+            IVec2::new(-1, -4),
+            IVec2::new(1, -4),
         ];
         let fov = FOV::Pattern(pattern.clone());
 
@@ -85,15 +86,15 @@ mod tests {
             assert!(fov.sees(&pos, Cardinal::North));
         }
 
-        let pattern_nw: Vec<GridPos> = vec![
-            GridPos::new(1, -1),
-            GridPos::new(2, -2),
-            GridPos::new(3, -3),
-            GridPos::new(2, -3),
-            GridPos::new(3, -2),
-            GridPos::new(4, -4),
-            GridPos::new(3, -4),
-            GridPos::new(4, -3),
+        let pattern_nw: Vec<IVec2> = vec![
+            IVec2::new(1, -1),
+            IVec2::new(2, -2),
+            IVec2::new(3, -3),
+            IVec2::new(2, -3),
+            IVec2::new(3, -2),
+            IVec2::new(4, -4),
+            IVec2::new(3, -4),
+            IVec2::new(4, -3),
         ];
 
         for pos in pattern_nw {
@@ -106,12 +107,12 @@ mod tests {
         let fov = FOV::Infinite;
 
         let targets = vec![
-            GridPos::new(0, -100_000),
-            GridPos::new(100_000, 0),
-            GridPos::new(0, 100_000),
-            GridPos::new(-100_000, 0),
-            GridPos::new(0, 0),
-            GridPos::new(100_000, 100_000),
+            IVec2::new(0, -100_000),
+            IVec2::new(100_000, 0),
+            IVec2::new(0, 100_000),
+            IVec2::new(-100_000, 0),
+            IVec2::new(0, 0),
+            IVec2::new(100_000, 100_000),
         ];
 
         for target in targets {
@@ -125,14 +126,14 @@ mod tests {
         let fov = FOV::Omnidirectional(1);
 
         let far_targets = vec![
-            GridPos::new(0, -100_000),
-            GridPos::new(100_000, 0),
-            GridPos::new(0, 100_000),
-            GridPos::new(-100_000, 0),
-            GridPos::new(100_000, 100_000),
+            IVec2::new(0, -100_000),
+            IVec2::new(100_000, 0),
+            IVec2::new(0, 100_000),
+            IVec2::new(-100_000, 0),
+            IVec2::new(100_000, 100_000),
         ];
 
-        let near_targets = vec![GridPos::new(0, 0), GridPos::new(1, 1), GridPos::new(-1, -1)];
+        let near_targets = vec![IVec2::new(0, 0), IVec2::new(1, 1), IVec2::new(-1, -1)];
 
         for target in far_targets {
             let is_seen = fov.sees(&target, Cardinal::North);
@@ -149,7 +150,7 @@ mod tests {
     fn directed_fov() {
         let fov = FOV::Cone(5, PI / 2.0);
 
-        let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
+        let north_targets = vec![IVec2::new(0, 0), IVec2::new(1, -1), IVec2::new(0, -3)];
         for target in north_targets {
             let is_seen = fov.sees(&target, Cardinal::North);
             assert!(is_seen, "Could not see {:?}", target);
@@ -160,7 +161,7 @@ mod tests {
             assert!(is_seen, "Could not see {:?}", target);
         }
 
-        let is_seen = fov.sees(&GridPos::new(-6, -6), Cardinal::North);
+        let is_seen = fov.sees(&IVec2::new(-6, -6), Cardinal::North);
         assert!(!is_seen);
     }
 
@@ -168,7 +169,7 @@ mod tests {
     fn view_curve() {
         let fov = FOV::Quadratic(5, 0.5, -1.5);
 
-        let north_targets = vec![GridPos::new(0, 0), GridPos::new(1, -1), GridPos::new(0, -3)];
+        let north_targets = vec![IVec2::new(0, 0), IVec2::new(1, -1), IVec2::new(0, -3)];
         for target in north_targets {
             let is_seen = fov.sees(&target, Cardinal::North);
             assert!(is_seen, "Could not see {:?}", target);
@@ -215,65 +216,65 @@ mod tests {
         }
     }
 
-    fn targets_behind_facing_north() -> Vec<GridPos> {
-        vec![GridPos::new(-1, 1), GridPos::new(0, 1), GridPos::new(1, 1)]
+    fn targets_behind_facing_north() -> Vec<IVec2> {
+        vec![IVec2::new(-1, 1), IVec2::new(0, 1), IVec2::new(1, 1)]
     }
 
-    fn targets_side_facing_north() -> Vec<GridPos> {
+    fn targets_side_facing_north() -> Vec<IVec2> {
         vec![
-            GridPos::new(1, 0),
-            GridPos::new(-1, 0),
-            GridPos::new(2, 0),
-            GridPos::new(-2, 0),
-            GridPos::new(-2, -1),
-            GridPos::new(2, -1),
+            IVec2::new(1, 0),
+            IVec2::new(-1, 0),
+            IVec2::new(2, 0),
+            IVec2::new(-2, 0),
+            IVec2::new(-2, -1),
+            IVec2::new(2, -1),
         ]
     }
 
-    fn targets_facing_east() -> Vec<GridPos> {
+    fn targets_facing_east() -> Vec<IVec2> {
         vec![
-            GridPos::new(1, 0),
-            GridPos::new(1, 1),
-            GridPos::new(1, -1),
-            GridPos::new(2, 2),
-            GridPos::new(2, -2),
-            GridPos::new(3, -3),
+            IVec2::new(1, 0),
+            IVec2::new(1, 1),
+            IVec2::new(1, -1),
+            IVec2::new(2, 2),
+            IVec2::new(2, -2),
+            IVec2::new(3, -3),
         ]
     }
 
-    fn targets_facing_west() -> Vec<GridPos> {
+    fn targets_facing_west() -> Vec<IVec2> {
         vec![
-            GridPos::new(1, -1),
-            GridPos::new(1, 0),
-            GridPos::new(1, 1),
-            GridPos::new(0, 1),
-            GridPos::new(0, 2),
-            GridPos::new(-2, -2),
-            GridPos::new(-2, -1),
-            GridPos::new(-2, 0),
-            GridPos::new(-2, 1),
-            GridPos::new(-2, 2),
+            IVec2::new(1, -1),
+            IVec2::new(1, 0),
+            IVec2::new(1, 1),
+            IVec2::new(0, 1),
+            IVec2::new(0, 2),
+            IVec2::new(-2, -2),
+            IVec2::new(-2, -1),
+            IVec2::new(-2, 0),
+            IVec2::new(-2, 1),
+            IVec2::new(-2, 2),
         ]
     }
 
-    fn targets_facing_west_hidden() -> Vec<GridPos> {
+    fn targets_facing_west_hidden() -> Vec<IVec2> {
         vec![
-            GridPos::new(1, -2),
-            GridPos::new(2, -1),
-            GridPos::new(2, 0),
-            GridPos::new(2, 1),
-            GridPos::new(1, 2),
-            GridPos::new(-6, 0),
+            IVec2::new(1, -2),
+            IVec2::new(2, -1),
+            IVec2::new(2, 0),
+            IVec2::new(2, 1),
+            IVec2::new(1, 2),
+            IVec2::new(-6, 0),
         ]
     }
 
-    fn targets_along_diagonal_nw() -> Vec<GridPos> {
+    fn targets_along_diagonal_nw() -> Vec<IVec2> {
         vec![
-            GridPos::new(-1, -1),
-            GridPos::new(-2, -2),
-            GridPos::new(-3, -3),
-            GridPos::new(-4, -4),
-            GridPos::new(-5, -5),
+            IVec2::new(-1, -1),
+            IVec2::new(-2, -2),
+            IVec2::new(-3, -3),
+            IVec2::new(-4, -4),
+            IVec2::new(-5, -5),
         ]
     }
 }

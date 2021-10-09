@@ -1,7 +1,8 @@
+use bevy::math::IVec2;
 use serde::Deserialize;
 
 use crate::{
-    core::types::{Cardinal, GridPos, Index, Int, Real},
+    core::types::{Cardinal, Index, Int, Real},
     util::helpers::deserialize,
     world::{AreaGrid, TileType},
 };
@@ -26,8 +27,8 @@ struct TestMapCases {
     pub cases: Vec<TestMap>,
 }
 
-pub fn from_ascii_layout(ascii_map: &str) -> (GridPos, AreaGrid) {
-    let mut origin = GridPos::ZERO;
+pub fn from_ascii_layout(ascii_map: &str) -> (IVec2, AreaGrid) {
+    let mut origin = IVec2::ZERO;
     let mut tiles: Vec<TileType> = vec![];
     let width = ascii_map.trim_start().find('\n').unwrap() as Int;
 
@@ -66,8 +67,8 @@ pub fn from_ascii_layout(ascii_map: &str) -> (GridPos, AreaGrid) {
     (origin, map)
 }
 
-pub fn from_ascii_expected(ascii_map: &str) -> Vec<GridPos> {
-    let mut visible_positions: Vec<GridPos> = vec![];
+pub fn from_ascii_expected(ascii_map: &str) -> Vec<IVec2> {
+    let mut visible_positions: Vec<IVec2> = vec![];
 
     let width = ascii_map.find('\n').unwrap() as Int;
     let rows = ascii_map.split('\n');
@@ -76,7 +77,7 @@ pub fn from_ascii_expected(ascii_map: &str) -> Vec<GridPos> {
         assert_eq!(width, row.trim_start().len() as Int);
         for (index, char) in row.trim_start().char_indices() {
             if char == '0' {
-                visible_positions.push(GridPos::new(index as Int, y as Int))
+                visible_positions.push(IVec2::new(index as Int, y as Int))
             }
         }
         y += 1;
@@ -85,8 +86,8 @@ pub fn from_ascii_expected(ascii_map: &str) -> Vec<GridPos> {
     visible_positions
 }
 
-pub fn from_ascii_axis_positions(ascii: &str) -> Vec<GridPos> {
-    let mut positions: Vec<GridPos> = vec![];
+pub fn from_ascii_axis_positions(ascii: &str) -> Vec<IVec2> {
+    let mut positions: Vec<IVec2> = vec![];
 
     let row_count = ascii.split('\n').count();
 
@@ -98,7 +99,7 @@ pub fn from_ascii_axis_positions(ascii: &str) -> Vec<GridPos> {
         for (index, char) in row.trim_start().char_indices() {
             if char == '0' {
                 let x = (index as Int) - (width / 2);
-                positions.push(GridPos::new(x, y))
+                positions.push(IVec2::new(x, y))
             }
         }
         y += 1;

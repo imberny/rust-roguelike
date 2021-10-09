@@ -8,8 +8,7 @@ edition = "2021"
 
 [dependencies]
 rltk = { version ="0.8.1", default-features = false, features = ["opengl"] }
-# bevy_ecs 0.5 doesn't expose event module
-bevy = { path = "../../bevy/", features = ["dynamic"] }
+bevy = { git = "https://github.com/BernardCloutier/bevy.git", features = ["dynamic"] }
 fraction = "0.8.0"
 ron = "0.6.5"
 serde = "1.0.130"

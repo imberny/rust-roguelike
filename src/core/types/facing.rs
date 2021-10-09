@@ -2,7 +2,7 @@ use bevy::math::Quat;
 
 use crate::core::constants::PI;
 
-use super::{Cardinal, Direction, Real};
+use super::{Cardinal, Direction};
 
 pub type Facing = Quat;
 

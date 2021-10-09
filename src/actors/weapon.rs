@@ -1,8 +1,11 @@
-use bevy::prelude::{Bundle, Color};
+use bevy::{
+    math::IVec2,
+    prelude::{Bundle, Color, Component},
+};
 
 use crate::{core::types::GridPos, world::Renderable};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Component, Default)]
 pub struct Weapon;
 
 #[derive(Debug, Bundle)]
@@ -16,7 +19,7 @@ impl Default for WeaponBundle {
     fn default() -> Self {
         Self {
             weapon: Default::default(),
-            position: Default::default(),
+            position: GridPos(IVec2::default()),
             renderable: Renderable {
                 glyph: '/',
                 fg: Color::YELLOW,

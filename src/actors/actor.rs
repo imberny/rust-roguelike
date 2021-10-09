@@ -1,13 +1,17 @@
+use bevy::{
+    math::IVec2,
+    prelude::{Bundle, Color, Component},
+};
+
 use crate::{
     core::types::{Cardinal, GridPos, Int, Percentage},
     world::{Renderable, Viewshed},
 };
-use bevy::prelude::*;
 
 const BASE_HEALTH: Int = 100;
 const BASE_SPEED: Int = 100;
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
 pub struct CharacterSheet {
     pub health: Int, // maybe derive health from attributes
     pub speed: Int,
@@ -23,13 +27,13 @@ impl Default for CharacterSheet {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Component)]
 pub struct CharacterProperties {
     pub health: Percentage,
     pub energy: Int, // Available time units
 }
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
 pub struct Actor {
     pub sheet: CharacterSheet,
     pub properties: CharacterProperties,
@@ -46,11 +50,8 @@ impl Default for Actor {
     }
 }
 
-pub type Name = String;
-
 #[derive(Bundle)]
 pub struct ActorBundle {
-    pub name: Name,
     pub actor: Actor,
     pub position: GridPos,
     pub viewshed: Viewshed,
@@ -60,9 +61,8 @@ pub struct ActorBundle {
 impl Default for ActorBundle {
     fn default() -> Self {
         Self {
-            name: "Missing name!".to_string(),
             actor: Default::default(),
-            position: GridPos::default(),
+            position: GridPos(IVec2::default()),
             viewshed: Default::default(),
             renderable: Renderable {
                 glyph: 'X',

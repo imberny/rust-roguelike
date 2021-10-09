@@ -14,7 +14,7 @@ pub fn monster_ai(
 ) {
     for (monster, viewshed) in monster_query.iter_mut() {
         for player_pos in player_query.iter() {
-            if viewshed.visible_tiles.contains(player_pos) {
+            if viewshed.visible_tiles.contains(&player_pos.0) {
                 commands.entity(monster).insert(Activity {
                     time_to_complete: 60,
                     action: Action::InitiateAttack,

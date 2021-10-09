@@ -1,14 +1,15 @@
+use bevy::math::IVec2;
 use serde::Deserialize;
 
-use crate::{core::types::GridPos, util::helpers::deserialize};
+use crate::util::helpers::deserialize;
 
 use super::visibility::from_ascii_axis_positions;
 
 #[derive(Debug, Clone)]
 pub struct RotationTestCase {
     pub shape: String,
-    pub pattern: Vec<GridPos>,
-    pub expected: [Vec<GridPos>; 8],
+    pub pattern: Vec<IVec2>,
+    pub expected: [Vec<IVec2>; 8],
 }
 
 pub fn cases() -> impl Iterator<Item = RotationTestCase> {
@@ -45,11 +46,11 @@ pub struct RotationTestCasesIterator {
     index: usize,
 }
 
-const fn grid_pos_vec() -> Vec<GridPos> {
+const fn grid_pos_vec() -> Vec<IVec2> {
     Vec::new()
 }
 
-const NEW_GRID_POS_VEC: Vec<GridPos> = grid_pos_vec();
+const NEW_GRID_POS_VEC: Vec<IVec2> = grid_pos_vec();
 
 impl Iterator for RotationTestCasesIterator {
     type Item = RotationTestCase;
@@ -60,7 +61,7 @@ impl Iterator for RotationTestCasesIterator {
         }
         let shape = self.test_cases[self.index].shape.clone();
         let pattern = from_ascii_axis_positions(&self.test_cases[self.index].shape);
-        let mut expected: [Vec<GridPos>; 8] = [NEW_GRID_POS_VEC; 8];
+        let mut expected: [Vec<IVec2>; 8] = [NEW_GRID_POS_VEC; 8];
         for (index, shape) in self.test_cases[self.index].expected.iter().enumerate() {
             expected[index] = from_ascii_axis_positions(shape);
         }
