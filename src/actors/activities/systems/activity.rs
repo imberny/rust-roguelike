@@ -2,13 +2,10 @@ use bevy::prelude::*;
 use std::convert::*;
 
 use crate::{
-    actors::{effects::Effect, Action, Activity, Actor},
+    actors::{effects::Effect, Action, Activity, Actor, Weapon},
     core::types::{Cardinal, Direction, Facing, GridPos, GridPosPredicate, Int},
     core::{types::Increment, TimeIncrementEvent},
-    util::{
-        algorithms::geometry::chessboard_rotate_and_place,
-        helpers::{cp437, GridPosRotator},
-    },
+    util::{algorithms::geometry::chessboard_rotate_and_place, helpers::GridPosRotator},
     world::{AreaGrid, Renderable, Viewshed},
 };
 
@@ -31,10 +28,33 @@ pub fn do_activities(
     mut commands: Commands,
     // map: Res<AreaGrid>,
     map_query: Query<&AreaGrid>,
-    mut actors: Query<(Entity, &mut Actor, &mut GridPos, &mut Viewshed, &Activity)>,
+    // mut queries: QuerySet<(
+    //     QueryState<(
+    //         Entity,
+    //         &Children,
+    //         &mut Actor,
+    //         &mut GridPos,
+    //         &mut Viewshed,
+    //         &Activity,
+    //     )>,
+    //     QueryState<&mut GridPos, With<Weapon>>,
+    // )>,
+    mut actors: Query<
+        (
+            Entity,
+            &Children,
+            &mut Actor,
+            &mut GridPos,
+            &mut Viewshed,
+            &Activity,
+        ),
+        Without<Weapon>,
+    >,
+    mut weapons: Query<&mut GridPos, With<Weapon>>,
 ) {
     let map = map_query.single();
-    for (entity, mut actor, mut pos, mut viewshed, activity) in actors.iter_mut() {
+    // let mut weapons = queries.q1();
+    for (entity, children, mut actor, mut pos, mut viewshed, activity) in actors.iter_mut() {
         if activity.time_to_complete == 0 {
             // console::log("Doing something");
             let mut new_activity: Option<Activity> = None;
@@ -44,11 +64,26 @@ pub fn do_activities(
                     do_move(&mut pos, direction, actor.facing, &|pos| {
                         map.is_blocking(pos)
                     });
+                    let mut weapon_pos = weapons.get_mut(*children.get(0).unwrap()).unwrap();
+                    let next_weapon_pos =
+                        compute_next_position(Direction::Forward, actor.facing, &mut pos);
+                    weapon_pos.x = next_weapon_pos.x;
+                    weapon_pos.y = next_weapon_pos.y;
+
                     // TODO: replace with event writer
                     viewshed.dirty = true;
                 }
                 Action::Turn(direction) => {
                     actor.facing = rotate_facing(actor.facing, direction.into());
+
+                    let mut weapon_pos = weapons.get_mut(*children.get(0).unwrap()).unwrap();
+                    // let next_weapon_pos =
+                    //     chessboard_rotate_and_place(&pos, &[*weapon_pos], direction.into())[0];
+                    let next_weapon_pos =
+                        compute_next_position(Direction::Forward, actor.facing, &mut pos);
+                    weapon_pos.x = next_weapon_pos.x;
+                    weapon_pos.y = next_weapon_pos.y;
+
                     viewshed.dirty = true;
                 }
                 Action::InitiateAttack => {
@@ -112,19 +147,23 @@ fn do_move(
     cardinal: Cardinal,
     is_blocking: &GridPosPredicate,
 ) {
-    let delta = GridPos::new(0, -1);
+    let mut next_position = compute_next_position(direction, cardinal, pos);
 
+    if is_blocking(&next_position) {
+        next_position = slide(*pos, direction, cardinal, is_blocking);
+    }
+    next_position.x = next_position.x.clamp(0, 79);
+    next_position.y = next_position.y.clamp(0, 49);
+
+    pos.x = next_position.x;
+    pos.y = next_position.y;
+}
+
+fn compute_next_position(direction: Direction, cardinal: Cardinal, pos: &mut IVec2) -> IVec2 {
+    let delta = GridPos::new(0, -1);
     let facing = compute_facing(direction, cardinal);
     let mut result_position: GridPos = facing.inverse().rot_grid(&delta) + *pos;
-
-    if is_blocking(&result_position) {
-        result_position = slide(*pos, direction, cardinal, is_blocking);
-    }
-    result_position.x = result_position.x.clamp(0, 79);
-    result_position.y = result_position.y.clamp(0, 49);
-
-    pos.x = result_position.x;
-    pos.y = result_position.y;
+    result_position
 }
 
 fn telegraph_attack(origin: GridPos, facing: Cardinal, commands: &mut Commands) {
@@ -143,7 +182,7 @@ fn telegraph_attack(origin: GridPos, facing: Cardinal, commands: &mut Commands) 
     let marker = Marker {
         time_left: 60,
         renderable: Renderable {
-            glyph: cp437('!'),
+            glyph: '!',
             fg: Color::RED,
             bg: Color::ANTIQUE_WHITE,
         },
@@ -167,7 +206,7 @@ fn do_attack(origin: GridPos, cardinal: Cardinal, commands: &mut Commands) {
     let marker = Marker {
         time_left: 30,
         renderable: Renderable {
-            glyph: cp437('*'),
+            glyph: '*',
             fg: Color::NAVY,
             bg: Color::RED,
         },

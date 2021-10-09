@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use rltk::RandomNumberGenerator;
 
 use crate::{
-    actors::{Action, Activity, ActorBundle, Player},
+    actors::{Action, Activity, ActorBundle, Player, WeaponBundle},
     ai::Monster,
     core::types::{FontChar, GridPos, Int},
     util::helpers::cp437,
@@ -100,16 +100,16 @@ pub fn generate_map_system(mut commands: Commands, mut map_query: Query<&mut Are
         let (x, y) = room.center();
 
         let name: String;
-        let glyph: FontChar;
+        let glyph: char;
         let roll = rng.roll_dice(1, 2);
         match roll {
             1 => {
                 name = "Goblin".to_string();
-                glyph = cp437('g');
+                glyph = 'g';
             }
             _ => {
                 name = "Orc".to_string();
-                glyph = cp437('o')
+                glyph = 'o'
             }
         }
 
@@ -120,12 +120,18 @@ pub fn generate_map_system(mut commands: Commands, mut map_query: Query<&mut Are
                 name: format!("{} #{}", &name, i),
                 position: GridPos::new(x, y),
                 viewshed: Viewshed::with_range(8),
+                renderable: Renderable {
+                    glyph,
+                    fg: Color::RED,
+                    bg: Color::BLACK,
+                },
                 ..Default::default()
             })
-            .insert(Renderable {
-                glyph,
-                fg: Color::RED,
-                bg: Color::BLACK,
+            .with_children(|actor| {
+                actor.spawn_bundle(WeaponBundle {
+                    position: GridPos::new(x, y - 1),
+                    ..Default::default()
+                });
             });
     }
 
@@ -141,11 +147,17 @@ pub fn generate_map_system(mut commands: Commands, mut map_query: Query<&mut Are
             name: "Player".to_string(),
             position: GridPos::new(player_x, player_y),
             viewshed: Viewshed::with_range(1),
+            renderable: Renderable {
+                glyph: '@',
+                fg: Color::CYAN,
+                bg: Color::BLACK,
+            },
             ..Default::default()
         })
-        .insert(Renderable {
-            glyph: cp437('@'),
-            fg: Color::CYAN,
-            bg: Color::BLACK,
+        .with_children(|actor| {
+            actor.spawn_bundle(WeaponBundle {
+                position: GridPos::new(player_x, player_y - 1),
+                ..Default::default()
+            });
         });
 }

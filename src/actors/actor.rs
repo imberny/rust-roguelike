@@ -1,6 +1,6 @@
 use crate::{
     core::types::{Cardinal, GridPos, Int, Percentage},
-    world::Viewshed,
+    world::{Renderable, Viewshed},
 };
 use bevy::prelude::*;
 
@@ -54,6 +54,7 @@ pub struct ActorBundle {
     pub actor: Actor,
     pub position: GridPos,
     pub viewshed: Viewshed,
+    pub renderable: Renderable,
 }
 
 impl Default for ActorBundle {
@@ -63,6 +64,11 @@ impl Default for ActorBundle {
             actor: Default::default(),
             position: GridPos::default(),
             viewshed: Default::default(),
+            renderable: Renderable {
+                glyph: 'X',
+                fg: Color::YELLOW,
+                bg: Color::DARK_GRAY,
+            },
         }
     }
 }

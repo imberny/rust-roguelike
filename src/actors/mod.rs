@@ -11,6 +11,9 @@ pub use player::Player;
 
 pub mod constants;
 
+mod weapon;
+pub use weapon::*;
+
 pub mod systems;
 
 mod plugin;

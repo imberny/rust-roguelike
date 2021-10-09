@@ -11,7 +11,7 @@ use bevy::{
 
 use crate::{
     core::types::{GridPos, Int, Real, RealPos},
-    util::helpers::colors::greyscale,
+    util::helpers::{colors::greyscale, cp437},
     world::{AreaGrid, TileType},
 };
 
@@ -51,9 +51,9 @@ pub fn draw(
         let mut bg = Color::SEA_GREEN;
         if map.visible[idx] {
             if let Some(renderable) = map.renderables.get(&pos) {
-                index = renderable.glyph;
+                index = cp437(renderable.glyph);
                 fg = renderable.fg;
-                bg += renderable.bg;
+                bg = renderable.bg;
             }
         }
         sprite.index = index;
