@@ -1,4 +1,4 @@
-pub const VERTEX_SHADER: &str = r#"#version 450
+#version 450
 
 layout(location = 0) in vec3 Vertex_Position;
 layout(location = 1) in vec3 Vertex_Normal;
@@ -6,8 +6,6 @@ layout(location = 2) in vec2 Vertex_Uv;
 
 layout(location = 0) out vec2 v_Uv;
 layout(location = 1) out vec4 v_Color;
-// layout(location = 2) out vec4 color_foreground;
-// layout(location = 3) out vec4 color_background;
 
 
 layout(set = 0, binding = 0) uniform CameraViewProj {
@@ -84,42 +82,4 @@ void main() {
 
     v_Color = color;
     gl_Position = ViewProj * SpriteTransform * vec4(vertex_position, 1.0);
-
-    // color_foreground = fg;//Vertex_Color_Foreground;
-    // color_background = bg;//Vertex_Color_Background;
 }
-"#;
-
-pub const FRAGMENT_SHADER: &str = r#"#version 450
-
-layout(location = 0) in vec2 v_Uv;
-layout(location = 1) in vec4 v_Color;
-
-// layout(location = 2) in vec4 color_foreground;
-// layout(location = 3) in vec4 color_background;
-
-layout(location = 0) out vec4 o_Target;
-
-layout(set = 1, binding = 2) uniform texture2D TextureAtlas_texture;
-layout(set = 1, binding = 3) uniform sampler TextureAtlas_texture_sampler;
-
-layout(set = 3, binding = 0) uniform MyTile_fg {
-    vec4 fg;
-};
-layout(set = 3, binding = 1) uniform MyTile_bg {
-    vec4 bg;
-};
-
-void main() {
-    vec4 color = texture(
-        sampler2D(TextureAtlas_texture, TextureAtlas_texture_sampler),
-        v_Uv);
-
-    if (color == vec4(1.0)) {
-        color = fg;
-    } else {
-        color = bg;
-    }
-    o_Target = color;
-}
-"#;
