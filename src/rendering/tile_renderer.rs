@@ -1,19 +1,18 @@
-use bevy::core::Bytes;
-pub use bevy::prelude::*;
-use bevy::reflect::TypeUuid;
-use bevy::render::render_graph::RenderResourcesNode;
-use bevy::render::renderer::{RenderResource, RenderResourceType};
-use bevy::render::{
-    pipeline::{PipelineDescriptor, RenderPipeline},
-    render_graph::{base, AssetRenderResourcesNode, RenderGraph},
-    renderer::RenderResources,
-    shader::{ShaderStage, ShaderStages},
+use bevy::{
+    core::Bytes,
+    prelude::*,
+    render::{
+        pipeline::{PipelineDescriptor, RenderPipeline},
+        render_graph::{RenderGraph, RenderResourcesNode},
+        renderer::{RenderResource, RenderResourceType, RenderResources},
+        shader::{ShaderStage, ShaderStages},
+    },
 };
 
-use crate::util::helpers::colors::greyscale;
 use crate::{
     core::types::{GridPos, Int, Real, RealPos},
-    world::{self, AreaGrid},
+    util::helpers::colors::greyscale,
+    world::{AreaGrid, TileType},
 };
 
 const TILE_SIZE: Int = 16;
@@ -27,7 +26,7 @@ pub struct Grid;
 pub fn draw(
     map_query: Query<&AreaGrid, Changed<AreaGrid>>,
     mut query: Query<&Children, With<Grid>>,
-    mut tile_query: Query<(&mut Handle<Mesh>, &mut TextureAtlasSprite, &mut CP437Tile)>,
+    mut tile_query: Query<(&mut TextureAtlasSprite, &mut CP437Tile)>,
 ) {
     if map_query.is_empty() {
         return;
@@ -39,14 +38,14 @@ pub fn draw(
     assert!(!map.tiles.is_empty());
     for (idx, tile) in map.tiles.iter().enumerate() {
         let tile_entity = children[idx];
-        let (mut mesh_handle, mut sprite, mut cp_tile) = tile_query.get_mut(tile_entity).unwrap();
+        let (mut sprite, mut cp_tile) = tile_query.get_mut(tile_entity).unwrap();
 
         let (x, y) = map.idx_xy(idx);
         let pos = GridPos::new(x, y);
 
         let mut index = match tile {
-            world::TileType::Wall => 35_u32,
-            world::TileType::Floor => 46_u32,
+            TileType::Wall => 35_u32,
+            TileType::Floor => 46_u32,
         };
         let mut fg = Color::ORANGE;
         let mut bg = Color::SEA_GREEN;
