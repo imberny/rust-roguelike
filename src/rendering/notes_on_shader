@@ -1,2 +1,0 @@
-
-So sprite sheet shader has per tile parameters. How 2 do dat? It has a binding on TextureAtlasSprite to get the index. Need to figure out binding.
