@@ -24,13 +24,6 @@ impl TempMap {
     pub fn xy_idx(&self, x: Int, y: Int) -> Index {
         ((y * self.dimensions.y) + x) as Index
     }
-
-    pub fn idx_xy(&self, idx: Index) -> (Int, Int) {
-        (
-            idx as Int % self.dimensions.y,
-            idx as Int / self.dimensions.y,
-        )
-    }
 }
 
 pub struct MapGenerator {}

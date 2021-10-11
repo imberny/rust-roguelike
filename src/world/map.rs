@@ -136,10 +136,6 @@ impl AreaGrid {
         ((y * self.width) + x) as Index
     }
 
-    pub fn idx_xy(&self, idx: Index) -> (Int, Int) {
-        (idx as Int % self.width, idx as Int / self.width)
-    }
-
     pub fn tile_at(&self, position: &IVec2) -> Option<TileHandle> {
         if self.is_point_in_bounds(position) {
             let idx = self.xy_idx(position.x, position.y);

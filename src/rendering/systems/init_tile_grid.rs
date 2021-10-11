@@ -8,7 +8,7 @@ use bevy::{
 };
 
 use crate::{
-    core::types::{Int, Real},
+    core::types::Real,
     rendering::{
         constants::{CP437_TILE_RENDER_NODE, TILE_SIZE, WORLD_VIEWPORT_DIMENSIONS},
         CP437Tile, Grid,
