@@ -99,7 +99,7 @@ impl MapGenerator {
         //         rooms.push(new_room);
         //     }
         // }
-        let new_room = Room::new(2, 2, 76, 46);
+        let new_room = Room::new(0, 0, 78, 48);
         self.apply_room_to_map(&mut map, &new_room);
         rooms.push(new_room);
         (map, rooms)
