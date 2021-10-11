@@ -1,9 +1,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    actors::Actor,
     core::{
-        types::{Facing, GridPos, Int},
+        types::{GridPos, Int},
         MainPointOfView,
     },
     rendering::{
@@ -11,17 +10,16 @@ use crate::{
         DrawEvent,
     },
     util::helpers::{colors::greyscale, cp437},
-    world::{AreaGrid, TileType, WorldMap},
+    world::{TileType, WorldMap},
 };
 
 pub fn pre_draw(
     world_map: Res<WorldMap>,
     grid_query: Query<&Children, With<Grid>>,
-    pov_query: Query<(&GridPos, &Actor), With<MainPointOfView>>,
+    pov_query: Query<&GridPos, With<MainPointOfView>>,
     mut draw_event_writer: EventWriter<DrawEvent>,
 ) {
-    let (camera_pos, actor) = pov_query.single();
-    let camera_cardinal = actor.facing;
+    let camera_pos = pov_query.single();
 
     let offset_area = world_map.get_area_from_pos(&camera_pos.0).unwrap();
     let offset = &offset_area.0;
@@ -35,6 +33,7 @@ pub fn pre_draw(
 
     let (min_x, max_x) = (offset.x, offset.x + area.width - 1);
     let (min_y, max_y) = (offset.y, offset.y + area.height - 1);
+
     let top_left = IVec2::new(
         (camera_pos.0.x - (columns / 2) as Int).clamp(min_x, max_x - columns as Int + 1),
         (camera_pos.0.y - (rows / 2) as Int).clamp(min_y, max_y - rows as Int + 1),
