@@ -16,7 +16,7 @@ pub fn update_viewsheds(
             viewshed.dirty = false;
 
             let area = &world_map.get_area_from_pos(&pos.0).unwrap().1;
-            let fov = FOV::Quadratic(15, 0.5, -1.5);
+            let fov = FOV::Quadratic(15, 0.35, -1.5);
             viewshed.visible_tiles =
                 symmetric_shadowcasting(&pos.0, &|pos| fov.sees(pos, actor.facing), &|pos| {
                     area.is_blocking(pos)
