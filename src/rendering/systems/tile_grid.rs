@@ -39,7 +39,6 @@ pub fn pre_draw(
         (camera_pos.0.x - (columns / 2) as Int).clamp(min_x, max_x - columns as Int + 1),
         (camera_pos.0.y - (rows / 2) as Int).clamp(min_y, max_y - rows as Int + 1),
     );
-    println!("Position: {:?}, top left: {:?}", camera_pos.0, top_left);
 
     (0..viewport_tiles.len()).for_each(|index| {
         let y = (index % columns) as Int;
