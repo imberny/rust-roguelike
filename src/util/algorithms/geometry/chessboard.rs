@@ -7,13 +7,6 @@ pub fn chessboard_distance(start: &IVec2, end: &IVec2) -> Int {
     std::cmp::max(delta.x.abs(), delta.y.abs())
 }
 
-pub fn chessboard_rotate(positions: &[IVec2], octants: Int) -> Vec<IVec2> {
-    positions
-        .iter()
-        .map(|pos| chessboard_rotate_one(pos, octants))
-        .collect()
-}
-
 pub fn chessboard_rotate_and_place(
     origin: &IVec2,
     positions: &[IVec2],
@@ -21,11 +14,11 @@ pub fn chessboard_rotate_and_place(
 ) -> Vec<IVec2> {
     positions
         .iter()
-        .map(|pos| *origin + chessboard_rotate_one(pos, octants))
+        .map(|pos| *origin + chessboard_rotate(pos, octants))
         .collect()
 }
 
-pub fn chessboard_rotate_one(pos: &IVec2, octants: Int) -> IVec2 {
+pub fn chessboard_rotate(pos: &IVec2, octants: Int) -> IVec2 {
     let mut result = pos.clone();
 
     if 1 == octants % 2 {
@@ -59,12 +52,14 @@ fn rotate_half_quadrant(result: &IVec2) -> IVec2 {
 
 #[cfg(test)]
 mod tests {
+    use bevy::math::IVec2;
+
     use crate::{
         core::types::{Cardinal, Int},
         test,
     };
 
-    use super::chessboard_rotate;
+    use super::chessboard_rotate_and_place;
 
     #[test]
     fn chessboard_rotations() {
@@ -73,7 +68,8 @@ mod tests {
                 .iter()
                 .enumerate()
                 .for_each(|(octants, expected)| {
-                    let actual = chessboard_rotate(&case.pattern, octants as Int);
+                    let actual =
+                        chessboard_rotate_and_place(&IVec2::ZERO, &case.pattern, octants as Int);
                     actual.iter().for_each(|rotated_pos| {
                         assert!(
                             expected.contains(rotated_pos),

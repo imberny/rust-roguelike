@@ -5,13 +5,15 @@ use crate::{AppState, SystemLabels};
 use super::{
     generator::generate_map_system,
     systems::{apply_player_viewsheds, update_renderables, update_viewsheds},
+    WorldMap,
 };
 
 pub struct GameWorldPlugin;
 
 impl Plugin for GameWorldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(generate_map_system.label(SystemLabels::Generation))
+        app.init_resource::<WorldMap>()
+            .add_startup_system(generate_map_system.label(SystemLabels::Generation))
             .add_system_set(
                 SystemSet::on_exit(AppState::Running)
                     .label(MapSystems::Viewshed)

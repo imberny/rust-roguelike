@@ -3,7 +3,7 @@ use bevy::math::{IVec2, Vec2};
 use crate::{
     core::types::{Cardinal, Facing, Int, Real},
     util::{
-        algorithms::geometry::{chessboard_distance, chessboard_rotate_one},
+        algorithms::geometry::{chessboard_distance, chessboard_rotate},
         helpers::GridRotator,
     },
 };
@@ -34,7 +34,7 @@ fn is_in_range(position: &IVec2, range: Int) -> bool {
 
 fn is_in_cone(pos: &IVec2, cardinal: Cardinal, range: Int, angle: Real) -> bool {
     let octants = (8 - Int::from(cardinal)) % 8;
-    let target = chessboard_rotate_one(pos, octants).as_vec2();
+    let target = chessboard_rotate(pos, octants).as_vec2();
     is_within_angle(&target, angle) && is_in_range(pos, range)
 }
 
@@ -54,7 +54,7 @@ fn is_above_curve(pos: &IVec2, cardinal: Cardinal, range: Int, a: Real, b: Real)
 }
 
 fn is_in_pattern(pattern: &[IVec2], position: &IVec2, cardinal: Cardinal) -> bool {
-    let pos = chessboard_rotate_one(position, cardinal.into());
+    let pos = chessboard_rotate(position, cardinal.into());
     pattern.contains(&pos)
 }
 

@@ -9,7 +9,7 @@ use crate::{
         TimeIncrementEvent,
     },
     util::{algorithms::geometry::chessboard_rotate_and_place, helpers::GridRotator},
-    world::{AreaGrid, Renderable, Viewshed},
+    world::{Renderable, Viewshed, WorldMap},
 };
 
 pub fn progress_activities(
@@ -29,7 +29,7 @@ pub fn progress_activities(
 
 pub fn do_activities(
     mut commands: Commands,
-    map_query: Query<&AreaGrid>,
+    world_map: Res<WorldMap>,
     mut actors: Query<
         (
             Entity,
@@ -43,22 +43,18 @@ pub fn do_activities(
     >,
     mut weapons: Query<&mut GridPos, With<Weapon>>,
 ) {
-    let map = map_query.single();
     for (entity, children, mut actor, mut pos, mut viewshed, activity) in actors.iter_mut() {
         if activity.time_to_complete == 0 {
             let mut new_activity: Option<Activity> = None;
 
             match activity.action {
                 Action::Move(direction) => {
-                    do_move(&mut pos.0, direction, actor.facing, &|pos| {
-                        map.is_blocking(pos)
+                    let area = &world_map.get_area_from_pos(&pos.0).unwrap().1;
+                    pos.0 = do_move(&pos.0, direction, actor.facing, &|pos| {
+                        area.is_blocking(pos)
                     });
                     let mut weapon_pos = weapons.get_mut(*children.get(0).unwrap()).unwrap();
-                    weapon_pos.0 =
-                        compute_next_position(Direction::Forward, actor.facing, &mut pos.0);
-
-                    // weapon_pos.x = next_weapon_pos.x;
-                    // weapon_pos.y = next_weapon_pos.y;
+                    weapon_pos.0 = compute_next_position(Direction::Forward, actor.facing, &pos.0);
 
                     // TODO: replace with event writer
                     viewshed.dirty = true;
@@ -67,12 +63,7 @@ pub fn do_activities(
                     actor.facing = rotate_facing(actor.facing, direction.into());
 
                     let mut weapon_pos = weapons.get_mut(*children.get(0).unwrap()).unwrap();
-                    // let next_weapon_pos =
-                    //     chessboard_rotate_and_place(&pos, &[*weapon_pos], direction.into())[0];
-                    weapon_pos.0 =
-                        compute_next_position(Direction::Forward, actor.facing, &mut pos.0);
-                    // weapon_pos.x = next_weapon_pos.x;
-                    // weapon_pos.y = next_weapon_pos.y;
+                    weapon_pos.0 = compute_next_position(Direction::Forward, actor.facing, &pos.0);
 
                     viewshed.dirty = true;
                 }
@@ -132,11 +123,11 @@ fn slide(
 }
 
 fn do_move(
-    pos: &mut IVec2,
+    pos: &IVec2,
     direction: Direction,
     cardinal: Cardinal,
     is_blocking: &Predicate<IVec2>,
-) {
+) -> IVec2 {
     let mut next_position = compute_next_position(direction, cardinal, pos);
 
     if is_blocking(&next_position) {
@@ -145,15 +136,13 @@ fn do_move(
     next_position.x = next_position.x.clamp(0, 79);
     next_position.y = next_position.y.clamp(0, 49);
 
-    pos.x = next_position.x;
-    pos.y = next_position.y;
+    next_position
 }
 
-fn compute_next_position(direction: Direction, cardinal: Cardinal, pos: &mut IVec2) -> IVec2 {
+fn compute_next_position(direction: Direction, cardinal: Cardinal, pos: &IVec2) -> IVec2 {
     let delta = IVec2::new(0, -1);
     let facing = compute_facing(direction, cardinal);
-    let mut result_position: IVec2 = facing.inverse().rot_i(&delta) + *pos;
-    result_position
+    facing.inverse().rot_i(&delta) + *pos
 }
 
 fn telegraph_attack(origin: &IVec2, facing: Cardinal, commands: &mut Commands) {
@@ -228,12 +217,12 @@ mod tests {
 
     use crate::{
         actors::{Action, Activity, ActorBundle},
-        core::types::{Cardinal, Direction, GridPos},
+        core::types::{Direction, GridPos},
         test,
         world::{AreaGrid, TileType},
     };
 
-    use super::{do_activities, do_move, slide};
+    use super::{do_activities, slide};
 
     fn test_map() -> AreaGrid {
         AreaGrid {
@@ -278,7 +267,8 @@ mod tests {
         let mut stage = SystemStage::single(do_activities.system());
         stage.run(&mut world);
 
-        assert!(world.get::<Activity>(entity).is_none());
+        let activity = world.get::<Activity>(entity);
+        assert!(activity.is_none());
         let position = world.get::<GridPos>(entity).unwrap();
         assert_eq!(IVec2::new(0, 1), position.0);
     }
@@ -296,15 +286,5 @@ mod tests {
 
             assert_eq!(expected, pos);
         }
-    }
-
-    #[test]
-    fn move_zero() {
-        do_move(
-            &mut IVec2::ZERO,
-            Direction::Forward,
-            Cardinal::North,
-            &|_pos| false,
-        );
     }
 }

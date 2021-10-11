@@ -48,7 +48,90 @@ impl Default for AreaGrid {
     }
 }
 
+pub struct TileHandle<'a> {
+    map: &'a AreaGrid,
+    index: usize,
+}
+
+impl<'a> TileHandle<'a> {
+    fn new(grid: &'a AreaGrid, index: usize) -> Self {
+        Self { map: grid, index }
+    }
+
+    pub fn which(&self) -> TileType {
+        self.map.tiles[self.index]
+    }
+
+    pub fn is_visible(&self) -> bool {
+        self.map.visible[self.index]
+    }
+
+    pub fn is_revealed(&self) -> bool {
+        self.map.revealed[self.index]
+    }
+}
+
+pub struct TileHandleMut<'a> {
+    map: &'a mut AreaGrid,
+    index: usize,
+}
+
+impl<'a> TileHandleMut<'a> {
+    fn new(grid: &'a mut AreaGrid, index: usize) -> Self {
+        Self { map: grid, index }
+    }
+
+    pub fn which(&self) -> TileType {
+        self.map.tiles[self.index]
+    }
+
+    pub fn set_visible(&mut self, is_visible: bool) {
+        self.map.visible[self.index] = is_visible;
+    }
+
+    pub fn set_revealed(&mut self, is_revealed: bool) {
+        self.map.revealed[self.index] = is_revealed;
+    }
+
+    pub fn set_renderable(&mut self, renderable: Renderable) {
+        let pos = self.map.index_to_point(self.index);
+        self.map.renderables.insert(pos, renderable);
+    }
+
+    pub fn is_visible(&mut self) -> bool {
+        self.map.visible[self.index]
+    }
+
+    pub fn is_revealed(&mut self) -> bool {
+        self.map.revealed[self.index]
+    }
+}
+
 impl AreaGrid {
+    pub fn new(dimensions: &IVec2) -> Self {
+        let tile_count = (dimensions.x * dimensions.y) as usize;
+        Self {
+            tiles: vec![TileType::Wall; tile_count],
+            width: dimensions.y,
+            height: dimensions.x,
+            revealed: vec![false; tile_count],
+            visible: vec![false; tile_count],
+            renderables: HashMap::default(),
+        }
+    }
+
+    pub fn from_tiles(dimensions: &IVec2, tiles: Vec<TileType>) -> Self {
+        let tile_count = tiles.len();
+        Self {
+            tiles,
+            width: dimensions.y,
+            height: dimensions.x,
+            revealed: vec![false; tile_count],
+            visible: vec![false; tile_count],
+            renderables: HashMap::default(),
+        }
+    }
+
     pub fn xy_idx(&self, x: Int, y: Int) -> Index {
         ((y * self.width) + x) as Index
     }
@@ -57,21 +140,22 @@ impl AreaGrid {
         (idx as Int % self.width, idx as Int / self.width)
     }
 
-    pub fn is_in_bounds(&self, x: Int, y: Int) -> bool {
-        x >= 0 && x < self.width && y >= 0 && y < self.height
+    pub fn tile_at(&self, position: &IVec2) -> Option<TileHandle> {
+        if self.is_point_in_bounds(position) {
+            let idx = self.xy_idx(position.x, position.y);
+            Some(TileHandle::new(self, idx))
+        } else {
+            None
+        }
     }
 
-    pub fn is_point_in_bounds(&self, point: &IVec2) -> bool {
-        self.is_in_bounds(point.x, point.y)
-    }
-
-    pub fn at(&self, position: &IVec2) -> TileType {
-        let idx = self.xy_idx(position.x, position.y);
-        self.tiles[idx]
-    }
-
-    pub fn index_to_point(&self, index: Index) -> IVec2 {
-        IVec2::new(index as Int % self.width, index as Int / self.width)
+    pub fn tile_at_mut(&mut self, position: &IVec2) -> Option<TileHandleMut> {
+        if self.is_point_in_bounds(position) {
+            let idx = self.xy_idx(position.x, position.y);
+            Some(TileHandleMut::new(self, idx))
+        } else {
+            None
+        }
     }
 
     pub fn is_blocking(&self, position: &IVec2) -> bool {
@@ -83,10 +167,27 @@ impl AreaGrid {
             TileType::Floor => false,
         }
     }
+
+    pub fn clear_renderables(&mut self) {
+        self.renderables.drain();
+    }
+
+    fn index_to_point(&self, index: Index) -> IVec2 {
+        IVec2::new(index as Int % self.width, index as Int / self.width)
+    }
+
+    fn is_point_in_bounds(&self, point: &IVec2) -> bool {
+        point.x >= 0 && point.x < self.width && point.y >= 0 && point.y < self.height
+    }
+
+    fn at(&self, position: &IVec2) -> TileType {
+        let idx = self.xy_idx(position.x, position.y);
+        self.tiles[idx]
+    }
 }
 
 impl IntoIterator for AreaGrid {
-    type Item = (IVec2, TileType);
+    type Item = IVec2;
 
     type IntoIter = MapIterator;
 
@@ -104,19 +205,15 @@ pub struct MapIterator {
 }
 
 impl Iterator for MapIterator {
-    type Item = (IVec2, TileType);
+    type Item = IVec2;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.map.tiles.len() == self.index {
             return None;
         }
 
-        let result = (
-            self.map.index_to_point(self.index),
-            self.map.tiles[self.index],
-        );
         self.index += 1;
-        Some(result)
+        Some(self.map.index_to_point(self.index - 1))
     }
 }
 

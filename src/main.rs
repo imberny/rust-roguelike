@@ -9,7 +9,6 @@ use crate::{
         IncrementalClock, TimeIncrementEvent,
     },
     settings::PlayerSettings,
-    world::{AreaGrid, TileType},
 };
 
 mod actors;
@@ -36,6 +35,7 @@ const HEIGHT: Int = 800;
 #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
 enum SystemLabels {
     Generation,
+    Rendering,
 }
 
 fn main() {
@@ -51,7 +51,6 @@ fn main() {
         .init_resource::<IncrementalClock>()
         .init_resource::<PlayerSettings>()
         .add_plugins(DefaultPlugins)
-        .add_startup_system_to_stage(StartupStage::PreStartup, set_up_map)
         .add_event::<TimeIncrementEvent>()
         .add_state(AppState::Running)
         .add_system_set(
@@ -68,17 +67,6 @@ fn main() {
         .add_plugin(world::GameWorldPlugin)
         .add_plugin(rendering::TileRendererPlugin)
         .run();
-}
-
-fn set_up_map(mut commands: Commands) {
-    commands.spawn().insert(AreaGrid {
-        revealed: vec![false; 80 * 50],
-        visible: vec![false; 80 * 50],
-        tiles: vec![TileType::Wall; 80 * 50],
-        width: 80,
-        height: 50,
-        ..Default::default()
-    });
 }
 
 fn pause_if_player_idle(
